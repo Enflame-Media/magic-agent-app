@@ -5,16 +5,16 @@ const name = {
     production: "Happy"
 }[variant];
 const bundleId = {
-    development: "com.slopus.happy.dev",
-    preview: "com.slopus.happy.preview",
-    production: "com.ex3ndr.happy"
+    development: "com.enfmn.happy.dev",
+    preview: "com.enfm.happy.preview",
+    production: "com.enfm.happy"
 }[variant];
 
 export default {
     expo: {
         name,
         slug: "happy",
-        version: "1.5.1",
+        version: "1.0.0",
         runtimeVersion: "18",
         orientation: "default",
         icon: "./sources/assets/images/icon.png",
