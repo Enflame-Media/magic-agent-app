@@ -127,40 +127,164 @@ class ApiSocket {
 
     /**
      * RPC call for sessions - uses session-specific encryption
+     * @param sessionId - The session ID
+     * @param method - The RPC method name
+     * @param params - The parameters to pass
+     * @param options - Optional abort signal for cancellation
      */
-    async sessionRPC<R, A>(sessionId: string, method: string, params: A): Promise<R> {
+    async sessionRPC<R, A>(
+        sessionId: string,
+        method: string,
+        params: A,
+        options?: { signal?: AbortSignal }
+    ): Promise<R> {
         const sessionEncryption = this.encryption!.getSessionEncryption(sessionId);
         if (!sessionEncryption) {
             throw new Error(`Session encryption not found for ${sessionId}`);
         }
-        
-        const result = await this.socket!.emitWithAck('rpc-call', {
-            method: `${sessionId}:${method}`,
-            params: await sessionEncryption.encryptRaw(params)
+
+        // Check if already aborted before making the call
+        if (options?.signal?.aborted) {
+            throw new Error('RPC call was cancelled');
+        }
+
+        if (!this.socket) {
+            throw new Error('Socket not connected');
+        }
+
+        // Capture socket reference to avoid stale closure issues
+        const socket = this.socket;
+
+        // Set up cancellation handling
+        let abortHandler: (() => void) | undefined;
+        let isSettled = false;
+
+        const result = await new Promise<any>((resolve, reject) => {
+            if (options?.signal) {
+                abortHandler = () => {
+                    if (!isSettled) {
+                        isSettled = true;
+                        reject(new Error('RPC call was cancelled'));
+                    }
+                };
+                options.signal.addEventListener('abort', abortHandler);
+            }
+
+            // Make the RPC call (not using async/await in executor to avoid anti-pattern)
+            const encryptPromise = sessionEncryption.encryptRaw(params);
+            encryptPromise.then(encryptedParams => {
+                return socket.emitWithAck('rpc-call', {
+                    method: `${sessionId}:${method}`,
+                    params: encryptedParams
+                });
+            }).then(rpcResult => {
+                if (!isSettled) {
+                    isSettled = true;
+                    // Send cancellation to server if we got a requestId and abortion happened
+                    if (options?.signal?.aborted && rpcResult.requestId) {
+                        socket.emit('rpc-cancel', { requestId: rpcResult.requestId });
+                    }
+                    resolve(rpcResult);
+                }
+            }).catch(error => {
+                if (!isSettled) {
+                    isSettled = true;
+                    reject(error);
+                }
+            });
+        }).finally(() => {
+            if (abortHandler && options?.signal) {
+                options.signal.removeEventListener('abort', abortHandler);
+            }
         });
-        
+
         if (result.ok) {
             return await sessionEncryption.decryptRaw(result.result) as R;
+        }
+        if (result.cancelled) {
+            throw new Error('RPC call was cancelled');
         }
         throw new Error('RPC call failed');
     }
 
     /**
      * RPC call for machines - uses legacy/global encryption (for now)
+     * @param machineId - The machine ID
+     * @param method - The RPC method name
+     * @param params - The parameters to pass
+     * @param options - Optional abort signal for cancellation
      */
-    async machineRPC<R, A>(machineId: string, method: string, params: A): Promise<R> {   
+    async machineRPC<R, A>(
+        machineId: string,
+        method: string,
+        params: A,
+        options?: { signal?: AbortSignal }
+    ): Promise<R> {
         const machineEncryption = this.encryption!.getMachineEncryption(machineId);
         if (!machineEncryption) {
             throw new Error(`Machine encryption not found for ${machineId}`);
         }
-        
-        const result = await this.socket!.emitWithAck('rpc-call', {
-            method: `${machineId}:${method}`,
-            params: await machineEncryption.encryptRaw(params)
+
+        // Check if already aborted before making the call
+        if (options?.signal?.aborted) {
+            throw new Error('RPC call was cancelled');
+        }
+
+        if (!this.socket) {
+            throw new Error('Socket not connected');
+        }
+
+        // Capture socket reference to avoid stale closure issues
+        const socket = this.socket;
+
+        // Set up cancellation handling
+        let abortHandler: (() => void) | undefined;
+        let isSettled = false;
+
+        const result = await new Promise<any>((resolve, reject) => {
+            if (options?.signal) {
+                abortHandler = () => {
+                    if (!isSettled) {
+                        isSettled = true;
+                        reject(new Error('RPC call was cancelled'));
+                    }
+                };
+                options.signal.addEventListener('abort', abortHandler);
+            }
+
+            // Make the RPC call (not using async/await in executor to avoid anti-pattern)
+            const encryptPromise = machineEncryption.encryptRaw(params);
+            encryptPromise.then(encryptedParams => {
+                return socket.emitWithAck('rpc-call', {
+                    method: `${machineId}:${method}`,
+                    params: encryptedParams
+                });
+            }).then(rpcResult => {
+                if (!isSettled) {
+                    isSettled = true;
+                    // Send cancellation to server if we got a requestId and abortion happened
+                    if (options?.signal?.aborted && rpcResult.requestId) {
+                        socket.emit('rpc-cancel', { requestId: rpcResult.requestId });
+                    }
+                    resolve(rpcResult);
+                }
+            }).catch(error => {
+                if (!isSettled) {
+                    isSettled = true;
+                    reject(error);
+                }
+            });
+        }).finally(() => {
+            if (abortHandler && options?.signal) {
+                options.signal.removeEventListener('abort', abortHandler);
+            }
         });
-        
+
         if (result.ok) {
             return await machineEncryption.decryptRaw(result.result) as R;
+        }
+        if (result.cancelled) {
+            throw new Error('RPC call was cancelled');
         }
         throw new Error('RPC call failed');
     }

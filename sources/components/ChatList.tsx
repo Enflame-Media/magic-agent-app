@@ -46,6 +46,10 @@ const ChatListInternal = React.memo((props: {
         <FlatList
             data={props.messages}
             inverted={true}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            removeClippedSubviews={Platform.OS !== 'web'}
             keyExtractor={keyExtractor}
             maintainVisibleContentPosition={{
                 minIndexForVisible: 0,
