@@ -1304,8 +1304,10 @@ class Sync {
 
             // Get platform and app identifiers
             const platform = Platform.OS;
-            const version = Constants.expoConfig?.version!;
-            const appId = (Platform.OS === 'ios' ? Constants.expoConfig?.ios?.bundleIdentifier! : Constants.expoConfig?.android?.package!);
+            const version = Constants.expoConfig?.version ?? 'unknown';
+            const appId = Platform.OS === 'ios'
+                ? (Constants.expoConfig?.ios?.bundleIdentifier ?? 'unknown')
+                : (Constants.expoConfig?.android?.package ?? 'unknown');
 
             const response = await fetch(`${serverUrl}/v1/version`, {
                 method: 'POST',

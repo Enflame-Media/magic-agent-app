@@ -304,8 +304,8 @@ export const SettingsView = React.memo(function SettingsView() {
                 />
                 <Item
                     title={t('settings.github')}
-                    subtitle={isGitHubConnected
-                        ? t('settings.githubConnected', { login: profile.github?.login! })
+                    subtitle={isGitHubConnected && profile.github
+                        ? t('settings.githubConnected', { login: profile.github.login })
                         : t('settings.connectGithubAccount')
                     }
                     icon={
