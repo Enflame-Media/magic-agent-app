@@ -2061,6 +2061,7 @@ if (__DEV__) {
 //
 
 let isInitialized = false;
+let statusChangeCleanup: (() => void) | null = null;
 export async function syncCreate(credentials: AuthCredentials) {
     if (isInitialized) {
         console.warn('Sync already initialized: ignoring');
@@ -2095,8 +2096,11 @@ async function syncInit(credentials: AuthCredentials, restore: boolean) {
     const API_ENDPOINT = getServerUrl();
     apiSocket.initialize({ endpoint: API_ENDPOINT, token: credentials.token }, encryption);
 
+    // Clean up previous status change handler if exists (prevents accumulation on hot reload)
+    statusChangeCleanup?.();
+
     // Wire socket status to storage
-    apiSocket.onStatusChange((status) => {
+    statusChangeCleanup = apiSocket.onStatusChange((status) => {
         storage.getState().setSocketStatus(status);
     });
 
