@@ -20,6 +20,7 @@ import { isMutableTool } from "@/components/tools/knownTools";
 import { projectManager } from "./projectManager";
 import { DecryptedArtifact } from "./artifactTypes";
 import { FeedItem } from "./feedTypes";
+import { t } from "@/text";
 
 /**
  * Centralized session online state resolver
@@ -187,13 +188,13 @@ function buildSessionListViewData(
 
                 let headerTitle: string;
                 if (sessionDateOnly.getTime() === today.getTime()) {
-                    headerTitle = 'Today';
+                    headerTitle = t('sessionHistory.today');
                 } else if (sessionDateOnly.getTime() === yesterday.getTime()) {
-                    headerTitle = 'Yesterday';
+                    headerTitle = t('sessionHistory.yesterday');
                 } else {
                     const diffTime = today.getTime() - sessionDateOnly.getTime();
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    headerTitle = `${diffDays} days ago`;
+                    headerTitle = t('sessionHistory.daysAgo', { count: diffDays });
                 }
 
                 listData.push({ type: 'header', title: headerTitle });
@@ -217,13 +218,13 @@ function buildSessionListViewData(
 
         let headerTitle: string;
         if (sessionDateOnly.getTime() === today.getTime()) {
-            headerTitle = 'Today';
+            headerTitle = t('sessionHistory.today');
         } else if (sessionDateOnly.getTime() === yesterday.getTime()) {
-            headerTitle = 'Yesterday';
+            headerTitle = t('sessionHistory.yesterday');
         } else {
             const diffTime = today.getTime() - sessionDateOnly.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            headerTitle = `${diffDays} days ago`;
+            headerTitle = t('sessionHistory.daysAgo', { count: diffDays });
         }
 
         listData.push({ type: 'header', title: headerTitle });
