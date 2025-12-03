@@ -1,6 +1,7 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 /**
  * Connect a service to the user's account
@@ -23,12 +24,12 @@ export async function connectService(
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to connect ${service}: ${response.status}`);
+            throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to connect ${service}: ${response.status}`);
         }
 
         const data = await response.json() as { success: true };
         if (!data.success) {
-            throw new Error(`Failed to connect ${service} account`);
+            throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to connect ${service} account`);
         }
     });
 }
@@ -50,14 +51,14 @@ export async function disconnectService(credentials: AuthCredentials, service: s
         if (!response.ok) {
             if (response.status === 404) {
                 const error = await response.json();
-                throw new Error(error.error || `${service} account not connected`);
+                throw new AppError(ErrorCodes.SERVICE_NOT_CONNECTED, error.error || `${service} account not connected`);
             }
-            throw new Error(`Failed to disconnect ${service}: ${response.status}`);
+            throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to disconnect ${service}: ${response.status}`);
         }
 
         const data = await response.json() as { success: true };
         if (!data.success) {
-            throw new Error(`Failed to disconnect ${service} account`);
+            throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to disconnect ${service} account`);
         }
     });
 }

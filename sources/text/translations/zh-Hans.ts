@@ -285,6 +285,17 @@ export const zhHans: TranslationStructure = {
         yesterday: '昨天',
         daysAgo: ({ count }: { count: number }) => `${count} 天前`,
         viewAll: '查看所有会话',
+        // Resume session functionality
+        resume: '继续',
+        resumeSession: '继续会话',
+        resumeConfirm: '继续此会话？',
+        resumeDescription: '这将创建一个新会话，包含原始会话的完整对话历史。原始会话将保持不变。',
+        resumeStarting: '正在继续会话...',
+        resumeSuccess: '会话已成功继续',
+        resumeFailed: '继续会话失败',
+        resumeNotAvailable: '无法继续',
+        resumeRequiresMachine: '需要机器在线才能继续',
+        resumeClaudeOnly: '继续功能仅适用于 Claude 会话',
     },
 
     session: {

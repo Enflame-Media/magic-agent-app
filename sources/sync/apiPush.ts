@@ -1,6 +1,7 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 export async function registerPushToken(credentials: AuthCredentials, token: string): Promise<void> {
     const API_ENDPOINT = getServerUrl();
@@ -15,12 +16,12 @@ export async function registerPushToken(credentials: AuthCredentials, token: str
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to register push token: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to register push token: ${response.status}`);
         }
 
         const data = await response.json();
         if (!data.success) {
-            throw new Error('Failed to register push token');
+            throw new AppError(ErrorCodes.API_ERROR, 'Failed to register push token');
         }
     });
 }

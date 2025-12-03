@@ -44,7 +44,6 @@ export const envConfig: EnvConfig[] = [
  */
 export function logEnvStatus(): void {
     // __DEV__ is a React Native/Expo global that indicates development mode
-    // @ts-expect-error __DEV__ is defined by React Native runtime
     if (typeof __DEV__ === 'undefined' || !__DEV__) {
         return;
     }

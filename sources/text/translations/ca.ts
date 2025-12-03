@@ -6,8 +6,8 @@ import type { TranslationStructure } from '../_default';
  * @param options - Object containing count, singular, and plural forms
  * @returns The appropriate form based on Catalan plural rules
  */
-function plural({ count, singular, plural }: { count: number; singular: string; plural: string }): string {
-    return count === 1 ? singular : plural;
+function plural({ count, singular, plural: pluralForm }: { count: number; singular: string; plural: string }): string {
+    return count === 1 ? singular : pluralForm;
 }
 
 /**
@@ -283,6 +283,17 @@ export const ca: TranslationStructure = {
         yesterday: 'Ahir',
         daysAgo: ({ count }: { count: number }) => `fa ${count} ${count === 1 ? 'dia' : 'dies'}`,
         viewAll: 'Veure totes les sessions',
+        // Resume session functionality
+        resume: 'Reprendre',
+        resumeSession: 'Reprendre sessió',
+        resumeConfirm: 'Reprendre aquesta sessió?',
+        resumeDescription: 'Això crearà una nova sessió amb l\'historial complet de la conversa original. La sessió original romandrà sense canvis.',
+        resumeStarting: 'Reprenent sessió...',
+        resumeSuccess: 'Sessió represa amb èxit',
+        resumeFailed: 'Error en reprendre la sessió',
+        resumeNotAvailable: 'Represa no disponible',
+        resumeRequiresMachine: 'La màquina ha d\'estar en línia per reprendre',
+        resumeClaudeOnly: 'Reprendre només està disponible per a sessions de Claude',
     },
 
     session: {

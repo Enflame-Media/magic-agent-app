@@ -283,6 +283,17 @@ export const es: TranslationStructure = {
         yesterday: 'Ayer',
         daysAgo: ({ count }: { count: number }) => `hace ${count} ${count === 1 ? 'día' : 'días'}`,
         viewAll: 'Ver todas las sesiones',
+        // Resume session functionality
+        resume: 'Reanudar',
+        resumeSession: 'Reanudar sesión',
+        resumeConfirm: '¿Reanudar esta sesión?',
+        resumeDescription: 'Esto creará una nueva sesión con el historial completo de la conversación original. La sesión original permanecerá sin cambios.',
+        resumeStarting: 'Reanudando sesión...',
+        resumeSuccess: 'Sesión reanudada con éxito',
+        resumeFailed: 'Error al reanudar la sesión',
+        resumeNotAvailable: 'Reanudación no disponible',
+        resumeRequiresMachine: 'La máquina debe estar en línea para reanudar',
+        resumeClaudeOnly: 'Reanudar solo está disponible para sesiones de Claude',
     },
 
     session: {

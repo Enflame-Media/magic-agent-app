@@ -1,6 +1,7 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 export interface GitHubOAuthParams {
     url: string;
@@ -38,9 +39,9 @@ export async function getGitHubOAuthParams(credentials: AuthCredentials): Promis
         if (!response.ok) {
             if (response.status === 400) {
                 const error = await response.json();
-                throw new Error(error.error || 'GitHub OAuth not configured');
+                throw new AppError(ErrorCodes.NOT_CONFIGURED, error.error || 'GitHub OAuth not configured');
             }
-            throw new Error(`Failed to get GitHub OAuth params: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get GitHub OAuth params: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as GitHubOAuthParams;
@@ -64,7 +65,7 @@ export async function getAccountProfile(credentials: AuthCredentials): Promise<A
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to get account profile: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get account profile: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as AccountProfile;
@@ -89,14 +90,14 @@ export async function disconnectGitHub(credentials: AuthCredentials): Promise<vo
         if (!response.ok) {
             if (response.status === 404) {
                 const error = await response.json();
-                throw new Error(error.error || 'GitHub account not connected');
+                throw new AppError(ErrorCodes.SERVICE_NOT_CONNECTED, error.error || 'GitHub account not connected');
             }
-            throw new Error(`Failed to disconnect GitHub: ${response.status}`);
+            throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to disconnect GitHub: ${response.status}`);
         }
 
         const data = await response.json() as { success: true };
         if (!data.success) {
-            throw new Error('Failed to disconnect GitHub account');
+            throw new AppError(ErrorCodes.SERVICE_ERROR, 'Failed to disconnect GitHub account');
         }
     });
 }

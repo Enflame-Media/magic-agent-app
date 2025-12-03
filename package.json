@@ -23,8 +23,8 @@
     "knip": "knip",
     "build:web": "APP_ENV=production expo export --platform web --output-dir dist",
     "build:web:preview": "APP_ENV=preview expo export --platform web --output-dir dist",
-    "deploy:workers": "yarn build:web && wrangler deploy --env production",
-    "deploy:workers:preview": "yarn build:web:preview && wrangler deploy --env preview"
+    "deploy:workers:pro": "yarn build:web && wrangler deploy --env production",
+    "deploy:workers:dev": "yarn build:web:preview && wrangler deploy --env development"
   },
   "jest": {
     "preset": "jest-expo"
@@ -47,9 +47,9 @@
     "@react-native-community/slider": "5.1.1",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-picker/picker": "2.11.4",
-    "@react-navigation/drawer": "^7.7.5",
+    "@react-navigation/drawer": "^7.7.6",
     "@react-navigation/native": "^7.1.22",
-    "@revenuecat/purchases-js": "^1.18.4",
+    "@revenuecat/purchases-js": "^1.19.0",
     "@shopify/flash-list": "2.2.0",
     "@shopify/react-native-skia": "2.4.6",
     "@tauri-apps/cli": "^2.9.5",
@@ -123,7 +123,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-native": "0.82.1",
-    "react-native-audio-api": "^0.10.1",
+    "react-native-audio-api": "^0.10.2",
     "react-native-device-info": "^15.0.1",
     "react-native-diff-view": "^1.1.2",
     "react-native-enriched": "^0.1.6",
@@ -155,7 +155,7 @@
     "socket.io-client": "^4.8.1",
     "twrnc": "^4.11.1",
     "uuid": "^13.0.0",
-    "vitest": "^4.0.14",
+    "vitest": "^4.0.15",
     "zod": "^4.1.13",
     "zustand": "^5.0.9"
   },
@@ -167,7 +167,7 @@
     "@stablelib/hex": "^2.0.1",
     "@types/node": "^24.10.1",
     "@types/react": "~19.2.7",
-    "@vitest/coverage-v8": "^4.0.14",
+    "@vitest/coverage-v8": "^4.0.15",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "knip": "^5.71.0",
     "oxlint": "^1.31.0",

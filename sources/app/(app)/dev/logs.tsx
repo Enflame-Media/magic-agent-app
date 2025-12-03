@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, FlatList, Pressable } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { log } from '@/log';
 import { ItemGroup } from '@/components/ItemGroup';

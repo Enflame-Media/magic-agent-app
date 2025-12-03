@@ -1,11 +1,11 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 import { Settings, settingsDefaults, settingsParse, SettingsSchema } from './settings';
 import { LocalSettings, localSettingsDefaults, localSettingsParse } from './localSettings';
 import { Purchases, purchasesDefaults, purchasesParse } from './purchases';
 import { Profile, profileDefaults, profileParse } from './profile';
 import type { PermissionMode } from '@/components/PermissionModeSelector';
 
-const mmkv = new MMKV();
+const mmkv = createMMKV();
 
 export function loadSettings(): { settings: Settings, version: number | null } {
     const settings = mmkv.getString('settings');
@@ -157,7 +157,7 @@ export function retrieveTempText(id: string): string | null {
     const content = mmkv.getString(`temp_text_${id}`);
     if (content) {
         // Auto-delete after retrieval
-        mmkv.delete(`temp_text_${id}`);
+        mmkv.remove(`temp_text_${id}`);
         return content;
     }
     return null;

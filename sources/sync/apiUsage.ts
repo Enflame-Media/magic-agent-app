@@ -1,6 +1,7 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 export interface UsageDataPoint {
     timestamp: number;
@@ -41,9 +42,9 @@ export async function queryUsage(
 
         if (!response.ok) {
             if (response.status === 404 && params.sessionId) {
-                throw new Error('Session not found');
+                throw new AppError(ErrorCodes.NOT_FOUND, 'Session not found');
             }
-            throw new Error(`Failed to query usage: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to query usage: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as UsageResponse;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
+import { View, TextInput, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';

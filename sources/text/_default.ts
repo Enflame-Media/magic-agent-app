@@ -283,6 +283,17 @@ export const en = {
         yesterday: 'Yesterday',
         daysAgo: ({ count }: { count: number }) => `${count} ${count === 1 ? 'day' : 'days'} ago`,
         viewAll: 'View all sessions',
+        // Resume session functionality
+        resume: 'Resume',
+        resumeSession: 'Resume Session',
+        resumeConfirm: 'Resume this session?',
+        resumeDescription: 'This will create a new session with the full conversation history from the original. The original session will remain unchanged.',
+        resumeStarting: 'Resuming session...',
+        resumeSuccess: 'Session resumed successfully',
+        resumeFailed: 'Failed to resume session',
+        resumeNotAvailable: 'Resume not available',
+        resumeRequiresMachine: 'Machine must be online to resume',
+        resumeClaudeOnly: 'Resume is only available for Claude sessions',
     },
 
     session: {

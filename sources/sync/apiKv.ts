@@ -1,6 +1,7 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 //
 // Types
@@ -84,7 +85,7 @@ export async function kvGet(
         }
 
         if (!response.ok) {
-            throw new Error(`Failed to get KV value: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get KV value: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as KvItem;
@@ -121,7 +122,7 @@ export async function kvList(
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to list KV items: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to list KV items: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as KvListResponse;
@@ -141,7 +142,7 @@ export async function kvBulkGet(
     }
 
     if (keys.length > 100) {
-        throw new Error('Cannot bulk get more than 100 keys at once');
+        throw new AppError(ErrorCodes.INVALID_INPUT, 'Cannot bulk get more than 100 keys at once');
     }
 
     const API_ENDPOINT = getServerUrl();
@@ -157,7 +158,7 @@ export async function kvBulkGet(
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to bulk get KV values: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to bulk get KV values: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as KvBulkGetResponse;
@@ -179,7 +180,7 @@ export async function kvMutate(
     }
 
     if (mutations.length > 100) {
-        throw new Error('Cannot mutate more than 100 keys at once');
+        throw new AppError(ErrorCodes.INVALID_INPUT, 'Cannot mutate more than 100 keys at once');
     }
 
     const API_ENDPOINT = getServerUrl();
@@ -200,7 +201,7 @@ export async function kvMutate(
         }
 
         if (!response.ok) {
-            throw new Error(`Failed to mutate KV values: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to mutate KV values: ${response.status}`);
         }
 
         const data = await response.json() as KvMutateSuccessResponse;
@@ -230,7 +231,7 @@ export async function kvSet(
 
     if (result.success === false) {
         const error = result.errors[0];
-        throw new Error(`Failed to set key "${key}": ${error.error} (current version: ${error.version})`);
+        throw new AppError(ErrorCodes.VERSION_CONFLICT, `Failed to set key "${key}": ${error.error} (current version: ${error.version})`);
     }
 
     return result.results[0].version;
@@ -252,7 +253,7 @@ export async function kvDelete(
 
     if (result.success === false) {
         const error = result.errors[0];
-        throw new Error(`Failed to delete key "${key}": ${error.error} (current version: ${error.version})`);
+        throw new AppError(ErrorCodes.VERSION_CONFLICT, `Failed to delete key "${key}": ${error.error} (current version: ${error.version})`);
     }
 }
 

@@ -2,6 +2,7 @@ import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 import { Artifact, ArtifactCreateRequest, ArtifactUpdateRequest, ArtifactUpdateResponse } from './artifactTypes';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 /**
  * Fetch all artifacts for the account
@@ -18,7 +19,7 @@ export async function fetchArtifacts(credentials: AuthCredentials): Promise<Arti
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch artifacts: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to fetch artifacts: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as Artifact[];
@@ -42,9 +43,9 @@ export async function fetchArtifact(credentials: AuthCredentials, artifactId: st
 
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Artifact not found');
+                throw new AppError(ErrorCodes.NOT_FOUND, 'Artifact not found');
             }
-            throw new Error(`Failed to fetch artifact: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to fetch artifact: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json() as Artifact;
@@ -73,9 +74,9 @@ export async function createArtifact(
 
         if (!response.ok) {
             if (response.status === 409) {
-                throw new Error('Artifact ID already exists');
+                throw new AppError(ErrorCodes.ALREADY_EXISTS, 'Artifact ID already exists');
             }
-            throw new Error(`Failed to create artifact: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to create artifact: ${response.status}`);
         }
 
         const data = await response.json() as Artifact;
@@ -105,9 +106,9 @@ export async function updateArtifact(
 
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Artifact not found');
+                throw new AppError(ErrorCodes.NOT_FOUND, 'Artifact not found');
             }
-            throw new Error(`Failed to update artifact: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to update artifact: ${response.status}`);
         }
 
         const data = await response.json() as ArtifactUpdateResponse;
@@ -134,9 +135,9 @@ export async function deleteArtifact(
 
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Artifact not found');
+                throw new AppError(ErrorCodes.NOT_FOUND, 'Artifact not found');
             }
-            throw new Error(`Failed to delete artifact: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to delete artifact: ${response.status}`);
         }
     });
 }

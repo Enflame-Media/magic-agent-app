@@ -283,6 +283,17 @@ export const pt: TranslationStructure = {
         yesterday: 'Ontem',
         daysAgo: ({ count }: { count: number }) => `há ${count} ${count === 1 ? 'dia' : 'dias'}`,
         viewAll: 'Ver todas as sessões',
+        // Resume session functionality
+        resume: 'Retomar',
+        resumeSession: 'Retomar sessão',
+        resumeConfirm: 'Retomar esta sessão?',
+        resumeDescription: 'Isso criará uma nova sessão com o histórico completo da conversa original. A sessão original permanecerá inalterada.',
+        resumeStarting: 'Retomando sessão...',
+        resumeSuccess: 'Sessão retomada com sucesso',
+        resumeFailed: 'Falha ao retomar a sessão',
+        resumeNotAvailable: 'Retomada não disponível',
+        resumeRequiresMachine: 'A máquina deve estar online para retomar',
+        resumeClaudeOnly: 'Retomar está disponível apenas para sessões Claude',
     },
 
     session: {

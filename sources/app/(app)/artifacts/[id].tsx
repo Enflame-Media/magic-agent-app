@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, ActivityIndicator, Pressable, Platform } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { useArtifact } from '@/sync/storage';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';

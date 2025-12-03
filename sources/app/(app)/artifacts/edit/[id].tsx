@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, TextInput, Pressable, ActivityIndicator, Platform, KeyboardAvoidingView as RNKeyboardAvoidingView } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, ActivityIndicator, Platform } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -7,7 +7,6 @@ import { t } from '@/text';
 import { layout } from '@/components/layout';
 import { Modal } from '@/modal';
 import { sync } from '@/sync/sync';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useArtifact } from '@/sync/storage';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 

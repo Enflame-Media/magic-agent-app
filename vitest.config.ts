@@ -15,7 +15,14 @@ export default defineConfig({
                 '**/*.d.ts',
                 '**/*.config.*',
                 '**/mockData/**',
+                '**/*.spec.ts',
+                '**/*.test.ts',
             ],
+            thresholds: {
+                lines: 60,
+                functions: 60,
+                branches: 50,
+            },
         },
     },
     resolve: {

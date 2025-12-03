@@ -266,6 +266,17 @@ export const ru: TranslationStructure = {
         yesterday: 'Вчера',
         daysAgo: ({ count }: { count: number }) => `${count} ${plural({ count, one: 'день', few: 'дня', many: 'дней' })} назад`,
         viewAll: 'Посмотреть все сессии',
+        // Resume session functionality
+        resume: 'Продолжить',
+        resumeSession: 'Продолжить сессию',
+        resumeConfirm: 'Продолжить эту сессию?',
+        resumeDescription: 'Будет создана новая сессия с полной историей переписки из оригинала. Исходная сессия останется без изменений.',
+        resumeStarting: 'Возобновление сессии...',
+        resumeSuccess: 'Сессия успешно возобновлена',
+        resumeFailed: 'Не удалось возобновить сессию',
+        resumeNotAvailable: 'Возобновление недоступно',
+        resumeRequiresMachine: 'Машина должна быть онлайн для возобновления',
+        resumeClaudeOnly: 'Возобновление доступно только для сессий Claude',
     },
 
     server: {

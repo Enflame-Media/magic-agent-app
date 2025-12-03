@@ -4,7 +4,6 @@ import { MessageView } from '@/components/MessageView';
 import { debugMessages } from './messages-demo-data';
 import { Message } from '@/sync/typesMessage';
 import { useDemoMessages } from '@/hooks/useDemoMessages';
-import { useMessage } from '@/sync/storage';
 
 function MessagesDemoScreen() {
     // Combine all demo messages

@@ -3,12 +3,13 @@ import type { ApiEphemeralActivityUpdate } from '../apiTypes';
 import { ActivityUpdateAccumulator } from './activityUpdateAccumulator';
 
 describe('ActivityUpdateAccumulator Smart Debounce', () => {
-    let mockFlushHandler: ReturnType<typeof vi.fn>;
+    type FlushHandler = (updates: Map<string, ApiEphemeralActivityUpdate>) => void;
+    let mockFlushHandler: ReturnType<typeof vi.fn<FlushHandler>>;
     let accumulator: ActivityUpdateAccumulator;
 
     beforeEach(() => {
         vi.useFakeTimers();
-        mockFlushHandler = vi.fn();
+        mockFlushHandler = vi.fn<FlushHandler>();
         accumulator = new ActivityUpdateAccumulator(mockFlushHandler, 500);
     });
 

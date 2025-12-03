@@ -1,7 +1,7 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 
 // Separate MMKV instance for server config that persists across logouts
-const serverConfigStorage = new MMKV({ id: 'server-config' });
+const serverConfigStorage = createMMKV({ id: 'server-config' });
 
 const SERVER_KEY = 'custom-server-url';
 const DEFAULT_SERVER_URL = 'https://api.cluster-fluster.com';
@@ -16,7 +16,7 @@ export function setServerUrl(url: string | null): void {
     if (url && url.trim()) {
         serverConfigStorage.set(SERVER_KEY, url.trim());
     } else {
-        serverConfigStorage.delete(SERVER_KEY);
+        serverConfigStorage.remove(SERVER_KEY);
     }
 }
 

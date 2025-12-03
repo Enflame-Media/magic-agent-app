@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { TokenStorage } from '@/auth/tokenStorage';
 import { Encryption } from './encryption/encryption';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 //
 // Types
@@ -157,16 +158,16 @@ class ApiSocket {
     ): Promise<R> {
         const sessionEncryption = this.encryption!.getSessionEncryption(sessionId);
         if (!sessionEncryption) {
-            throw new Error(`Session encryption not found for ${sessionId}`);
+            throw new AppError(ErrorCodes.NOT_FOUND, `Session encryption not found for ${sessionId}`);
         }
 
         // Check if already aborted before making the call
         if (options?.signal?.aborted) {
-            throw new Error('RPC call was cancelled');
+            throw new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled');
         }
 
         if (!this.socket) {
-            throw new Error('Socket not connected');
+            throw new AppError(ErrorCodes.SOCKET_NOT_CONNECTED, 'Socket not connected');
         }
 
         // Capture socket reference to avoid stale closure issues
@@ -181,7 +182,7 @@ class ApiSocket {
                 abortHandler = () => {
                     if (!isSettled) {
                         isSettled = true;
-                        reject(new Error('RPC call was cancelled'));
+                        reject(new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled'));
                     }
                 };
                 options.signal.addEventListener('abort', abortHandler);
@@ -219,9 +220,9 @@ class ApiSocket {
             return await sessionEncryption.decryptRaw(result.result) as R;
         }
         if (result.cancelled) {
-            throw new Error('RPC call was cancelled');
+            throw new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled');
         }
-        throw new Error('RPC call failed');
+        throw new AppError(ErrorCodes.RPC_FAILED, 'RPC call failed');
     }
 
     /**
@@ -239,16 +240,16 @@ class ApiSocket {
     ): Promise<R> {
         const machineEncryption = this.encryption!.getMachineEncryption(machineId);
         if (!machineEncryption) {
-            throw new Error(`Machine encryption not found for ${machineId}`);
+            throw new AppError(ErrorCodes.NOT_FOUND, `Machine encryption not found for ${machineId}`);
         }
 
         // Check if already aborted before making the call
         if (options?.signal?.aborted) {
-            throw new Error('RPC call was cancelled');
+            throw new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled');
         }
 
         if (!this.socket) {
-            throw new Error('Socket not connected');
+            throw new AppError(ErrorCodes.SOCKET_NOT_CONNECTED, 'Socket not connected');
         }
 
         // Capture socket reference to avoid stale closure issues
@@ -263,7 +264,7 @@ class ApiSocket {
                 abortHandler = () => {
                     if (!isSettled) {
                         isSettled = true;
-                        reject(new Error('RPC call was cancelled'));
+                        reject(new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled'));
                     }
                 };
                 options.signal.addEventListener('abort', abortHandler);
@@ -301,9 +302,9 @@ class ApiSocket {
             return await machineEncryption.decryptRaw(result.result) as R;
         }
         if (result.cancelled) {
-            throw new Error('RPC call was cancelled');
+            throw new AppError(ErrorCodes.RPC_CANCELLED, 'RPC call was cancelled');
         }
-        throw new Error('RPC call failed');
+        throw new AppError(ErrorCodes.RPC_FAILED, 'RPC call failed');
     }
 
     send(event: string, data: any) {
@@ -313,7 +314,7 @@ class ApiSocket {
 
     async emitWithAck<T = any>(event: string, data: any): Promise<T> {
         if (!this.socket) {
-            throw new Error('Socket not connected');
+            throw new AppError(ErrorCodes.SOCKET_NOT_CONNECTED, 'Socket not connected');
         }
         return await this.socket.emitWithAck(event, data);
     }
@@ -324,12 +325,12 @@ class ApiSocket {
 
     async request(path: string, options?: RequestInit): Promise<Response> {
         if (!this.config) {
-            throw new Error('SyncSocket not initialized');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'SyncSocket not initialized');
         }
 
         const credentials = await TokenStorage.getCredentials();
         if (!credentials) {
-            throw new Error('No authentication credentials');
+            throw new AppError(ErrorCodes.NOT_AUTHENTICATED, 'No authentication credentials');
         }
 
         const url = `${this.config.endpoint}${path}`;

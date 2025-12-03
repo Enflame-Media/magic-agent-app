@@ -294,6 +294,17 @@ export const pl: TranslationStructure = {
         yesterday: 'Wczoraj',
         daysAgo: ({ count }: { count: number }) => `${count} ${plural({ count, one: 'dzień', few: 'dni', many: 'dni' })} temu`,
         viewAll: 'Zobacz wszystkie sesje',
+        // Resume session functionality
+        resume: 'Wznów',
+        resumeSession: 'Wznów sesję',
+        resumeConfirm: 'Wznowić tę sesję?',
+        resumeDescription: 'Zostanie utworzona nowa sesja z pełną historią rozmowy z oryginału. Oryginalna sesja pozostanie bez zmian.',
+        resumeStarting: 'Wznawianie sesji...',
+        resumeSuccess: 'Sesja została wznowiona pomyślnie',
+        resumeFailed: 'Nie udało się wznowić sesji',
+        resumeNotAvailable: 'Wznowienie niedostępne',
+        resumeRequiresMachine: 'Maszyna musi być online, aby wznowić',
+        resumeClaudeOnly: 'Wznowienie jest dostępne tylko dla sesji Claude',
     },
 
     session: {
