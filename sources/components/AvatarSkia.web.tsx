@@ -57,7 +57,7 @@ const grayscaleColors = ['#070707', '#242424', '#575757', '#979797', '#bbbbbb'];
 export const AvatarSkia = React.memo((props: AvatarProps) => {
     const { id, square, size = 48, monochrome } = props;
     const defaultColors = monochrome ? grayscaleColors : colors;
-    const pixelColors = React.useMemo(() => generateColors(id, defaultColors, monochrome), [id, defaultColors]);
+    const pixelColors = React.useMemo(() => generateColors(id, defaultColors, monochrome), [id, defaultColors, monochrome]);
     
     // Calculate cell size based on the avatar size
     const cellSize = size / GRID_SIZE;

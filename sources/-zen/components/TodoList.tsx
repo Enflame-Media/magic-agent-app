@@ -190,6 +190,7 @@ export const TodoList = React.memo<TodoListProps>((props) => {
             newPositions[todo.id] = index;
         });
         positions.value = newPositions;
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- positions is a Reanimated shared value, stable across renders
     }, [props.todos]);
 
     return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
@@ -128,19 +128,15 @@ export const UsagePanel: React.FC<{ sessionId?: string }> = ({ sessionId }) => {
         costByModel: {} as Record<string, number>
     });
     
-    useEffect(() => {
-        loadUsageData();
-    }, [period, sessionId]);
-    
-    const loadUsageData = async () => {
+    const loadUsageData = useCallback(async () => {
         if (!auth.credentials) {
             setError('Not authenticated');
             return;
         }
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await getUsageForPeriod(auth.credentials, period, sessionId);
             setUsageData(response.usage || []);
@@ -155,7 +151,11 @@ export const UsagePanel: React.FC<{ sessionId?: string }> = ({ sessionId }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [auth.credentials, period, sessionId]);
+
+    useEffect(() => {
+        loadUsageData();
+    }, [loadUsageData]);
     
     const formatTokens = (tokens: number): string => {
         if (tokens >= 1000000) {

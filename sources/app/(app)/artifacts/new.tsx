@@ -126,7 +126,7 @@ function NewArtifactScreen() {
                 </Text>
             )}
         </Pressable>
-    ), [handleSave, isSaving, styles]);
+    ), [handleSave, isSaving, styles, theme.colors.header.tint]);
     
     const KeyboardWrapper = Platform.select({
         ios: KeyboardAvoidingView,

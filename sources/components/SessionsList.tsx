@@ -180,11 +180,12 @@ export function SessionsList() {
     }, [data, pathname]) : data;
 
     // Request review
+    const hasData = data && data.length > 0;
     React.useEffect(() => {
-        if (data && data.length > 0) {
+        if (hasData) {
             requestReview();
         }
-    }, [data?.length]);
+    }, [hasData]);
 
     // Early return if no data yet
     if (!data) {
@@ -260,7 +261,7 @@ export function SessionsList() {
                     />
                 );
         }
-    }, [pathname, dataWithSelected, compactSessionView]);
+    }, [pathname, dataWithSelected, compactSessionView, isTablet, styles]);
 
 
     // Remove this section as we'll use FlatList for all items now

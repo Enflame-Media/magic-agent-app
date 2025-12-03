@@ -27,6 +27,8 @@ export function useDraft(
     }, [sessionId]);
 
     // Load draft on mount and when focused
+    // We intentionally don't include `value` in deps - we only want to load the draft once on mount/focus,
+    // not re-check on every keystroke. The `!value` check prevents overwriting user input.
     useEffect(() => {
         if (!sessionId || !isFocused) return;
 
@@ -38,6 +40,7 @@ export function useDraft(
             // Ensure lastSavedValue is empty if there's no draft
             lastSavedValue.current = '';
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionId, isFocused, onChange]);
 
     // Auto-save with smart debouncing

@@ -191,7 +191,7 @@ function EditArtifactScreen() {
                 </Text>
             )}
         </Pressable>
-    ), [handleSave, hasChanges, isSaving, styles]);
+    ), [handleSave, hasChanges, isSaving, styles, theme.colors.header.tint]);
     
     const KeyboardWrapper = Platform.select({
         ios: KeyboardAvoidingView,

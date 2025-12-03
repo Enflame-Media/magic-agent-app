@@ -149,7 +149,7 @@ export const OAuthView = React.memo((props: {
         return () => {
             mounted = false;
         };
-    }, [generation]); // Only regenerate when generation changes
+    }, [generation, props.config]);
 
     if (!parameters) {
         // Return empty view while initializing (almost instant)
@@ -279,6 +279,7 @@ export const OAuthViewRender = React.memo((props: {
         }
 
         return true;
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- tokenExchangeOpacity is a Reanimated shared value, stable across renders
     }, [props.parameters, props.config]);
 
     const handleWebViewError = React.useCallback((syntheticEvent: any) => {

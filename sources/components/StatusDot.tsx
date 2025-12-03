@@ -22,6 +22,7 @@ export const StatusDot = React.memo(({ color, isPulsing, size = 6, style }: Stat
         } else {
             opacity.value = withTiming(1, { duration: 200 });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- opacity is a Reanimated shared value, stable across renders
     }, [isPulsing]);
 
     const animatedStyle = useAnimatedStyle(() => {

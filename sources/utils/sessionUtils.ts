@@ -22,9 +22,12 @@ export function useSessionStatus(session: Session): SessionStatus {
     const isOnline = session.presence === "online";
     const hasPermissions = (session.agentState?.requests && Object.keys(session.agentState.requests).length > 0 ? true : false);
 
+    // Generate a random vibing message - intentionally changes on each render when session state changes
+    // Using an empty deps array would prevent message updates when the session reconnects
     const vibingMessage = React.useMemo(() => {
         return vibingMessages[Math.floor(Math.random() * vibingMessages.length)].toLowerCase() + '…';
-    }, [isOnline, hasPermissions, session.thinking]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (!isOnline) {
         return {

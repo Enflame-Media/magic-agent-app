@@ -42,22 +42,23 @@ export const RoundButton = React.memo((props: { size?: RoundButtonSize, display?
     const styles = stylesheet;
     const [loading, setLoading] = React.useState(false);
     const doLoading = props.loading !== undefined ? props.loading : loading;
+    const { onPress, action } = props;
     const doAction = React.useCallback(() => {
-        if (props.onPress) {
-            props.onPress();
+        if (onPress) {
+            onPress();
             return;
         }
-        if (props.action) {
+        if (action) {
             setLoading(true);
             (async () => {
                 try {
-                    await props.action!();
+                    await action();
                 } finally {
                     setLoading(false);
                 }
             })();
         }
-    }, [props.onPress, props.action]);
+    }, [onPress, action]);
     const displays: { [key in RoundButtonDisplay]: {
         textColor: string,
         backgroundColor: string,

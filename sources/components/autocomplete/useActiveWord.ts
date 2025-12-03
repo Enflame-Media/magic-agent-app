@@ -15,5 +15,5 @@ export function useActiveWord(text: string, selection: { start: number; end: num
             return w.activeWord;
         }
         return null;
-    }, [text, selection.start, selection.end, prefixes]);
+    }, [text, selection, prefixes]);
 }

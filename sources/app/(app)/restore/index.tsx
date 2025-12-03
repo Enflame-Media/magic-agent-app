@@ -129,7 +129,7 @@ function Restore() {
         return () => {
             isCancelledRef.current = true;
         };
-    }, [keypair]);
+    }, [keypair, auth, router]);
 
     return (
         <ScrollView style={styles.scrollView} contentContainerStyle={{ flexGrow: 1 }}>

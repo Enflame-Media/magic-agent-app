@@ -108,7 +108,7 @@ export const QRCode = React.memo((props: QRCodeProps) => {
         }
 
         return elements;
-    }, [qrMatrix, moduleSize, foregroundColor]);
+    }, [qrMatrix, moduleSize, foregroundColor, size]);
 
     const baseRadius = 0.5;
 

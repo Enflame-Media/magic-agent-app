@@ -53,12 +53,12 @@ export function useAutocomplete(query: string | null, resolver: (text: string) =
                 sync.invalidate();
             },
         };
-    }, [resolver]);
+    }, [resolver, query]);
 
     // Trigger sync
     React.useEffect(() => {
         sync.onSearchQueryChange(query);
-    }, [query]);
+    }, [query, sync]);
 
     // Return empty array if no query
     if (query === null) {

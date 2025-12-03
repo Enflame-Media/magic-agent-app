@@ -168,7 +168,7 @@ function ArtifactsScreen() {
         if (artifacts.length > 0) {
             console.log('📱 ArtifactsScreen: First artifact:', artifacts[0]);
         }
-    }, [artifacts]);
+    }, [artifacts.length]);
 
     const renderItem = React.useCallback(({ item, index }: { item: DecryptedArtifact; index: number }) => {
         const isFirst = index === 0;
@@ -209,7 +209,7 @@ function ArtifactsScreen() {
                 />
             </Pressable>
         );
-    }, [artifacts, router, styles]);
+    }, [artifacts.length, router, styles, theme.colors.textSecondary]);
 
     const keyExtractor = React.useCallback((item: DecryptedArtifact) => item.id, []);
 
@@ -241,7 +241,7 @@ function ArtifactsScreen() {
                 </Text>
             </View>
         );
-    }, [isLoading, styles]);
+    }, [isLoading, styles, theme.colors.textSecondary]);
 
     return (
         <View style={styles.container}>

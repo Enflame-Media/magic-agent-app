@@ -42,6 +42,7 @@ export const ShimmerView = React.memo<ShimmerViewProps>(({
             -1,
             false
         );
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- shimmerTranslate is a Reanimated shared value, stable across renders
     }, [duration]);
 
     const animatedStyle = useAnimatedStyle(() => {

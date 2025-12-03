@@ -124,7 +124,7 @@ export function useActiveSuggestions(
     }, [clampSelection, autoSelectFirst, handler]);
     React.useEffect(() => {
         sync.setValue(query);
-    }, [query]);
+    }, [query, sync]);
 
     // If no query return empty suggestions
     if (!query) {
