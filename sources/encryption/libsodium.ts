@@ -28,6 +28,18 @@ function generateHybridNonce(totalLength: number): Uint8Array {
         throw new Error(`Nonce length ${totalLength} is too short for hybrid nonce (minimum 8 bytes)`);
     }
 
+    // CRITICAL: Capture and increment counter atomically (in JS single-threaded sense)
+    // to prevent any theoretical race conditions in async scenarios.
+    // The increment happens BEFORE the counter value is used, ensuring each call
+    // gets a unique counter value even in high-concurrency scenarios.
+    if (nonceCounter >= MAX_UINT64) {
+        // This should be practically impossible (2^64 encryptions)
+        // but handle it securely: throw error instead of wrapping
+        throw new Error("CRITICAL: Nonce counter limit reached after 2^64 operations. Application must be restarted immediately to maintain cryptographic security.");
+    }
+    const currentCounter = nonceCounter;
+    nonceCounter = nonceCounter + 1n;  // Increment immediately after capture
+
     const nonce = new Uint8Array(totalLength);
 
     // Random prefix for cross-process/cross-machine uniqueness
@@ -38,16 +50,7 @@ function generateHybridNonce(totalLength: number): Uint8Array {
 
     // Counter suffix for within-process uniqueness (big-endian)
     const counterView = new DataView(nonce.buffer, nonce.byteOffset + randomLength, counterBytes);
-    counterView.setBigUint64(0, nonceCounter, false);
-
-    // Increment counter, throw error at max value (never allow wrapping)
-    if (nonceCounter >= MAX_UINT64) {
-        // This should be practically impossible (2^64 encryptions)
-        // but handle it securely: throw error instead of wrapping
-        throw new Error("CRITICAL: Nonce counter limit reached after 2^64 operations. Application must be restarted immediately to maintain cryptographic security.");
-    } else {
-        nonceCounter++;
-    }
+    counterView.setBigUint64(0, currentCounter, false);
 
     return nonce;
 }
