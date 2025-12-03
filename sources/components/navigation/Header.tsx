@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text, Platform, StatusBar, Pressable } from 'react-native';
+import { View, Text, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,10 +32,10 @@ export const Header = React.memo((props: HeaderProps) => {
         headerLeft,
         headerRight,
         headerStyle,
-        headerTitleStyle,
+        headerTitleStyle: _headerTitleStyle,
         headerSubtitleStyle,
-        headerTintColor, // Accept but ignore - using theme instead
-        headerBackgroundColor, // Accept but ignore - using theme instead
+        headerTintColor: _headerTintColor, // Accept but ignore - using theme instead
+        headerBackgroundColor: _headerBackgroundColor, // Accept but ignore - using theme instead
         headerShadowVisible = true,
         headerTransparent = false,
         safeAreaEnabled = true,

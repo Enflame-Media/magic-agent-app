@@ -6,7 +6,6 @@ import { ToolCall } from '@/sync/typesMessage';
 import { ToolSectionView } from '../ToolSectionView';
 import { Metadata } from '@/sync/storageTypes';
 import { resolvePath } from '@/utils/pathUtils';
-import { t } from '@/text';
 
 interface CodexPatchViewProps {
     tool: ToolCall;

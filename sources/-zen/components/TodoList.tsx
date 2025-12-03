@@ -7,7 +7,7 @@ import Animated, {
     useDerivedValue,
     SharedValue,
 } from 'react-native-reanimated';
-import { runOnJS, runOnUI, scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN } from 'react-native-worklets';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { TODO_HEIGHT, TodoView } from './TodoView';
 

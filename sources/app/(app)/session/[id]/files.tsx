@@ -29,7 +29,7 @@ function FilesScreen() {
     // Use project git status first, fallback to session git status for backward compatibility
     const projectGitStatus = useSessionProjectGitStatus(sessionId);
     const sessionGitStatus = useSessionGitStatus(sessionId);
-    const gitStatus = projectGitStatus || sessionGitStatus;
+    const _gitStatus = projectGitStatus || sessionGitStatus;
     const { theme } = useUnistyles();
     
     // Load git status files

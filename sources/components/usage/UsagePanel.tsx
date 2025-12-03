@@ -3,7 +3,6 @@ import { View, ActivityIndicator, ScrollView, Pressable } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useAuth } from '@/auth/AuthContext';
-import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { UsageChart } from './UsageChart';
 import { UsageBar } from './UsageBar';

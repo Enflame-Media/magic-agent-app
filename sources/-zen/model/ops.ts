@@ -3,12 +3,9 @@ import { sync } from '../../sync/sync';
 import { storage } from '../../sync/storage';
 import {
     kvGet,
-    kvBulkGet,
     kvList,
     kvMutate,
     kvSet,
-    kvDelete,
-    KvItem,
     KvMutation
 } from '../../sync/apiKv';
 import { randomUUID } from 'expo-crypto';
@@ -641,7 +638,7 @@ export async function deleteTodo(
     }
 
     // Remove from state optimistically
-    const { [id]: deletedTodo, ...remainingTodos } = todos;
+    const { [id]: _deletedTodo, ...remainingTodos } = todos;
     const optimisticUndoneOrder = undoneOrder.filter(tid => tid !== id);
     const optimisticDoneOrder = doneOrder.filter(tid => tid !== id);
 

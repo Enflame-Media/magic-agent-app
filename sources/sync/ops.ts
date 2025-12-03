@@ -6,6 +6,7 @@
 import { apiSocket } from './apiSocket';
 import { sync } from './sync';
 import type { MachineMetadata } from './storageTypes';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 // Strict type definitions for all operations
 
@@ -117,7 +118,7 @@ interface SessionRipgrepResponse {
 }
 
 // Kill session operation types
-interface SessionKillRequest {
+interface _SessionKillRequest {
     // No parameters needed
 }
 
@@ -139,16 +140,25 @@ export interface SpawnSessionOptions {
     approvedNewDirectoryCreation?: boolean;
     token?: string;
     agent?: 'codex' | 'claude';
+    /**
+     * Optional session ID to resume from. When provided with agent: 'claude',
+     * the daemon passes --resume <sessionId> to Claude, which creates a NEW
+     * session with the full conversation history from the original session.
+     * Note: Codex does not support --resume, this parameter is ignored for Codex.
+     */
+    sessionId?: string;
 }
 
 // Exported session operation functions
 
 /**
- * Spawn a new remote session on a specific machine
+ * Spawn a new remote session on a specific machine.
+ * If sessionId is provided with agent: 'claude', the session will be resumed
+ * (forked) from the original session, preserving conversation history.
  */
 export async function machineSpawnNewSession(options: SpawnSessionOptions): Promise<SpawnSessionResult> {
-    
-    const { machineId, directory, approvedNewDirectoryCreation = false, token, agent } = options;
+
+    const { machineId, directory, approvedNewDirectoryCreation = false, token, agent, sessionId } = options;
 
     try {
         const result = await apiSocket.machineRPC<SpawnSessionResult, {
@@ -156,11 +166,12 @@ export async function machineSpawnNewSession(options: SpawnSessionOptions): Prom
             directory: string
             approvedNewDirectoryCreation?: boolean,
             token?: string,
-            agent?: 'codex' | 'claude'
+            agent?: 'codex' | 'claude',
+            sessionId?: string
         }>(
             machineId,
             'spawn-happy-session',
-            { type: 'spawn-in-directory', directory, approvedNewDirectoryCreation, token, agent }
+            { type: 'spawn-in-directory', directory, approvedNewDirectoryCreation, token, agent, sessionId }
         );
         return result;
     } catch (error) {
@@ -237,7 +248,7 @@ export async function machineUpdateMetadata(
 
     const machineEncryption = sync.encryption.getMachineEncryption(machineId);
     if (!machineEncryption) {
-        throw new Error(`Machine encryption not found for ${machineId}`);
+        throw new AppError(ErrorCodes.NOT_FOUND, `Machine encryption not found for ${machineId}`);
     }
 
     while (retryCount < maxRetries) {
@@ -275,16 +286,16 @@ export async function machineUpdateMetadata(
 
             // If we've exhausted retries, throw error
             if (retryCount >= maxRetries) {
-                throw new Error(`Failed to update after ${maxRetries} retries due to version conflicts`);
+                throw new AppError(ErrorCodes.VERSION_CONFLICT, `Failed to update after ${maxRetries} retries due to version conflicts`);
             }
 
             // Otherwise, loop will retry with updated version and merged metadata
         } else {
-            throw new Error(result.message || 'Failed to update machine metadata');
+            throw new AppError(ErrorCodes.API_ERROR, result.message || 'Failed to update machine metadata');
         }
     }
 
-    throw new Error('Unexpected error in machineUpdateMetadata');
+    throw new AppError(ErrorCodes.INTERNAL_ERROR, 'Unexpected error in machineUpdateMetadata');
 }
 
 /**
@@ -491,7 +502,7 @@ export async function sessionDelete(sessionId: string): Promise<{ success: boole
         });
         
         if (response.ok) {
-            const result = await response.json();
+            const _result = await response.json();
             return { success: true };
         } else {
             const error = await response.text();

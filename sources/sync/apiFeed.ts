@@ -1,8 +1,9 @@
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
-import { FeedResponse, FeedResponseSchema, FeedItem } from './feedTypes';
+import { FeedResponseSchema, FeedItem } from './feedTypes';
 import { log } from '@/log';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 /**
  * Fetch user's feed with pagination
@@ -34,15 +35,15 @@ export async function fetchFeed(
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch feed: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to fetch feed: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json();
         const parsed = FeedResponseSchema.safeParse(data);
-        
+
         if (!parsed.success) {
             console.error('Failed to parse feed response:', parsed.error);
-            throw new Error('Invalid feed response format');
+            throw new AppError(ErrorCodes.VALIDATION_FAILED, 'Invalid feed response format');
         }
 
         // Add counter field from cursor

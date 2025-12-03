@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compareVersions, isVersionSupported, parseVersion, MINIMUM_CLI_VERSION } from './versionUtils';
+import { compareVersions, isVersionSupported, parseVersion } from './versionUtils';
 
 describe('versionUtils', () => {
     describe('compareVersions', () => {

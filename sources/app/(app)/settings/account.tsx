@@ -18,7 +18,7 @@ import { getServerInfo } from '@/sync/serverConfig';
 import { useUnistyles } from 'react-native-unistyles';
 import { Switch } from '@/components/Switch';
 import { useConnectAccount } from '@/hooks/useConnectAccount';
-import { getDisplayName, getAvatarUrl } from '@/sync/profile';
+import { getDisplayName } from '@/sync/profile';
 import { Image } from 'expo-image';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { disconnectGitHub } from '@/sync/apiGithub';
@@ -27,7 +27,7 @@ import { disconnectService } from '@/sync/apiServices';
 export default React.memo(() => {
     const { theme } = useUnistyles();
     const auth = useAuth();
-    const router = useRouter();
+    const _router = useRouter();
     const [showSecret, setShowSecret] = useState(false);
     const [copiedRecently, setCopiedRecently] = useState(false);
     const [analyticsOptOut, setAnalyticsOptOut] = useSettingMutable('analyticsOptOut');

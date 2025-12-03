@@ -80,7 +80,7 @@ const stylesheet = StyleSheet.create((theme) => ({
 }));
 
 export const ItemGroup = React.memo<ItemGroupProps>((props) => {
-    const { theme } = useUnistyles();
+    const { theme: _theme } = useUnistyles();
     const styles = stylesheet;
 
     const {

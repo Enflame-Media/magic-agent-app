@@ -5,12 +5,10 @@ import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
 import { useSettingMutable } from '@/sync/storage';
-import { useUnistyles } from 'react-native-unistyles';
 import { findLanguageByCode, getLanguageDisplayName, LANGUAGES } from '@/constants/Languages';
 import { t } from '@/text';
 
 function VoiceSettingsScreen() {
-    const { theme } = useUnistyles();
     const router = useRouter();
     const [voiceAssistantLanguage] = useSettingMutable('voiceAssistantLanguage');
     

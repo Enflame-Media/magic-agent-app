@@ -4,10 +4,8 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useRealtimeStatus, useFriendRequests } from '@/sync/storage';
 import { useVisibleSessionListViewData } from '@/hooks/useVisibleSessionListViewData';
 import { useIsTablet } from '@/utils/responsive';
-import { useRouter } from 'expo-router';
 import { EmptySessionsTablet } from './EmptySessionsTablet';
 import { SessionsList } from './SessionsList';
-import { FABWide } from './FABWide';
 import { VoiceAssistantStatusBar } from './VoiceAssistantStatusBar';
 import { TabBar, TabType } from './TabBar';
 import { InboxView } from './InboxView';
@@ -71,7 +69,6 @@ export const MainView = React.memo(({ variant }: MainViewProps) => {
     const sessionListViewData = useVisibleSessionListViewData();
     const isTablet = useIsTablet();
     const realtimeStatus = useRealtimeStatus();
-    const router = useRouter();
     const friendRequests = useFriendRequests();
     const settings = useSettings();
 
@@ -80,10 +77,6 @@ export const MainView = React.memo(({ variant }: MainViewProps) => {
     const [activeTab, setActiveTab] = React.useState<TabType>(
         settings.experiments ? 'zen' : 'sessions'
     );
-
-    const handleNewSession = React.useCallback(() => {
-        router.push('/new');
-    }, [router]);
 
     const handleTabPress = React.useCallback((tab: TabType) => {
         setActiveTab(tab);

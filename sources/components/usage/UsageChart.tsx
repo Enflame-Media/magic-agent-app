@@ -63,7 +63,7 @@ export const UsageChart: React.FC<UsageChartProps> = ({
     height = 200,
     onBarPress
 }) => {
-    const { theme } = useUnistyles();
+    const _styles = useUnistyles();
     
     if (!data || data.length === 0) {
         return (

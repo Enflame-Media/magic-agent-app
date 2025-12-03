@@ -14,11 +14,11 @@ export function ToolHeader({ tool }: ToolHeaderProps) {
     const knownTool = knownTools[tool.name as keyof typeof knownTools] as any;
 
     // Extract status first for Bash tool to potentially use as title
-    let status: string | null = null;
+    let _status: string | null = null;
     if (knownTool && typeof knownTool.extractStatus === 'function') {
         const extractedStatus = knownTool.extractStatus({ tool, metadata: null });
         if (typeof extractedStatus === 'string' && extractedStatus) {
-            status = extractedStatus;
+            _status = extractedStatus;
         }
     }
 

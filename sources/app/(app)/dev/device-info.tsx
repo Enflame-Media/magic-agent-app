@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, ScrollView, Dimensions, Platform, PixelRatio } from 'react-native';
+import { Dimensions, Platform, PixelRatio } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { Typography } from '@/constants/Typography';
 import { ItemGroup } from '@/components/ItemGroup';
 import { Item } from '@/components/Item';
 import { ItemList } from '@/components/ItemList';
@@ -16,7 +15,7 @@ function DeviceInfo() {
     const { width, height } = Dimensions.get('window');
     const screenDimensions = Dimensions.get('screen');
     const pixelDensity = PixelRatio.get();
-    const isTablet = useIsTablet();
+    const _isTablet = useIsTablet();
     const deviceType = getDeviceType();
     const headerHeight = useHeaderHeight();
     const isRunningOnMacCatalyst = isRunningOnMac();

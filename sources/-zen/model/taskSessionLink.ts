@@ -85,7 +85,7 @@ export async function removeSessionLink(sessionId: string): Promise<void> {
     for (const [taskId, todo] of Object.entries(todos)) {
         if (todo.linkedSessions?.[sessionId]) {
             // Remove the session link from the map
-            const { [sessionId]: removed, ...remaining } = todo.linkedSessions;
+            const { [sessionId]: _removed, ...remaining } = todo.linkedSessions;
 
             // Update the todo with the remaining linked sessions
             await updateTodoLinkedSessions(taskId, remaining);

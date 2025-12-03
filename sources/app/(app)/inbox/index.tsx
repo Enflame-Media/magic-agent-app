@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { View, Text, Platform, Pressable } from 'react-native';
 import { InboxView } from "@/components/InboxView";
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { useIsTablet, useHeaderHeight } from '@/utils/responsive';
@@ -80,10 +79,10 @@ function InboxPage() {
     const headerHeight = useHeaderHeight();
 
     // Calculate gradient height: safe area + some extra for the fade effect
-    const gradientHeight = insets.top + 40;
+    const _gradientHeight = insets.top + 40;
 
     // Create gradient colors from opaque background to transparent
-    const gradientColors: readonly [string, string, ...string[]] = [
+    const _gradientColors: readonly [string, string, ...string[]] = [
         theme.colors.groupped.background,
         theme.colors.groupped.background + 'E6', // 90% opacity
         theme.colors.groupped.background + '99', // 60% opacity

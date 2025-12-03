@@ -78,7 +78,7 @@ const stylesheet = StyleSheet.create((theme) => ({
 function ServerConfigScreen() {
     const { theme } = useUnistyles();
     const styles = stylesheet;
-    const router = useRouter();
+    const _router = useRouter();
     const serverInfo = getServerInfo();
     const [inputUrl, setInputUrl] = useState(serverInfo.isCustom ? getServerUrl() : '');
     const [error, setError] = useState<string | null>(null);

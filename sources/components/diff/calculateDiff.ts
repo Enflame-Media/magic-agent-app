@@ -1,4 +1,4 @@
-import { diffLines, diffWordsWithSpace, diffChars } from 'diff';
+import { diffLines, diffWordsWithSpace } from 'diff';
 
 export interface DiffToken {
     value: string;
@@ -51,7 +51,7 @@ export function calculateUnifiedDiff(
     
     // Convert to our internal format and track line numbers
     const allLines: DiffLine[] = [];
-    const linePairs: LinePair[] = [];
+    const _linePairs: LinePair[] = [];
     let oldLineNum = 1;
     let newLineNum = 1;
     let additions = 0;

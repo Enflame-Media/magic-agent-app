@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/auth/AuthContext';
 import { RoundButton } from '@/components/RoundButton';
@@ -67,10 +67,10 @@ function Restore() {
     const styles = stylesheet;
     const auth = useAuth();
     const router = useRouter();
-    const [restoreKey, setRestoreKey] = useState('');
-    const [isWaitingForAuth, setIsWaitingForAuth] = useState(false);
+    const [_restoreKey, _setRestoreKey] = useState('');
+    const [_isWaitingForAuth, setIsWaitingForAuth] = useState(false);
     const [authReady, setAuthReady] = useState(false);
-    const [waitingDots, setWaitingDots] = useState(0);
+    const [_waitingDots, setWaitingDots] = useState(0);
     const isCancelledRef = useRef(false);
 
     // Memoize keypair generation to prevent re-creating on re-renders

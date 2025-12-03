@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { apiSocket } from '@/sync/apiSocket';
 import { AuthCredentials } from '@/auth/tokenStorage';
 import { AppError, ErrorCodes } from '@/utils/errors';
-import { Encryption } from '@/sync/encryption/encryption';
+import { Encryption, EncryptionCache } from '@/sync/encryption/encryption';
 import { decodeBase64, encodeBase64 } from '@/encryption/base64';
 import { storage } from './storage';
 import { ApiEphemeralUpdateSchema, ApiMessage, ApiUpdateContainerSchema } from './apiTypes';
@@ -30,10 +30,9 @@ import { gitStatusSync } from './gitStatusSync';
 import { projectManager } from './projectManager';
 import { voiceHooks } from '@/realtime/hooks/voiceHooks';
 import { Message } from './typesMessage';
-import { EncryptionCache } from './encryption/encryptionCache';
 import { systemPrompt } from './prompt/systemPrompt';
 import { fetchArtifact, fetchArtifacts, createArtifact, updateArtifact } from './apiArtifacts';
-import { DecryptedArtifact, Artifact, ArtifactCreateRequest, ArtifactUpdateRequest } from './artifactTypes';
+import { DecryptedArtifact, ArtifactCreateRequest, ArtifactUpdateRequest } from './artifactTypes';
 import { ArtifactEncryption } from './encryption/artifactEncryption';
 import { getFriendsList, getUserProfile } from './apiFriends';
 import { fetchFeed } from './apiFeed';
@@ -1036,7 +1035,7 @@ class Sync {
         const { todos, undoneOrder, doneOrder, versions } = todoState;
         let updatedTodos = { ...todos };
         let updatedVersions = { ...versions };
-        let indexUpdated = false;
+        let _indexUpdated = false;
         let newUndoneOrder = undoneOrder;
         let newDoneOrder = doneOrder;
 
@@ -1066,7 +1065,7 @@ class Sync {
                         const index = decrypted as any;
                         newUndoneOrder = index.undoneOrder || [];
                         newDoneOrder = index.completedOrder || []; // Map completedOrder to doneOrder
-                        indexUpdated = true;
+                        _indexUpdated = true;
                     } else if (key.startsWith('todo.')) {
                         // Update a todo item
                         const todoId = key.substring(5);

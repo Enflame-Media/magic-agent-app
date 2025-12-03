@@ -197,17 +197,6 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
         storage.getState().updateSessionModelMode(sessionId, mode);
     }, [sessionId]);
 
-    // Memoize header-dependent styles to prevent re-renders
-    const headerDependentStyles = React.useMemo(() => ({
-        contentContainer: {
-            flex: 1
-        },
-        flatListStyle: {
-            marginTop: 0 // No marginTop needed since header is handled by parent
-        },
-    }), []);
-
-
     // Handle microphone button press - memoized to prevent button flashing
     const handleMicrophonePress = React.useCallback(async () => {
         if (realtimeStatus === 'connecting') {

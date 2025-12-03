@@ -7,7 +7,7 @@ import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
 import { useSettingMutable } from '@/sync/storage';
 import { useUnistyles } from 'react-native-unistyles';
-import { LANGUAGES, getLanguageDisplayName, type Language } from '@/constants/Languages';
+import { LANGUAGES, getLanguageDisplayName } from '@/constants/Languages';
 import { t } from '@/text';
 
 function LanguageSelectionScreen() {

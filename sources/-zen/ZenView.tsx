@@ -106,7 +106,7 @@ export const ZenView = React.memo(() => {
             .replace('{{task}}', editedText);
 
         // Create a display title for the prompt
-        const promptDisplayTitle = `Clarify: ${editedText}`;
+        const _promptDisplayTitle = `Clarify: ${editedText}`;
 
         // Store the prompt data in temporary store
         const sessionData: NewSessionData = {

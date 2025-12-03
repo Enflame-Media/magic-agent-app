@@ -69,7 +69,7 @@ const DiffDisplay: React.FC<{ diffContent: string }> = ({ diffContent }) => {
 };
 
 function FileScreen() {
-    const route = useRoute();
+    const _route = useRoute();
     const { theme } = useUnistyles();
     const { id: sessionId } = useLocalSearchParams<{ id: string }>();
     const searchParams = useLocalSearchParams();

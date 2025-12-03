@@ -4,7 +4,6 @@ import { Session, Machine, GitStatus } from "./storageTypes";
 import { createReducer, reducer, ReducerState } from "./reducer/reducer";
 import { Message } from "./typesMessage";
 import { NormalizedMessage } from "./typesRaw";
-import { isMachineOnline } from '@/utils/machineUtils';
 import { applySettings, Settings } from "./settings";
 import { LocalSettings, applyLocalSettings } from "./localSettings";
 import { Purchases, customerInfoToPurchases } from "./purchases";
@@ -882,13 +881,13 @@ export const storage = create<StorageState>()((set, get) => {
         }),
         deleteSession: (sessionId: string) => set((state) => {
             // Remove session from sessions
-            const { [sessionId]: deletedSession, ...remainingSessions } = state.sessions;
-            
+            const { [sessionId]: _deletedSession, ...remainingSessions } = state.sessions;
+
             // Remove session messages if they exist
-            const { [sessionId]: deletedMessages, ...remainingSessionMessages } = state.sessionMessages;
-            
+            const { [sessionId]: _deletedMessages, ...remainingSessionMessages } = state.sessionMessages;
+
             // Remove session git status if it exists
-            const { [sessionId]: deletedGitStatus, ...remainingGitStatus } = state.sessionGitStatus;
+            const { [sessionId]: _deletedGitStatus, ...remainingGitStatus } = state.sessionGitStatus;
             
             // Clear drafts and permission modes from persistent storage
             const drafts = loadSessionDrafts();

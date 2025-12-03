@@ -87,7 +87,7 @@ const stylesheet = StyleSheet.create((theme) => ({
 
 export function EmptyMainScreen() {
     const { connectTerminal, connectWithUrl, isLoading } = useConnectTerminal();
-    const { theme } = useUnistyles();
+    const _styles = useUnistyles();
     const styles = stylesheet;
 
     return (

@@ -101,7 +101,7 @@ export default React.memo(() => {
 });
 
 function FullView(props: { message: Message }) {
-    const { theme } = useUnistyles();
+    const { theme: _theme } = useUnistyles();
     const styles = stylesheet;
     
     if (props.message.kind === 'tool-call') {

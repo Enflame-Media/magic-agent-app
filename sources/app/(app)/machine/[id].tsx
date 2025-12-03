@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Platform, Pressable, TextInput } from 'react-native';
+import { View, Text, ActivityIndicator, RefreshControl, Platform, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Item } from '@/components/Item';
 import { ItemGroup } from '@/components/ItemGroup';
 import { ItemList } from '@/components/ItemList';
 import { Typography } from '@/constants/Typography';
-import { useSessions, useAllMachines, useMachine } from '@/sync/storage';
+import { useSessions, useMachine } from '@/sync/storage';
 import { Ionicons, Octicons } from '@expo/vector-icons';
-import type { Session } from '@/sync/storageTypes';
+import { type Session } from '@/sync/storageTypes';
 import { machineStopDaemon, machineUpdateMetadata } from '@/sync/ops';
 import { Modal } from '@/modal';
 import { formatPathRelativeToHome, getSessionName, getSessionSubtitle } from '@/utils/sessionUtils';
@@ -245,7 +245,7 @@ function MachineDetailScreen() {
         }
     };
 
-    const pastUsedRelativePath = useCallback((session: Session) => {
+    const _pastUsedRelativePath = useCallback((session: Session) => {
         if (!session.metadata) return 'unknown path';
         return formatPathRelativeToHome(session.metadata.path, session.metadata.homeDir);
     }, []);

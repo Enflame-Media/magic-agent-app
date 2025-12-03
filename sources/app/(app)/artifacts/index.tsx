@@ -122,7 +122,7 @@ const stylesheet = StyleSheet.create((theme) => ({
 function ArtifactsScreen() {
     const { theme } = useUnistyles();
     const styles = stylesheet;
-    const safeArea = useSafeAreaInsets();
+    const _safeArea = useSafeAreaInsets();
     const router = useRouter();
     const artifacts = useArtifacts();
     const [isLoading, setIsLoading] = React.useState(false);

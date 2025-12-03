@@ -3,13 +3,11 @@ import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 import {
     UserProfile,
-    UserResponse,
-    FriendsResponse,
-    UsersSearchResponse,
     UserResponseSchema,
     FriendsResponseSchema,
     UsersSearchResponseSchema
 } from './friendTypes';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 /**
  * Search for users by username (returns multiple results)
@@ -35,7 +33,7 @@ export async function searchUsersByUsername(
             if (response.status === 404) {
                 return [];
             }
-            throw new Error(`Failed to search users: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to search users: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json();
@@ -73,7 +71,7 @@ export async function getUserProfile(
             if (response.status === 404) {
                 return null;
             }
-            throw new Error(`Failed to get user profile: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get user profile: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json();
@@ -127,7 +125,7 @@ export async function sendFriendRequest(
             if (response.status === 404) {
                 return null;
             }
-            throw new Error(`Failed to add friend: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to add friend: ${response.status}`);
         }
 
         const data = await response.json();
@@ -164,7 +162,7 @@ export async function getFriendsList(
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to get friends list: ${response.status}`);
+            throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get friends list: ${response.status}`, { canTryAgain: true });
         }
 
         const data = await response.json();
@@ -201,7 +199,7 @@ export async function removeFriend(
             if (response.status === 404) {
                 return null;
             }
-            throw new Error(`Failed to remove friend: ${response.status}`);
+            throw new AppError(ErrorCodes.API_ERROR, `Failed to remove friend: ${response.status}`);
         }
 
         const data = await response.json();

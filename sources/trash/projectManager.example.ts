@@ -3,7 +3,7 @@
  * This shows how to use the project management functionality
  */
 
-import { useProjects, useProjectForSession, useProjectSessions } from './storage';
+import { useProjects, useProjectForSession } from './storage';
 import { getProjectDisplayName, getProjectFullPath } from './projectManager';
 
 // Example React component showing how to use projects
@@ -29,7 +29,6 @@ export function ProjectsListExample() {
 // Example component showing project info for a specific session
 export function SessionProjectInfoExample({ sessionId }: { sessionId: string }) {
     const project = useProjectForSession(sessionId);
-    const projectSessions = useProjectSessions(project?.id || null);
 
     if (!project) {
         return <p>Session not in any project</p>;
@@ -40,7 +39,7 @@ export function SessionProjectInfoExample({ sessionId }: { sessionId: string }) 
             <h3>Project: {getProjectDisplayName(project)}</h3>
             <p>Path: {project.key.path}</p>
             <p>Machine: {project.key.machineId}</p>
-            <p>Other sessions in this project: {projectSessions.filter(id => id !== sessionId).length}</p>
+            <p>Sessions in this project: {project.sessionIds.length}</p>
         </div>
     );
 }

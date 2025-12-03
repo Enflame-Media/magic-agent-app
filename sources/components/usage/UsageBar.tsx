@@ -50,7 +50,7 @@ export const UsageBar: React.FC<UsageBarProps> = ({
     showPercentage = false,
     height = 8
 }) => {
-    const { theme } = useUnistyles();
+    const _styles = useUnistyles();
     const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
     const fillColor = color || '#007AFF';
     

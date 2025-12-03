@@ -91,7 +91,7 @@ function SessionInfoContent({ session }: { session: Session }) {
     }, [session]);
 
     // Use HappyAction for archiving - it handles errors automatically
-    const [archivingSession, performArchive] = useHappyAction(async () => {
+    const [_archivingSession, performArchive] = useHappyAction(async () => {
         const result = await sessionKill(session.id);
         if (!result.success) {
             throw new HappyError(result.message || t('sessionInfo.failedToArchiveSession'), false);
@@ -117,7 +117,7 @@ function SessionInfoContent({ session }: { session: Session }) {
     }, [performArchive]);
 
     // Use HappyAction for deletion - it handles errors automatically
-    const [deletingSession, performDelete] = useHappyAction(async () => {
+    const [_deletingSession, performDelete] = useHappyAction(async () => {
         const result = await sessionDelete(session.id);
         if (!result.success) {
             throw new HappyError(result.message || t('sessionInfo.failedToDeleteSession'), false);

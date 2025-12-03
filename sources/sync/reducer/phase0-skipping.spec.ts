@@ -74,7 +74,7 @@ describe('Phase 0 permission skipping issue', () => {
                 'tool2': {
                     tool: 'Write',
                     arguments: { file_path: '/test.txt', content: 'hello' },
-                    status: 'approved',
+                    status: 'approved' as const,
                     createdAt: 1900,
                     completedAt: 1950
                 },
@@ -82,7 +82,7 @@ describe('Phase 0 permission skipping issue', () => {
                 'tool3': {
                     tool: 'Read',
                     arguments: { file_path: '/test.txt' },
-                    status: 'denied',
+                    status: 'denied' as const,
                     reason: 'Access denied',
                     createdAt: 2900,
                     completedAt: 2950
@@ -192,7 +192,7 @@ describe('Phase 0 permission skipping issue', () => {
             }
         };
         
-        const result2 = reducer(state, [], agentState);
+        const _result2 = reducer(state, [], agentState);
         
         // Permission should be matched to existing tool
         const toolAfterPermission = Array.from(state.messages.values())

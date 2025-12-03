@@ -12,16 +12,16 @@ import { useAuth } from '@/auth/AuthContext';
 import { useShallow } from 'zustand/react/shallow';
 
 export const ZenHome = () => {
-    const insets = useSafeAreaInsets();
+    const _insets = useSafeAreaInsets();
     const { theme } = useUnistyles();
     const auth = useAuth();
 
     // Get todos from storage
     const todoState = storage(useShallow(state => state.todoState));
-    const todosLoaded = storage(state => state.todosLoaded);
+    const _todosLoaded = storage(state => state.todosLoaded);
 
     // Process todos
-    const { undoneTodos, doneTodos } = React.useMemo(() => {
+    const { undoneTodos, doneTodos: _doneTodos } = React.useMemo(() => {
         if (!todoState) {
             return { undoneTodos: [], doneTodos: [] };
         }

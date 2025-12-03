@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useSession, useSessionMessages } from "@/sync/storage";
-import { ActivityIndicator, FlatList, Platform, View } from 'react-native';
+import { FlatList, Platform, View } from 'react-native';
 import { useCallback } from 'react';
 import { useHeaderHeight } from '@/utils/responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

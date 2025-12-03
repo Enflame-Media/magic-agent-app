@@ -74,14 +74,14 @@ export function GitStatusBadge({ sessionId }: GitStatusBadgeProps) {
     );
 }
 
-function getTotalChangedFiles(status: GitStatus): number {
+function _getTotalChangedFiles(status: GitStatus): number {
     return status.modifiedCount + status.untrackedCount + status.stagedCount;
 }
 
-function hasMeaningfulChanges(status: GitStatus): boolean {
+function _hasMeaningfulChanges(status: GitStatus): boolean {
     // Must have been loaded (lastUpdatedAt > 0) and be dirty and have either file changes or line changes
     return status.lastUpdatedAt > 0 && status.isDirty && (
-        getTotalChangedFiles(status) > 0 ||
+        _getTotalChangedFiles(status) > 0 ||
         status.unstagedLinesAdded > 0 ||
         status.unstagedLinesRemoved > 0
     );

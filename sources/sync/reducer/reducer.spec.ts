@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { NormalizedMessage } from '../typesRaw';
-import { createReducer } from './reducer';
-import { reducer } from './reducer';
+import { createReducer, reducer } from './reducer';
 import { AgentState } from '../storageTypes';
 
 describe('reducer', () => {
@@ -1348,7 +1347,7 @@ describe('reducer', () => {
             // Debug: Check if tool was properly registered
             const toolId = 'tool-1';
             const msgId = state.toolIdToMessageId.get(toolId);
-            const message = msgId ? state.messages.get(msgId) : null;
+            const _message = msgId ? state.messages.get(msgId) : null;
 
             expect(result3.messages).toHaveLength(1);
             expect(result3.messages[0]).toMatchObject({

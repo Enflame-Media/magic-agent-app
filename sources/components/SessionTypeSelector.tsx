@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, Platform } from 'react-native';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { StyleSheet } from 'react-native-unistyles';
 import { Typography } from '@/constants/Typography';
 import { t } from '@/text';
 
@@ -79,7 +79,6 @@ const stylesheet = StyleSheet.create((theme) => ({
 }));
 
 export const SessionTypeSelector: React.FC<SessionTypeSelectorProps> = ({ value, onChange }) => {
-    const { theme } = useUnistyles();
     const styles = stylesheet;
 
     const handlePress = (type: 'simple' | 'worktree') => {

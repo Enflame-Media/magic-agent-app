@@ -75,22 +75,22 @@ function FriendsScreen() {
         setProcessingId(null);
     });
 
-    const handleAcceptRequest = React.useCallback((fromUserId: string) => {
+    const _handleAcceptRequest = React.useCallback((fromUserId: string) => {
         setProcessingId(fromUserId);
         doAccept();
     }, [doAccept]);
 
-    const handleRejectRequest = React.useCallback((fromUserId: string) => {
+    const _handleRejectRequest = React.useCallback((fromUserId: string) => {
         setProcessingId(fromUserId);
         doReject();
     }, [doReject]);
 
-    const handleRemoveFriend = React.useCallback((friendId: string) => {
+    const _handleRemoveFriend = React.useCallback((friendId: string) => {
         setProcessingId(friendId);
         doRemove();
     }, [doRemove]);
 
-    const isProcessing = (id: string) => processingId === id && (acceptLoading || rejectLoading || removeLoading);
+    const _isProcessing = (id: string) => processingId === id && (acceptLoading || rejectLoading || removeLoading);
 
     return (
         <ItemList style={{ paddingTop: 0 }}>

@@ -125,7 +125,7 @@ interface AvatarGradientProps {
 }
 
 export const AvatarGradient = React.memo((props: AvatarGradientProps) => {
-    const { id, square, size = 48, monochrome } = props;
+    const { id, square, size = 48, monochrome: _monochrome } = props;
     
     // Use hashCode to get consistent gradient index
     const imageIndex = hashCode(id) % 100;

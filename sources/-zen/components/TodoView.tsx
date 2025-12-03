@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Platform, Text, View, Pressable } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
 import { useRouter } from 'expo-router';
-import { SharedValue, useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 
 export const TODO_HEIGHT = 56;
 

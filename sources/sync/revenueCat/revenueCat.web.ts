@@ -3,9 +3,7 @@ import {
     Purchases,
     CustomerInfo as WebCustomerInfo,
     Product as WebProduct,
-    Offerings as WebOfferings,
-    Offering as WebOffering,
-    Price as WebPrice
+    Offerings as WebOfferings
 } from '@revenuecat/purchases-js';
 import {
     RevenueCatInterface,
@@ -18,6 +16,7 @@ import {
     PaywallResult,
     PaywallOptions
 } from './types';
+import { AppError, ErrorCodes } from '@/utils/errors';
 
 class RevenueCatWeb implements RevenueCatInterface {
     private purchases: Purchases | null = null;
@@ -35,7 +34,7 @@ class RevenueCatWeb implements RevenueCatInterface {
 
     async getCustomerInfo(): Promise<CustomerInfo> {
         if (!this.purchases) {
-            throw new Error('RevenueCat not configured');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
         }
 
         const customerInfo = await this.purchases.getCustomerInfo();
@@ -44,7 +43,7 @@ class RevenueCatWeb implements RevenueCatInterface {
 
     async getOfferings(): Promise<Offerings> {
         if (!this.purchases) {
-            throw new Error('RevenueCat not configured');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
         }
 
         const offerings = await this.purchases.getOfferings();
@@ -53,7 +52,7 @@ class RevenueCatWeb implements RevenueCatInterface {
 
     async getProducts(productIds: string[]): Promise<Product[]> {
         if (!this.purchases) {
-            throw new Error('RevenueCat not configured');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
         }
 
         // Web SDK doesn't have a direct getProducts method
@@ -77,7 +76,7 @@ class RevenueCatWeb implements RevenueCatInterface {
 
     async purchaseStoreProduct(product: Product): Promise<PurchaseResult> {
         if (!this.purchases) {
-            throw new Error('RevenueCat not configured');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
         }
 
         // Web purchases work differently - they require a package, not just a product
@@ -95,7 +94,7 @@ class RevenueCatWeb implements RevenueCatInterface {
             if (targetPackage) break;
         }
         if (!targetPackage) {
-            throw new Error(`Package for product ${product.identifier} not found`);
+            throw new AppError(ErrorCodes.PRODUCT_NOT_FOUND, `Package for product ${product.identifier} not found`);
         }
         const result = await this.purchases.purchase({ rcPackage: targetPackage });
         return {
@@ -107,7 +106,7 @@ class RevenueCatWeb implements RevenueCatInterface {
         // Web SDK doesn't have a syncPurchases method
         // Customer info is always synced when retrieved
         if (!this.purchases) {
-            throw new Error('RevenueCat not configured');
+            throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
         }
 
         // Just fetch customer info to ensure sync
@@ -125,7 +124,7 @@ class RevenueCatWeb implements RevenueCatInterface {
         // We'll attempt to purchase the first available product in the current offering
         try {
             if (!this.purchases) {
-                throw new Error('RevenueCat not configured');
+                throw new AppError(ErrorCodes.NOT_CONFIGURED, 'RevenueCat not configured');
             }
 
             // Get the offering to use (provided or current)
@@ -142,7 +141,7 @@ class RevenueCatWeb implements RevenueCatInterface {
             
             try {
                 // Attempt to purchase
-                const result = await this.purchaseStoreProduct(firstPackage.product);
+                const _result = await this.purchaseStoreProduct(firstPackage.product);
                 return PaywallResult.PURCHASED;
             } catch (purchaseError: any) {
                 // Check if user cancelled

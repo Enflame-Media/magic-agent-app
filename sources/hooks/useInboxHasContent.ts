@@ -1,5 +1,5 @@
 import { useUpdates } from './useUpdates';
-import { useFriendRequests, useRequestedFriends, useFeedItems } from '@/sync/storage';
+import { useFriendRequests, useRequestedFriends } from '@/sync/storage';
 import { useChangelog } from './useChangelog';
 
 // Hook to check if inbox has content to show
