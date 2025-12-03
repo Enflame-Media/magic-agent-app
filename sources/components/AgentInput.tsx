@@ -304,6 +304,23 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     const shakerRef = React.useRef<ShakeInstance>(null);
     const inputRef = React.useRef<MultiTextInputHandle>(null);
 
+    // Ref to hold latest keyboard handler values - avoids stale closure issues
+    // and prevents listener churn when dependencies change frequently
+    const keyboardHandlerRef = React.useRef({
+        isCodex,
+        modelMode: props.modelMode,
+        onModelModeChange: props.onModelModeChange,
+    });
+
+    // Keep keyboard handler ref in sync with latest values
+    React.useEffect(() => {
+        keyboardHandlerRef.current = {
+            isCodex,
+            modelMode: props.modelMode,
+            onModelModeChange: props.onModelModeChange,
+        };
+    });
+
     // Forward ref to the MultiTextInput with null safety
     React.useImperativeHandle(ref, () => ({
         setTextAndSelection: (text: string, selection: { start: number; end: number }) => {
@@ -476,19 +493,22 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     }, [props.value, props.onSend, props.permissionMode, props.onPermissionModeChange, suggestions, selected, handleSuggestionSelect, moveUp, moveDown, props.showAbortButton, props.onAbort, isAborting, handleAbortPress, isCodex]);
 
     // Add global keyboard handler for model mode switching on web
+    // Uses ref to avoid listener churn when props change frequently (HAP-37)
     React.useEffect(() => {
         if (Platform.OS !== 'web') return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
+            const { isCodex: currentIsCodex, modelMode, onModelModeChange } = keyboardHandlerRef.current;
+
             // Handle Cmd/Ctrl+M for model mode switching
-            if (e.key === 'm' && (e.metaKey || e.ctrlKey) && props.onModelModeChange) {
+            if (e.key === 'm' && (e.metaKey || e.ctrlKey) && onModelModeChange) {
                 e.preventDefault();
-                const modelOrder: ModelMode[] = isCodex
+                const modelOrder: ModelMode[] = currentIsCodex
                     ? ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'default']
                     : ['default', 'adaptiveUsage', 'sonnet', 'opus'];
-                const currentIndex = modelOrder.indexOf(props.modelMode || (isCodex ? 'gpt-5-codex-high' : 'default'));
+                const currentIndex = modelOrder.indexOf(modelMode || (currentIsCodex ? 'gpt-5-codex-high' : 'default'));
                 const nextIndex = (currentIndex + 1) % modelOrder.length;
-                props.onModelModeChange(modelOrder[nextIndex]);
+                onModelModeChange(modelOrder[nextIndex]);
                 hapticsLight();
             }
         };
@@ -497,7 +517,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isCodex, props.modelMode, props.onModelModeChange]);
+    }, []); // Empty deps - handler reads from ref
 
 
 
