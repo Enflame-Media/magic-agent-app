@@ -72,6 +72,9 @@ class Sync {
     private recalculationLockCount = 0;
     private lastRecalculationTime = 0;
 
+
+    // AppState subscription for cleanup
+    private appStateSubscription?: { remove: () => void };
     constructor() {
         this.sessionsSync = new InvalidateSync(this.fetchSessions);
         this.settingsSync = new InvalidateSync(this.syncSettings);
@@ -95,7 +98,7 @@ class Sync {
         this.activityAccumulator = new ActivityUpdateAccumulator(this.flushActivityUpdates.bind(this), 2000);
 
         // Listen for app state changes to refresh purchases
-        AppState.addEventListener('change', (nextAppState) => {
+        this.appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
             if (nextAppState === 'active') {
                 log.log('📱 App became active');
                 this.purchasesSync.invalidate();
@@ -140,6 +143,15 @@ class Sync {
         this.anonID = encryption.anonID;
         this.serverID = parseToken(credentials.token);
         await this.#init();
+    }
+
+
+    /**
+     * Cleanup method to remove event listeners and prevent memory leaks.
+     * Call this when the Sync instance is no longer needed.
+     */
+    destroy() {
+        this.appStateSubscription?.remove();
     }
 
     async #init() {
