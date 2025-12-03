@@ -40,6 +40,23 @@ import { FeedItem } from './feedTypes';
 import { UserProfile } from './friendTypes';
 import { initializeTodoSync } from '../-zen/model/ops';
 
+/**
+ * Compares two arrays for shallow equality.
+ * More efficient than JSON.stringify comparison as it:
+ * - Returns true immediately for reference equality
+ * - Compares lengths before iterating
+ * - Uses direct element comparison without serialization
+ */
+function arraysEqual<T>(a: T[] | undefined, b: T[] | undefined): boolean {
+    if (a === b) return true;
+    if (!a || !b) return a === b;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
 class Sync {
 
     encryption!: Encryption;
@@ -806,8 +823,8 @@ class Sync {
             const updateRequest: ArtifactUpdateRequest = {};
             
             // Check if header needs updating (title, sessions, or draft changed)
-            if (title !== currentArtifact.title || 
-                JSON.stringify(sessions) !== JSON.stringify(currentArtifact.sessions) ||
+            if (title !== currentArtifact.title ||
+                !arraysEqual(sessions, currentArtifact.sessions) ||
                 draft !== currentArtifact.draft) {
                 const encryptedHeader = await artifactEncryption.encryptHeader({ 
                     title, 
