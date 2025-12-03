@@ -230,19 +230,16 @@ export class EncryptionCache {
             return;
         }
 
-        // Find oldest entry by access time
-        let oldestKey: string | null = null;
-        let oldestTime = Infinity;
-        
-        for (const [key, entry] of cache.entries()) {
-            if (entry.accessTime < oldestTime) {
-                oldestTime = entry.accessTime;
-                oldestKey = key;
-            }
-        }
-        
-        if (oldestKey) {
-            cache.delete(oldestKey);
+        // Calculate how many to evict (batch eviction for O(n log n) instead of O(n²))
+        const toEvict = cache.size - maxSize;
+
+        // Sort entries by access time (oldest first)
+        const entries = Array.from(cache.entries())
+            .sort((a, b) => a[1].accessTime - b[1].accessTime);
+
+        // Delete oldest N entries at once
+        for (let i = 0; i < toEvict; i++) {
+            cache.delete(entries[i][0]);
         }
     }
 }
