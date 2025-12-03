@@ -53,7 +53,7 @@ export function useAutocomplete(query: string | null, resolver: (text: string) =
                 sync.invalidate();
             },
         };
-    }, []);
+    }, [resolver]);
 
     // Trigger sync
     React.useEffect(() => {
