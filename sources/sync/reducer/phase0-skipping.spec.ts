@@ -109,32 +109,31 @@ describe('Phase 0 permission skipping issue', () => {
         // WebFetch should have pending permission
         expect(webFetchTool).toBeDefined();
         expect(webFetchTool?.kind).toBe('tool-call');
-        if (webFetchTool?.kind === 'tool-call') {
-            expect(webFetchTool.tool?.permission).toBeDefined();
-            expect(webFetchTool.tool?.permission?.id).toBe('tool1');
-            expect(webFetchTool.tool?.permission?.status).toBe('pending');
-        }
-        
+        // Assert that the tool-call kind is correct, then access properties safely
+        expect(webFetchTool!.kind).toBe('tool-call');
+        const webFetchToolCall = webFetchTool as typeof webFetchTool & { kind: 'tool-call' };
+        expect(webFetchToolCall.tool?.permission).toBeDefined();
+        expect(webFetchToolCall.tool?.permission?.id).toBe('tool1');
+        expect(webFetchToolCall.tool?.permission?.status).toBe('pending');
+
         // Write should have approved permission
         expect(writeTool).toBeDefined();
         expect(writeTool?.kind).toBe('tool-call');
-        if (writeTool?.kind === 'tool-call') {
-            expect(writeTool.tool?.permission).toBeDefined();
-            expect(writeTool.tool?.permission?.id).toBe('tool2');
-            expect(writeTool.tool?.permission?.status).toBe('approved');
-            expect(writeTool.tool?.state).toBe('running'); // Approved tools should be running
-        }
-        
+        const writeToolCall = writeTool as typeof writeTool & { kind: 'tool-call' };
+        expect(writeToolCall.tool?.permission).toBeDefined();
+        expect(writeToolCall.tool?.permission?.id).toBe('tool2');
+        expect(writeToolCall.tool?.permission?.status).toBe('approved');
+        expect(writeToolCall.tool?.state).toBe('running'); // Approved tools should be running
+
         // Read should have denied permission
         expect(readTool).toBeDefined();
         expect(readTool?.kind).toBe('tool-call');
-        if (readTool?.kind === 'tool-call') {
-            expect(readTool.tool?.permission).toBeDefined();
-            expect(readTool.tool?.permission?.id).toBe('tool3');
-            expect(readTool.tool?.permission?.status).toBe('denied');
-            expect(readTool.tool?.permission?.reason).toBe('Access denied');
-            expect(readTool.tool?.state).toBe('error'); // Denied tools should be in error state
-        }
+        const readToolCall = readTool as typeof readTool & { kind: 'tool-call' };
+        expect(readToolCall.tool?.permission).toBeDefined();
+        expect(readToolCall.tool?.permission?.id).toBe('tool3');
+        expect(readToolCall.tool?.permission?.status).toBe('denied');
+        expect(readToolCall.tool?.permission?.reason).toBe('Access denied');
+        expect(readToolCall.tool?.state).toBe('error'); // Denied tools should be in error state
         
         // Verify that permissions were properly linked (IDs now match)
         expect(state.toolIdToMessageId.has('tool1')).toBe(true);
@@ -173,10 +172,10 @@ describe('Phase 0 permission skipping issue', () => {
         
         // Tool should be created without permission
         const toolBeforePermission = result1.messages.find(m => m.kind === 'tool-call');
+        expect(toolBeforePermission).toBeDefined();
         expect(toolBeforePermission?.kind).toBe('tool-call');
-        if (toolBeforePermission?.kind === 'tool-call') {
-            expect(toolBeforePermission.tool?.permission).toBeUndefined();
-        }
+        const toolCallBefore = toolBeforePermission as typeof toolBeforePermission & { kind: 'tool-call' };
+        expect(toolCallBefore.tool?.permission).toBeUndefined();
         
         // Step 2: AgentState arrives later with permission
         const agentState: AgentState = {

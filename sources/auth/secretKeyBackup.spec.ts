@@ -7,7 +7,7 @@ import {
 import { encodeBase64, decodeBase64 } from '@/encryption/base64';
 import { describe, it, expect } from 'vitest';
 
-describe.skip('secretKeyBackup', () => {
+describe('secretKeyBackup', () => {
     // Test data: a valid 32-byte secret key
     const testSecretBytes = new Uint8Array(32);
     for (let i = 0; i < 32; i++) {
@@ -150,22 +150,22 @@ describe.skip('secretKeyBackup', () => {
         });
 
         it('should throw for invalid keys', () => {
-            expect(() => normalizeSecretKey('invalid')).toThrow();
-            expect(() => normalizeSecretKey('')).toThrow();
+            expect(() => normalizeSecretKey('invalid')).toThrow(/Invalid key length/);
+            expect(() => normalizeSecretKey('')).toThrow('No valid characters found');
         });
 
         it('should throw for wrong length keys', () => {
             const shortKey = encodeBase64(new Uint8Array(16), 'base64url');
-            expect(() => normalizeSecretKey(shortKey)).toThrow();
+            expect(() => normalizeSecretKey(shortKey)).toThrow(/Invalid (secret key|key length)/);
         });
 
         it('should handle edge cases', () => {
             // Key with dashes but not formatted (should still try to parse as formatted)
-            expect(() => normalizeSecretKey('test-key-with-dashes')).toThrow();
-            
+            expect(() => normalizeSecretKey('test-key-with-dashes')).toThrow(/Invalid key length/);
+
             // Very long string
             const longString = 'A'.repeat(1000);
-            expect(() => normalizeSecretKey(longString)).toThrow();
+            expect(() => normalizeSecretKey(longString)).toThrow(/Invalid key length/);
         });
     });
 
@@ -436,9 +436,9 @@ describe.skip('secretKeyBackup', () => {
         it('should try formatted parsing when base64 fails', () => {
             // This looks like base64 but isn't valid
             const fakeBase64 = 'ABCDEFGHIJKLMNOP';
-            
+
             // Should throw because it's not valid in either format
-            expect(() => normalizeSecretKey(fakeBase64)).toThrow();
+            expect(() => normalizeSecretKey(fakeBase64)).toThrow(/Invalid key length/);
         });
 
         it('should handle user typing key with random spacing', () => {
