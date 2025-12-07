@@ -47,7 +47,7 @@ function UserProfileScreen() {
         };
 
         loadUserProfile();
-    }, [credentials, id]);
+    }, [credentials, id, router]);
 
     // Add friend / Accept request action
     const [addingFriend, addFriend] = useHappyAction(async () => {

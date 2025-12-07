@@ -183,7 +183,7 @@ function NewSessionScreen() {
 
     const handleMachineClick = React.useCallback(() => {
         router.push('/new/pick/machine');
-    }, []);
+    }, [router]);
 
     //
     // Agent selection
@@ -230,9 +230,9 @@ function NewSessionScreen() {
     });
 
     const [modelMode, setModelMode] = React.useState<ModelMode>(() => {
-        // Initialize with last used model mode if valid, otherwise default
-        const validClaudeModes: ModelMode[] = ['default', 'adaptiveUsage', 'sonnet', 'opus'];
-        const validCodexModes: ModelMode[] = ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'default', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'];
+        // Initialize with last used model mode if valid, otherwise default to opus
+        const validClaudeModes: ModelMode[] = ['opus', 'sonnet', 'haiku'];
+        const validCodexModes: ModelMode[] = ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'];
 
         if (lastUsedModelMode) {
             if (agentType === 'codex' && validCodexModes.includes(lastUsedModelMode as ModelMode)) {
@@ -241,7 +241,7 @@ function NewSessionScreen() {
                 return lastUsedModelMode as ModelMode;
             }
         }
-        return agentType === 'codex' ? 'gpt-5-codex-high' : 'default';
+        return agentType === 'codex' ? 'gpt-5-codex-high' : 'opus';
     });
 
     // Reset permission and model modes when agent type changes
@@ -251,9 +251,9 @@ function NewSessionScreen() {
             setPermissionMode('default');
             setModelMode('gpt-5-codex-high');
         } else {
-            // Switch to claude-compatible modes
+            // Switch to claude-compatible modes (opus is default)
             setPermissionMode('default');
-            setModelMode('default');
+            setModelMode('opus');
         }
     }, [agentType]);
 
@@ -421,7 +421,7 @@ function NewSessionScreen() {
         } finally {
             setIsSending(false);
         }
-    }, [agentType, selectedMachineId, selectedPath, input, recentMachinePaths, sessionType, experimentsEnabled, permissionMode, modelMode]);
+    }, [agentType, selectedMachineId, selectedPath, input, recentMachinePaths, sessionType, experimentsEnabled, permissionMode, modelMode, router, tempSessionData?.taskId, tempSessionData?.taskTitle, tempSessionData?.prompt]);
 
     return (
         <KeyboardAvoidingView

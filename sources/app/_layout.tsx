@@ -148,7 +148,7 @@ export default function RootLayout() {
                 background: theme.colors.groupped.background,
             }
         };
-    }, [theme.dark]);
+    }, [theme.dark, theme.colors.groupped.background]);
 
     //
     // Init sequence

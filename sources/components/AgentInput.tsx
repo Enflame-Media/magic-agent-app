@@ -288,7 +288,18 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     const { theme } = useUnistyles();
     const screenWidth = useWindowDimensions().width;
 
-    const hasText = props.value.trim().length > 0;
+    // Destructure callbacks used in useCallback hooks to avoid eslint exhaustive-deps warnings
+    const {
+        onPermissionModeChange,
+        onModelModeChange,
+        onAbort,
+        onSend,
+        value,
+        permissionMode,
+        showAbortButton
+    } = props;
+
+    const hasText = value.trim().length > 0;
     
     // Check if this is a Codex session
     const isCodex = props.metadata?.flavor === 'codex';
@@ -403,27 +414,27 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
     // Handle settings selection
     const handleSettingsSelect = React.useCallback((mode: PermissionMode) => {
         hapticsLight();
-        props.onPermissionModeChange?.(mode);
+        onPermissionModeChange?.(mode);
         // Don't close the settings overlay - let users see the change and potentially switch again
-    }, [props.onPermissionModeChange]);
+    }, [onPermissionModeChange]);
 
     // Handle model selection
     const handleModelSelect = React.useCallback((mode: ModelMode) => {
         hapticsLight();
-        props.onModelModeChange?.(mode);
+        onModelModeChange?.(mode);
         // Don't close the settings overlay - let users see the change and potentially switch again
-    }, [props.onModelModeChange]);
+    }, [onModelModeChange]);
 
     // Handle abort button press
     const handleAbortPress = React.useCallback(async () => {
-        if (!props.onAbort) return;
+        if (!onAbort) return;
 
         hapticsError();
         setIsAborting(true);
         const startTime = Date.now();
 
         try {
-            await props.onAbort?.();
+            await onAbort?.();
 
             // Ensure minimum 300ms loading time
             const elapsed = Date.now() - startTime;
@@ -437,7 +448,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
         } finally {
             setIsAborting(false);
         }
-    }, [props.onAbort]);
+    }, [onAbort]);
 
     // Handle keyboard navigation
     const handleKeyPress = React.useCallback((event: KeyPressEvent): boolean => {
@@ -463,7 +474,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
         }
 
         // Handle Escape for abort when no suggestions are visible
-        if (event.key === 'Escape' && props.showAbortButton && props.onAbort && !isAborting) {
+        if (event.key === 'Escape' && showAbortButton && onAbort && !isAborting) {
             handleAbortPress();
             return true;
         }
@@ -471,26 +482,26 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
         // Original key handling
         if (Platform.OS === 'web') {
             if (event.key === 'Enter' && !event.shiftKey) {
-                if (props.value.trim()) {
-                    props.onSend();
+                if (value.trim()) {
+                    onSend();
                     return true; // Key was handled
                 }
             }
             // Handle Shift+Tab for permission mode switching
-            if (event.key === 'Tab' && event.shiftKey && props.onPermissionModeChange) {
+            if (event.key === 'Tab' && event.shiftKey && onPermissionModeChange) {
                 const modeOrder: PermissionMode[] = isCodex
                     ? ['default', 'read-only', 'safe-yolo', 'yolo']
                     : ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
-                const currentIndex = modeOrder.indexOf(props.permissionMode || 'default');
+                const currentIndex = modeOrder.indexOf(permissionMode || 'default');
                 const nextIndex = (currentIndex + 1) % modeOrder.length;
-                props.onPermissionModeChange(modeOrder[nextIndex]);
+                onPermissionModeChange(modeOrder[nextIndex]);
                 hapticsLight();
                 return true; // Key was handled, prevent default tab behavior
             }
 
         }
         return false; // Key was not handled
-    }, [props.value, props.onSend, props.permissionMode, props.onPermissionModeChange, suggestions, selected, handleSuggestionSelect, moveUp, moveDown, props.showAbortButton, props.onAbort, isAborting, handleAbortPress, isCodex]);
+    }, [value, onSend, permissionMode, onPermissionModeChange, suggestions, selected, handleSuggestionSelect, moveUp, moveDown, showAbortButton, onAbort, isAborting, handleAbortPress, isCodex]);
 
     // Add global keyboard handler for model mode switching on web
     // Uses ref to avoid listener churn when props change frequently (HAP-37)
@@ -504,9 +515,9 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
             if (e.key === 'm' && (e.metaKey || e.ctrlKey) && onModelModeChange) {
                 e.preventDefault();
                 const modelOrder: ModelMode[] = currentIsCodex
-                    ? ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'default']
-                    : ['default', 'adaptiveUsage', 'sonnet', 'opus'];
-                const currentIndex = modelOrder.indexOf(modelMode || (currentIsCodex ? 'gpt-5-codex-high' : 'default'));
+                    ? ['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low']
+                    : ['opus', 'sonnet', 'haiku'];
+                const currentIndex = modelOrder.indexOf(modelMode || (currentIsCodex ? 'gpt-5-codex-high' : 'opus'));
                 const nextIndex = (currentIndex + 1) % modelOrder.length;
                 onModelModeChange(modelOrder[nextIndex]);
                 hapticsLight();
@@ -645,28 +656,26 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                                     }}>
                                         {isCodex ? t('agentInput.codexModel.title') : t('agentInput.model.title')}
                                     </Text>
-                                    {(isCodex 
-                                        ? (['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'default', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'] as const)
-                                        : (['default', 'adaptiveUsage', 'sonnet', 'opus'] as const)
+                                    {(isCodex
+                                        ? (['gpt-5-codex-high', 'gpt-5-codex-medium', 'gpt-5-codex-low', 'gpt-5-minimal', 'gpt-5-low', 'gpt-5-medium', 'gpt-5-high'] as const)
+                                        : (['opus', 'sonnet', 'haiku'] as const)
                                     ).map((model) => {
                                         const modelConfig = isCodex ? {
                                             'gpt-5-codex-high': { label: t('agentInput.codexModel.gpt5CodexHigh') },
                                             'gpt-5-codex-medium': { label: t('agentInput.codexModel.gpt5CodexMedium') },
                                             'gpt-5-codex-low': { label: t('agentInput.codexModel.gpt5CodexLow') },
-                                            'default': { label: t('agentInput.model.default') },
                                             'gpt-5-minimal': { label: t('agentInput.codexModel.gpt5Minimal') },
                                             'gpt-5-low': { label: t('agentInput.codexModel.gpt5Low') },
                                             'gpt-5-medium': { label: t('agentInput.codexModel.gpt5Medium') },
                                             'gpt-5-high': { label: t('agentInput.codexModel.gpt5High') },
                                         } : {
-                                            default: { label: t('agentInput.model.default') },
-                                            adaptiveUsage: { label: t('agentInput.model.adaptiveUsage') },
-                                            sonnet: { label: t('agentInput.model.sonnet') },
                                             opus: { label: t('agentInput.model.opus') },
+                                            sonnet: { label: t('agentInput.model.sonnet') },
+                                            haiku: { label: t('agentInput.model.haiku') },
                                         };
                                         const config = modelConfig[model as keyof typeof modelConfig];
                                         if (!config) return null;
-                                        const isSelected = props.modelMode === model || (isCodex && model === 'gpt-5-codex-high' && !props.modelMode) || (!isCodex && model === 'default' && !props.modelMode);
+                                        const isSelected = props.modelMode === model || (isCodex && model === 'gpt-5-codex-high' && !props.modelMode) || (!isCodex && model === 'opus' && !props.modelMode);
 
                                         return (
                                             <Pressable

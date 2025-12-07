@@ -160,6 +160,7 @@ function ArtifactsScreen() {
             cancelled = true;
             console.log('📱 ArtifactsScreen: Component unmounted');
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Intentionally only run on mount, artifacts.length is just for initial log
     }, []);
     
     // Log when artifacts change
@@ -168,7 +169,7 @@ function ArtifactsScreen() {
         if (artifacts.length > 0) {
             console.log('📱 ArtifactsScreen: First artifact:', artifacts[0]);
         }
-    }, [artifacts.length]);
+    }, [artifacts]);
 
     const renderItem = React.useCallback(({ item, index }: { item: DecryptedArtifact; index: number }) => {
         const isFirst = index === 0;
