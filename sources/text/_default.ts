@@ -572,6 +572,7 @@ export const en = {
         github: 'GitHub',
         tapToDisconnect: 'Tap to disconnect',
         server: 'Server',
+        serverAddress: 'Server Address',
         backup: 'Backup',
         backupDescription: 'Your secret key is the only way to recover your account. Save it in a secure place like a password manager.',
         secretKey: 'Secret Key',

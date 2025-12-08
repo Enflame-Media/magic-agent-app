@@ -582,6 +582,7 @@ export const ru: TranslationStructure = {
         github: 'GitHub',
         tapToDisconnect: 'Нажмите для отключения',
         server: 'Сервер',
+        serverAddress: 'Адрес сервера',
         backup: 'Резервная копия',
         backupDescription: 'Ваш секретный ключ - единственный способ восстановить ваш аккаунт. Сохраните его в безопасном месте, например в менеджере паролей.',
         secretKey: 'Секретный ключ',

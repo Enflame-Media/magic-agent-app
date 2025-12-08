@@ -572,6 +572,7 @@ export const es: TranslationStructure = {
         github: 'GitHub',
         tapToDisconnect: 'Toque para desconectar',
         server: 'Servidor',
+        serverAddress: 'Dirección del servidor',
         backup: 'Copia de seguridad',
         backupDescription: 'Tu clave secreta es la única forma de recuperar tu cuenta. Guárdala en un lugar seguro como un administrador de contraseñas.',
         secretKey: 'Clave secreta',

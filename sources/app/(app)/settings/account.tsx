@@ -127,6 +127,12 @@ export default React.memo(() => {
                         showChevron={false}
                         copy={!!sync.serverID}
                     />
+                    <Item
+                        title={t('settingsAccount.serverAddress')}
+                        detail={serverInfo.hostname + (serverInfo.port ? `:${serverInfo.port}` : '')}
+                        showChevron={false}
+                        copy={true}
+                    />
                     {Platform.OS !== 'web' && (
                         <Item
                             title={t('settingsAccount.linkNewDevice')}
@@ -219,17 +225,6 @@ export default React.memo(() => {
                         </ItemGroup>
                     );
                 })()}
-
-                {/* Server Info */}
-                {serverInfo.isCustom && (
-                    <ItemGroup title={t('settingsAccount.server')}>
-                        <Item
-                            title={t('settingsAccount.server')}
-                            detail={serverInfo.hostname + (serverInfo.port ? `:${serverInfo.port}` : '')}
-                            showChevron={false}
-                        />
-                    </ItemGroup>
-                )}
 
                 {/* Backup Section */}
                 <ItemGroup

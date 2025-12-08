@@ -574,6 +574,7 @@ export const zhHans: TranslationStructure = {
         github: 'GitHub',
         tapToDisconnect: '点击断开连接',
         server: '服务器',
+        serverAddress: '服务器地址',
         backup: '备份',
         backupDescription: '您的密钥是恢复账户的唯一方法。请将其保存在安全的地方，比如密码管理器中。',
         secretKey: '密钥',
