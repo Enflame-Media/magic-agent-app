@@ -1,8 +1,7 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import * as React from 'react';
-import { View, Platform, useWindowDimensions, Text, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
+import { View, Platform, useWindowDimensions, Text, ActivityIndicator, TouchableWithoutFeedback, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Pressable } from 'react-native-gesture-handler';
 import { layout } from './layout';
 import { MultiTextInput } from './MultiTextInput';
 import { Typography } from '@/constants/Typography';
