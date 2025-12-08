@@ -478,6 +478,12 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
             return true;
         }
 
+        // Handle Escape to close settings overlay on web
+        if (event.key === 'Escape' && showSettings) {
+            setShowSettings(false);
+            return true;
+        }
+
         // Original key handling
         if (Platform.OS === 'web') {
             if (event.key === 'Enter' && !event.shiftKey) {
@@ -500,7 +506,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
 
         }
         return false; // Key was not handled
-    }, [value, onSend, permissionMode, onPermissionModeChange, suggestions, selected, handleSuggestionSelect, moveUp, moveDown, showAbortButton, onAbort, isAborting, handleAbortPress, isCodex]);
+    }, [value, onSend, permissionMode, onPermissionModeChange, suggestions, selected, handleSuggestionSelect, moveUp, moveDown, showAbortButton, onAbort, isAborting, handleAbortPress, isCodex, showSettings]);
 
     // Add global keyboard handler for model mode switching on web
     // Uses ref to avoid listener churn when props change frequently (HAP-37)
