@@ -1,7 +1,7 @@
 import { MarkdownSpan, parseMarkdown } from './parseMarkdown';
 import { Link } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, View, Platform, Pressable } from 'react-native';
+import { ScrollView, View, Platform, Pressable, InteractionManager, Animated } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Text } from '../StyledText';
 import { Typography } from '@/constants/Typography';
@@ -10,6 +10,12 @@ import { Modal } from '@/modal';
 import { useLocalSetting } from '@/sync/storage';
 import { storeTempText } from '@/sync/persistence';
 import { useRouter } from 'expo-router';
+
+// Constants for lazy code block rendering
+const CODE_LINE_HEIGHT = 20;
+const CODE_PADDING_VERTICAL = 32; // 16px top + 16px bottom
+const CODE_LANGUAGE_HEIGHT = 20; // Approximate height of language label
+const MIN_CODE_BLOCK_HEIGHT = 56;
 
 // Option type for callback
 export type Option = {
@@ -109,22 +115,63 @@ function RenderNumberedListBlock(props: { items: { number: number, spans: Markdo
     );
 }
 
+/**
+ * Lazy-loaded code block component that defers expensive syntax highlighting
+ * until after the initial render pass completes.
+ *
+ * This improves performance when rendering messages with multiple code blocks
+ * by showing a placeholder first, then fading in the highlighted code.
+ * The estimated height prevents layout shift during the transition.
+ */
 function RenderCodeBlock(props: { content: string, language: string | null, first: boolean, last: boolean, selectable: boolean }) {
+    const [isReady, setIsReady] = React.useState(false);
+    const opacity = React.useRef(new Animated.Value(0)).current;
+
+    // Calculate estimated height to prevent layout shift
+    // Line count * line height + padding + language label (if present)
+    const lineCount = props.content.split('\n').length;
+    const estimatedHeight = Math.max(
+        lineCount * CODE_LINE_HEIGHT + CODE_PADDING_VERTICAL + (props.language ? CODE_LANGUAGE_HEIGHT : 0),
+        MIN_CODE_BLOCK_HEIGHT
+    );
+
+    React.useEffect(() => {
+        // Defer syntax highlighting until after interactions complete
+        // This allows the FlatList to finish scrolling/rendering first
+        const task = InteractionManager.runAfterInteractions(() => {
+            setIsReady(true);
+            Animated.timing(opacity, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+            }).start();
+        });
+        return () => task.cancel();
+    }, [opacity]);
+
     return (
-        <View style={[style.codeBlock, props.first && style.first, props.last && style.last]}>
+        <View style={[style.codeBlock, props.first && style.first, props.last && style.last, { minHeight: estimatedHeight }]}>
             {props.language && <Text selectable={props.selectable} style={style.codeLanguage}>{props.language}</Text>}
-            <ScrollView
-                style={{ flexGrow: 0, flexShrink: 0 }}
-                horizontal={true}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
-                showsHorizontalScrollIndicator={false}
-            >
-                <SimpleSyntaxHighlighter 
-                    code={props.content} 
-                    language={props.language} 
-                    selectable={props.selectable}
-                />
-            </ScrollView>
+            {!isReady ? (
+                // Placeholder: Same background, just empty space
+                // The minHeight on parent maintains layout stability
+                <View style={style.codeBlockPlaceholder} />
+            ) : (
+                <Animated.View style={{ opacity }}>
+                    <ScrollView
+                        style={{ flexGrow: 0, flexShrink: 0 }}
+                        horizontal={true}
+                        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}
+                        showsHorizontalScrollIndicator={false}
+                    >
+                        <SimpleSyntaxHighlighter
+                            code={props.content}
+                            language={props.language}
+                            selectable={props.selectable}
+                        />
+                    </ScrollView>
+                </Animated.View>
+            )}
         </View>
     );
 }
@@ -288,6 +335,11 @@ const style = StyleSheet.create((theme) => ({
         backgroundColor: theme.colors.surfaceHighest,
         borderRadius: 8,
         marginVertical: 8,
+    },
+    codeBlockPlaceholder: {
+        // Empty placeholder that maintains the space while code loads
+        // Parent container's minHeight ensures consistent sizing
+        flex: 1,
     },
     codeLanguage: {
         ...Typography.mono(),
