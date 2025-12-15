@@ -56,6 +56,7 @@ export const pt: TranslationStructure = {
         fileViewer: 'Visualizador de arquivos',
         loading: 'Carregando...',
         retry: 'Tentar novamente',
+        on: 'em',
     },
 
     profile: {
@@ -244,6 +245,11 @@ export const pt: TranslationStructure = {
         failedToSendRequest: 'Falha ao enviar solicitação de amizade',
     },
 
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: 'Início rápido',
+    },
+
     newSession: {
         // Used by new-session screen and launch flows
         title: 'Iniciar nova sessão',
@@ -342,6 +348,20 @@ export const pt: TranslationStructure = {
         copySessionId: 'Copiar ID da sessão',
         changeMode: 'Mudar modo',
         changeModel: 'Mudar modelo',
+    },
+
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: 'Responder',
+        replyHint: 'Navegar para a sessão para enviar uma mensagem',
+        archive: 'Arquivar',
+        archiveHint: 'Arquivar esta sessão',
+        delete: 'Excluir',
+        deleteHint: 'Excluir permanentemente esta sessão',
+        // Accessibility announcements
+        navigatingToReply: 'Navegando para a sessão',
+        sessionArchived: 'Sessão arquivada',
+        sessionDeleted: 'Sessão excluída',
     },
 
     sessionInfo: {

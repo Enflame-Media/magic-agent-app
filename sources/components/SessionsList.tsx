@@ -20,6 +20,8 @@ import { requestReview } from '@/utils/requestReview';
 import { layout } from './layout';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { useSessionContextMenu } from '@/hooks/useSessionContextMenu';
+import { QuickStartCard } from './QuickStartCard';
+import { SwipeableSessionRow } from './SwipeableSessionRow';
 
 const stylesheet = StyleSheet.create((theme) => ({
     container: {
@@ -252,13 +254,15 @@ export function SessionsList() {
                 const isSingle = isFirst && isLast;
 
                 return (
-                    <SessionItem
-                        session={item.session}
-                        selected={item.selected}
-                        isFirst={isFirst}
-                        isLast={isLast}
-                        isSingle={isSingle}
-                    />
+                    <SwipeableSessionRow session={item.session}>
+                        <SessionItem
+                            session={item.session}
+                            selected={item.selected}
+                            isFirst={isFirst}
+                            isLast={isLast}
+                            isSingle={isSingle}
+                        />
+                    </SwipeableSessionRow>
                 );
         }
     }, [pathname, dataWithSelected, compactSessionView, isTablet, styles]);
@@ -273,6 +277,7 @@ export function SessionsList() {
                 {/* <View style={{ marginHorizontal: -4 }}>
                     <UpdateBanner />
                 </View> */}
+                <QuickStartCard />
             </View>
         );
     }, []);

@@ -56,6 +56,7 @@ export const es: TranslationStructure = {
         fileViewer: 'Visor de archivos',
         loading: 'Cargando...',
         retry: 'Reintentar',
+        on: 'en',
     },
 
     profile: {
@@ -242,6 +243,11 @@ export const es: TranslationStructure = {
         failedToRemoveFriend: 'No se pudo eliminar al amigo',
         searchFailed: 'La búsqueda falló. Por favor, intenta de nuevo.',
         failedToSendRequest: 'No se pudo enviar la solicitud de amistad',
+    },
+
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: 'Inicio rápido',
     },
 
     newSession: {

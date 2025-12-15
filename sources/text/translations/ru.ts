@@ -67,6 +67,7 @@ export const ru: TranslationStructure = {
         fileViewer: 'Просмотр файла',
         loading: 'Загрузка...',
         retry: 'Повторить',
+        on: 'включено',
     },
 
     connect: {
@@ -227,6 +228,11 @@ export const ru: TranslationStructure = {
         failedToSendRequest: 'Не удалось отправить запрос в друзья',
     },
 
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: 'Быстрый старт',
+    },
+
     newSession: {
         // Used by new-session screen and launch flows
         title: 'Начать новую сессию',
@@ -315,6 +321,20 @@ export const ru: TranslationStructure = {
         copySessionId: 'Копировать ID сессии',
         changeMode: 'Изменить режим',
         changeModel: 'Изменить модель',
+    },
+
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: 'Ответить',
+        replyHint: 'Перейти к сессии для отправки сообщения',
+        archive: 'Архивировать',
+        archiveHint: 'Архивировать эту сессию',
+        delete: 'Удалить',
+        deleteHint: 'Удалить эту сессию навсегда',
+        // Accessibility announcements
+        navigatingToReply: 'Переход к сессии',
+        sessionArchived: 'Сессия архивирована',
+        sessionDeleted: 'Сессия удалена',
     },
 
     sessionInfo: {

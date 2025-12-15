@@ -14,6 +14,7 @@ import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { useIsTablet } from '@/utils/responsive';
 import { ProjectGitStatus } from './ProjectGitStatus';
 import { useSessionContextMenu } from '@/hooks/useSessionContextMenu';
+import { SwipeableSessionRow } from './SwipeableSessionRow';
 
 const stylesheet = StyleSheet.create((theme) => ({
     container: {
@@ -248,13 +249,14 @@ export function ActiveSessionsGroupCompact({ sessions, selectedSessionId }: Acti
                                 .map(([machineId, machineGroup]) => (
                                     <View key={`${projectPath}-${machineId}`}>
                                         {machineGroup.sessions.map((session, index) => (
-                                            <CompactSessionRow
-                                                key={session.id}
-                                                session={session}
-                                                selected={selectedSessionId === session.id}
-                                                showBorder={index < machineGroup.sessions.length - 1 ||
-                                                    Array.from(projectGroup.machines.keys()).indexOf(machineId) < projectGroup.machines.size - 1}
-                                            />
+                                            <SwipeableSessionRow key={session.id} session={session}>
+                                                <CompactSessionRow
+                                                    session={session}
+                                                    selected={selectedSessionId === session.id}
+                                                    showBorder={index < machineGroup.sessions.length - 1 ||
+                                                        Array.from(projectGroup.machines.keys()).indexOf(machineId) < projectGroup.machines.size - 1}
+                                                />
+                                            </SwipeableSessionRow>
                                         ))}
                                     </View>
                                 ))}

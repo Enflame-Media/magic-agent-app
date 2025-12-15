@@ -58,6 +58,7 @@ export const zhHans: TranslationStructure = {
         fileViewer: '文件查看器',
         loading: '加载中...',
         retry: '重试',
+        on: '在',
     },
 
     profile: {
@@ -246,6 +247,11 @@ export const zhHans: TranslationStructure = {
         failedToSendRequest: '发送好友请求失败',
     },
 
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: '快速开始',
+    },
+
     newSession: {
         // Used by new-session screen and launch flows
         title: '启动新会话',
@@ -344,6 +350,20 @@ export const zhHans: TranslationStructure = {
         copySessionId: '复制会话 ID',
         changeMode: '更改模式',
         changeModel: '更改模型',
+    },
+
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: '回复',
+        replyHint: '导航到会话以发送消息',
+        archive: '归档',
+        archiveHint: '归档此会话',
+        delete: '删除',
+        deleteHint: '永久删除此会话',
+        // Accessibility announcements
+        navigatingToReply: '正在导航到会话',
+        sessionArchived: '会话已归档',
+        sessionDeleted: '会话已删除',
     },
 
     sessionInfo: {

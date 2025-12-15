@@ -56,6 +56,7 @@ export const ca: TranslationStructure = {
         fileViewer: 'Visualitzador de fitxers',
         loading: 'Carregant...',
         retry: 'Torna-ho a provar',
+        on: 'a',
     },
 
     profile: {
@@ -244,6 +245,11 @@ export const ca: TranslationStructure = {
         failedToSendRequest: 'No s\'ha pogut enviar la sol·licitud d\'amistat',
     },
 
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: 'Inici ràpid',
+    },
+
     newSession: {
         // Used by new-session screen and launch flows
         title: 'Inicia una nova sessió',
@@ -342,6 +348,20 @@ export const ca: TranslationStructure = {
         copySessionId: 'Copia l\'ID de la sessió',
         changeMode: 'Canvia el mode',
         changeModel: 'Canvia el model',
+    },
+
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: 'Respondre',
+        replyHint: 'Navega a la sessió per enviar un missatge',
+        archive: 'Arxivar',
+        archiveHint: 'Arxiva aquesta sessió',
+        delete: 'Eliminar',
+        deleteHint: 'Elimina permanentment aquesta sessió',
+        // Accessibility announcements
+        navigatingToReply: 'Navegant a la sessió',
+        sessionArchived: 'Sessió arxivada',
+        sessionDeleted: 'Sessió eliminada',
     },
 
     sessionInfo: {
