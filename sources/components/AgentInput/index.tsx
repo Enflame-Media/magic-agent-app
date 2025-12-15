@@ -310,6 +310,7 @@ export const AgentInput = React.memo(React.forwardRef<MultiTextInputHandle, Agen
                     connectionStatus={props.connectionStatus}
                     contextWarning={contextWarning}
                     permissionMode={props.permissionMode}
+                    onPermissionModeChange={props.onPermissionModeChange}
                     isCodex={isCodex}
                 />
 

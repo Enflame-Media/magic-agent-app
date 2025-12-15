@@ -56,6 +56,7 @@ export interface StatusDisplayProps {
     connectionStatus?: AgentInputProps['connectionStatus'];
     contextWarning: { text: string; color: string } | null;
     permissionMode?: PermissionMode;
+    onPermissionModeChange?: (mode: PermissionMode) => void;
     isCodex: boolean;
 }
 

@@ -1,6 +1,8 @@
 import React from 'react';
-import { Pressable, Platform } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Pressable, Platform, Text } from 'react-native';
+import { useUnistyles } from 'react-native-unistyles';
+import { Typography } from '@/constants/Typography';
+import { t } from '@/text';
 import { hapticsLight } from './haptics';
 
 export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'read-only' | 'safe-yolo' | 'yolo';
@@ -11,99 +13,118 @@ interface PermissionModeSelectorProps {
     mode: PermissionMode;
     onModeChange: (mode: PermissionMode) => void;
     disabled?: boolean;
+    isCodex?: boolean;
 }
 
-const modeConfig = {
-    default: {
-        label: 'Default',
-        icon: 'shield-checkmark' as const,
-        description: 'Ask for permissions'
-    },
-    acceptEdits: {
-        label: 'Accept Edits',
-        icon: 'create' as const,
-        description: 'Auto-approve edits'
-    },
-    plan: {
-        label: 'Plan',
-        icon: 'list' as const,
-        description: 'Plan before executing'
-    },
-    bypassPermissions: {
-        label: 'Yolo',
-        icon: 'flash' as const,
-        description: 'Skip all permissions'
-    },
-    // Codex modes (not displayed in this component, but needed for type compatibility)
-    'read-only': {
-        label: 'Read-only',
-        icon: 'eye' as const,
-        description: 'Read-only mode'
-    },
-    'safe-yolo': {
-        label: 'Safe YOLO',
-        icon: 'shield' as const,
-        description: 'Safe YOLO mode'
-    },
-    'yolo': {
-        label: 'YOLO',
-        icon: 'rocket' as const,
-        description: 'YOLO mode'
-    },
-};
+// Mode order for Claude Code
+const claudeModeOrder: PermissionMode[] = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
 
-const modeOrder: PermissionMode[] = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
+// Mode order for Codex
+const codexModeOrder: PermissionMode[] = ['default', 'read-only', 'safe-yolo', 'yolo'];
 
+/**
+ * PermissionModeSelector - A tappable pill button that displays the current permission mode
+ * and cycles through available modes on tap. Shows a colored border and label.
+ */
 export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
     mode,
     onModeChange,
-    disabled = false
+    disabled = false,
+    isCodex = false
 }) => {
-    const _currentConfig = modeConfig[mode];
+    const { theme } = useUnistyles();
+
+    // Get the mode order based on agent type
+    const activeModeOrder = isCodex ? codexModeOrder : claudeModeOrder;
+
+    // Get color for current mode
+    const getModeColor = () => {
+        switch (mode) {
+            case 'acceptEdits':
+                return theme.colors.permission.acceptEdits;
+            case 'bypassPermissions':
+                return theme.colors.permission.bypass;
+            case 'plan':
+                return theme.colors.permission.plan;
+            case 'read-only':
+                return theme.colors.permission.readOnly;
+            case 'safe-yolo':
+                return theme.colors.permission.safeYolo;
+            case 'yolo':
+                return theme.colors.permission.yolo;
+            default:
+                return theme.colors.permission.default;
+        }
+    };
+
+    // Get the label for the current mode
+    const getModeLabel = () => {
+        if (isCodex) {
+            switch (mode) {
+                case 'default':
+                    return t('agentInput.codexPermissionMode.default');
+                case 'read-only':
+                    return t('agentInput.codexPermissionMode.readOnly');
+                case 'safe-yolo':
+                    return t('agentInput.codexPermissionMode.safeYolo');
+                case 'yolo':
+                    return t('agentInput.codexPermissionMode.yolo');
+                default:
+                    return t('agentInput.codexPermissionMode.default');
+            }
+        } else {
+            switch (mode) {
+                case 'default':
+                    return t('agentInput.permissionMode.default');
+                case 'acceptEdits':
+                    return t('agentInput.permissionMode.acceptEdits');
+                case 'plan':
+                    return t('agentInput.permissionMode.plan');
+                case 'bypassPermissions':
+                    return t('agentInput.permissionMode.bypassPermissions');
+                default:
+                    return t('agentInput.permissionMode.default');
+            }
+        }
+    };
 
     const handleTap = () => {
+        if (disabled) return;
         hapticsLight();
-        const currentIndex = modeOrder.indexOf(mode);
-        const nextIndex = (currentIndex + 1) % modeOrder.length;
-        onModeChange(modeOrder[nextIndex]);
+        const currentIndex = activeModeOrder.indexOf(mode);
+        // If mode not in order (e.g. Claude mode on Codex), start from beginning
+        const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+        const nextIndex = (safeIndex + 1) % activeModeOrder.length;
+        onModeChange(activeModeOrder[nextIndex]);
     };
+
+    const modeColor = getModeColor();
 
     return (
         <Pressable
             onPress={handleTap}
             disabled={disabled}
-            hitSlop={{ top: 5, bottom: 10, left: 0, right: 0 }}
-            style={{
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
-                // backgroundColor: Platform.select({
-                //     ios: '#F2F2F7',
-                //     android: '#E0E0E0',
-                //     default: '#F2F2F7'
-                // }),
-                borderRadius: Platform.select({ default: 16, android: 20 }),
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                width: 120,
-                justifyContent: 'center',
-                height: 32,
+                borderRadius: Platform.select({ default: 10, android: 12 }),
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                backgroundColor: pressed ? `${modeColor}22` : 'transparent',
+                borderWidth: 1,
+                borderColor: modeColor,
                 opacity: disabled ? 0.5 : 1,
-            }}
+            })}
         >
-            <Ionicons
-                name={'hammer-outline'}
-                size={16}
-                color={'black'}
-                style={{ marginRight: 4 }}
-            />
-            {/* <Text style={{
-                fontSize: 13,
-                color: '#000',
+            <Text style={{
+                fontSize: 11,
+                color: modeColor,
                 fontWeight: '600',
                 ...Typography.default('semiBold')
             }}>
-                {currentConfig.label}
-            </Text> */}
+                {getModeLabel()}
+            </Text>
         </Pressable>
     );
 };
