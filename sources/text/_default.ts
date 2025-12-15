@@ -56,6 +56,7 @@ export const en = {
         fileViewer: 'File Viewer',
         loading: 'Loading...',
         retry: 'Retry',
+        on: 'on',
     },
 
     profile: {
@@ -280,6 +281,11 @@ export const en = {
         }
     },
 
+    sessions: {
+        // Used by sessions list and quick start feature
+        quickStart: 'Quick Start',
+    },
+
     sessionHistory: {
         // Used by session history screen
         title: 'Session History',
@@ -403,6 +409,20 @@ export const en = {
         copySessionId: 'Copy Session ID',
         changeMode: 'Change Mode',
         changeModel: 'Change Model',
+    },
+
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: 'Reply',
+        replyHint: 'Navigate to session to send a message',
+        archive: 'Archive',
+        archiveHint: 'Archive this session',
+        delete: 'Delete',
+        deleteHint: 'Permanently delete this session',
+        // Accessibility announcements
+        navigatingToReply: 'Navigating to session',
+        sessionArchived: 'Session archived',
+        sessionDeleted: 'Session deleted',
     },
 
     components: {
@@ -759,6 +779,8 @@ export const en = {
         unknownEvent: 'Unknown event',
         usageLimitUntil: ({ time }: { time: string }) => `Usage limit reached until ${time}`,
         unknownTime: 'unknown time',
+        showMore: ({ lines }: { lines: number }) => `Show ${lines} more lines`,
+        showLess: 'Show less',
     },
 
     codex: {

@@ -759,6 +759,8 @@ export const ca: TranslationStructure = {
         unknownEvent: 'Esdeveniment desconegut',
         usageLimitUntil: ({ time }: { time: string }) => `Límit d'ús assolit fins a ${time}`,
         unknownTime: 'temps desconegut',
+        showMore: ({ lines }: { lines: number }) => `Mostra ${lines} línies més`,
+        showLess: 'Mostra menys',
     },
 
     codex: {

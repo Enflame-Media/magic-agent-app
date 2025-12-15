@@ -769,6 +769,8 @@ export const pl: TranslationStructure = {
         unknownEvent: 'Nieznane zdarzenie',
         usageLimitUntil: ({ time }: { time: string }) => `Osiągnięto limit użycia do ${time}`,
         unknownTime: 'nieznany czas',
+        showMore: ({ lines }: { lines: number }) => `Pokaż jeszcze ${lines} linii`,
+        showLess: 'Pokaż mniej',
     },
 
     codex: {

@@ -759,6 +759,8 @@ export const pt: TranslationStructure = {
         unknownEvent: 'Evento desconhecido',
         usageLimitUntil: ({ time }: { time: string }) => `Limite de uso atingido até ${time}`,
         unknownTime: 'horário desconhecido',
+        showMore: ({ lines }: { lines: number }) => `Mostrar mais ${lines} linhas`,
+        showLess: 'Mostrar menos',
     },
 
     codex: {

@@ -344,6 +344,20 @@ export const es: TranslationStructure = {
         changeModel: 'Cambiar modelo',
     },
 
+    swipeActions: {
+        // Used by SwipeableSessionRow component for swipe gestures on session items
+        reply: 'Responder',
+        replyHint: 'Navegar a la sesión para enviar un mensaje',
+        archive: 'Archivar',
+        archiveHint: 'Archivar esta sesión',
+        delete: 'Eliminar',
+        deleteHint: 'Eliminar permanentemente esta sesión',
+        // Accessibility announcements
+        navigatingToReply: 'Navegando a la sesión',
+        sessionArchived: 'Sesión archivada',
+        sessionDeleted: 'Sesión eliminada',
+    },
+
     sessionInfo: {
         // Used by Session Info screen (app/(app)/session/[id]/info.tsx)
         killSession: 'Terminar sesión',
@@ -759,6 +773,8 @@ export const es: TranslationStructure = {
         unknownEvent: 'Evento desconocido',
         usageLimitUntil: ({ time }: { time: string }) => `Límite de uso alcanzado hasta ${time}`,
         unknownTime: 'tiempo desconocido',
+        showMore: ({ lines }: { lines: number }) => `Mostrar ${lines} líneas más`,
+        showLess: 'Mostrar menos',
     },
 
     codex: {

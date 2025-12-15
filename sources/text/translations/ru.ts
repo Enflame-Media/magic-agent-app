@@ -757,6 +757,8 @@ export const ru: TranslationStructure = {
         unknownEvent: 'Неизвестное событие',
         usageLimitUntil: ({ time }: { time: string }) => `Лимит использования достигнут до ${time}`,
         unknownTime: 'неизвестное время',
+        showMore: ({ lines }: { lines: number }) => `Показать ещё ${lines} строк`,
+        showLess: 'Показать меньше',
     },
 
     codex: {

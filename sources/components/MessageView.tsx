@@ -1,5 +1,5 @@
 import * as React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Pressable, LayoutAnimation } from "react-native";
 import { StyleSheet } from 'react-native-unistyles';
 import { MarkdownView } from "./markdown/MarkdownView";
 import { t } from '@/text';
@@ -11,6 +11,10 @@ import { AgentEvent } from "@/sync/typesRaw";
 import { sync } from '@/sync/sync';
 import { Option } from './markdown/MarkdownView';
 import { AppError, ErrorCodes } from '@/utils/errors';
+
+// Truncation thresholds for long messages
+const LINE_THRESHOLD = 50;  // Truncate if message has more than this many lines
+const INITIAL_LINES = 20;   // Show this many lines when truncated
 
 export const MessageView = React.memo((props: {
   message: Message;
@@ -69,17 +73,47 @@ function UserTextBlock(props: {
   message: UserTextMessage;
   sessionId: string;
 }) {
+  const [expanded, setExpanded] = React.useState(false);
+
   const handleOptionPress = React.useCallback((option: Option) => {
     sync.sendMessage(props.sessionId, option.title);
   }, [props.sessionId]);
 
+  const sourceText = props.message.displayText || props.message.text;
+
+  // Calculate truncation for long messages
+  const { text, needsTruncation, hiddenLines } = React.useMemo(() => {
+    const lines = sourceText.split('\n');
+    const needsTruncation = lines.length > LINE_THRESHOLD;
+
+    if (needsTruncation && !expanded) {
+      return {
+        text: lines.slice(0, INITIAL_LINES).join('\n'),
+        needsTruncation: true,
+        hiddenLines: lines.length - INITIAL_LINES
+      };
+    }
+    return { text: sourceText, needsTruncation, hiddenLines: 0 };
+  }, [sourceText, expanded]);
+
+  const handleToggle = React.useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  }, [expanded]);
+
   return (
     <View style={styles.userMessageContainer}>
       <View style={styles.userMessageBubble}>
-        <MarkdownView markdown={props.message.displayText || props.message.text} onOptionPress={handleOptionPress} />
-        {/* {__DEV__ && (
-          <Text style={styles.debugText}>{JSON.stringify(props.message.meta)}</Text>
-        )} */}
+        <MarkdownView markdown={text} onOptionPress={handleOptionPress} />
+        {needsTruncation && (
+          <Pressable onPress={handleToggle} style={styles.showMoreContainer}>
+            <Text style={styles.showMoreText}>
+              {expanded
+                ? t('message.showLess')
+                : t('message.showMore', { lines: hiddenLines })}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -89,13 +123,44 @@ function AgentTextBlock(props: {
   message: AgentTextMessage;
   sessionId: string;
 }) {
+  const [expanded, setExpanded] = React.useState(false);
+
   const handleOptionPress = React.useCallback((option: Option) => {
     sync.sendMessage(props.sessionId, option.title);
   }, [props.sessionId]);
 
+  // Calculate truncation for long messages
+  const { text, needsTruncation, hiddenLines } = React.useMemo(() => {
+    const lines = props.message.text.split('\n');
+    const needsTruncation = lines.length > LINE_THRESHOLD;
+
+    if (needsTruncation && !expanded) {
+      return {
+        text: lines.slice(0, INITIAL_LINES).join('\n'),
+        needsTruncation: true,
+        hiddenLines: lines.length - INITIAL_LINES
+      };
+    }
+    return { text: props.message.text, needsTruncation, hiddenLines: 0 };
+  }, [props.message.text, expanded]);
+
+  const handleToggle = React.useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  }, [expanded]);
+
   return (
     <View style={styles.agentMessageContainer}>
-      <MarkdownView markdown={props.message.text} onOptionPress={handleOptionPress} />
+      <MarkdownView markdown={text} onOptionPress={handleOptionPress} />
+      {needsTruncation && (
+        <Pressable onPress={handleToggle} style={styles.showMoreContainer}>
+          <Text style={styles.showMoreText}>
+            {expanded
+              ? t('message.showLess')
+              : t('message.showMore', { lines: hiddenLines })}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -212,5 +277,14 @@ const styles = StyleSheet.create((theme) => ({
   debugText: {
     color: theme.colors.agentEventText,
     fontSize: 12,
+  },
+  showMoreContainer: {
+    paddingVertical: 8,
+    alignItems: 'flex-start',
+  },
+  showMoreText: {
+    color: theme.colors.textLink,
+    fontSize: 14,
+    fontWeight: '500',
   },
 }));

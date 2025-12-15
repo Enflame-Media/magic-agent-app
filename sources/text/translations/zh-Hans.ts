@@ -761,6 +761,8 @@ export const zhHans: TranslationStructure = {
         unknownEvent: '未知事件',
         usageLimitUntil: ({ time }: { time: string }) => `使用限制到 ${time}`,
         unknownTime: '未知时间',
+        showMore: ({ lines }: { lines: number }) => `显示更多 ${lines} 行`,
+        showLess: '显示更少',
     },
 
     codex: {
