@@ -381,6 +381,12 @@ class Sync {
             }
         }
 
+        // Sync contextNotificationsEnabled to all active CLI sessions (HAP-358)
+        if ('contextNotificationsEnabled' in delta) {
+            const enabled = delta.contextNotificationsEnabled ?? true;
+            this.broadcastContextNotificationsEnabled(enabled);
+        }
+
         // Invalidate settings sync
         this.settingsSync.invalidate();
     }
@@ -391,6 +397,33 @@ class Sync {
 
     refreshProfile = async () => {
         await this.profileSync.invalidateAndAwait();
+    }
+
+    /**
+     * Broadcast contextNotificationsEnabled setting to all active CLI sessions.
+     * This allows the CLI to respect the user's notification preference.
+     * @see HAP-358
+     */
+    private broadcastContextNotificationsEnabled = (enabled: boolean) => {
+        const activeSessions = storage.getState().getActiveSessions();
+        log.log(`[HAP-358] Broadcasting contextNotificationsEnabled=${enabled} to ${activeSessions.length} active sessions`);
+
+        for (const session of activeSessions) {
+            // Send RPC call to CLI to update notification setting
+            // Fire-and-forget: we don't need to wait for response
+            apiSocket.sessionRPC<{ ok: boolean }, { enabled: boolean }>(
+                session.id,
+                'setContextNotificationsEnabled',
+                { enabled }
+            ).then(response => {
+                if (response?.ok) {
+                    log.log(`[HAP-358] Session ${session.id} acknowledged contextNotificationsEnabled=${enabled}`);
+                }
+            }).catch(error => {
+                // Silently ignore errors - CLI may not be connected or may not support this RPC
+                log.log(`[HAP-358] Failed to send contextNotificationsEnabled to session ${session.id}: ${error}`);
+            });
+        }
     }
 
     purchaseProduct = async (productId: string): Promise<{ success: boolean; error?: string }> => {
