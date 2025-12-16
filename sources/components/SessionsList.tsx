@@ -23,12 +23,16 @@ import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { useSessionContextMenu } from '@/hooks/useSessionContextMenu';
 import { QuickStartCard } from './QuickStartCard';
 import { SwipeableSessionRow } from './SwipeableSessionRow';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, interpolate } from 'react-native-reanimated';
 
 // Item height constants for getItemLayout optimization
 // These enable O(1) scroll position calculations instead of O(n) measurement
+// Note: With collapsible sessions, we disable getItemLayout when sessions are collapsed
+const SESSION_HEIGHT_EXPANDED = 88;   // Full height with all details
+const SESSION_HEIGHT_COLLAPSED = 56;  // Compact height without subtitle
 const ITEM_HEIGHTS = {
-    session: 89,        // 88px height + 1px marginBottom (typical non-last item)
-    sessionLast: 100,   // 88px height + 12px marginBottom (last item in group)
+    session: SESSION_HEIGHT_COLLAPSED + 1,        // Collapsed height + 1px marginBottom (typical non-last item)
+    sessionLast: SESSION_HEIGHT_COLLAPSED + 12,   // Collapsed height + 12px marginBottom (last item in group)
     header: 46,         // paddingTop(20) + paddingBottom(8) + text(~18)
     projectGroup: 53,   // paddingVertical(20) + title(18) + subtitle(13) + marginTop(2)
 } as const;
@@ -76,13 +80,13 @@ const stylesheet = StyleSheet.create((theme) => ({
         ...Typography.default(),
     },
     sessionItem: {
-        height: 88,
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         backgroundColor: theme.colors.surface,
         marginHorizontal: 16,
         marginBottom: 1,
+        overflow: 'hidden',
     },
     sessionItemFirst: {
         borderTopLeftRadius: 12,
@@ -191,6 +195,13 @@ const stylesheet = StyleSheet.create((theme) => ({
         paddingBottom: 12,
         backgroundColor: theme.colors.groupped.background,
     },
+    expandChevron: {
+        marginLeft: 8,
+        opacity: 0.4,
+    },
+    sessionSubtitleContainer: {
+        overflow: 'hidden',
+    },
 }));
 
 export function SessionsList() {
@@ -239,18 +250,19 @@ export function SessionsList() {
         }
     }, []);
 
-    // Check if list contains active-sessions (variable height) - skip getItemLayout if so
-    const hasActiveSessions = React.useMemo(() =>
-        dataWithSelected?.some(item => item.type === 'active-sessions') ?? false,
+    // Check if list contains variable-height items - skip getItemLayout if so
+    // With collapsible sessions, all session items now have variable heights
+    const hasVariableHeightItems = React.useMemo(() =>
+        dataWithSelected?.some(item => item.type === 'active-sessions' || item.type === 'session') ?? false,
     [dataWithSelected]);
 
     // getItemLayout for O(1) scroll position calculations
-    // Only used when list contains fixed-height items (no active-sessions group)
+    // Only used when list contains fixed-height items (no collapsible sessions)
     const getItemLayout = React.useCallback((
         _data: ArrayLike<SessionListViewItem & { selected?: boolean }> | null | undefined,
         index: number
     ) => {
-        if (!dataWithSelected || hasActiveSessions) {
+        if (!dataWithSelected || hasVariableHeightItems) {
             // Fallback for variable-height lists - use average session height
             return { length: ITEM_HEIGHTS.session, offset: ITEM_HEIGHTS.session * index, index };
         }
@@ -274,7 +286,7 @@ export function SessionsList() {
                     break;
                 }
                 case 'active-sessions':
-                    // This shouldn't happen since we check hasActiveSessions above
+                    // This shouldn't happen since we check hasVariableHeightItems above
                     // but include for type safety
                     offset += ITEM_HEIGHTS.session * item.sessions.length;
                     break;
@@ -305,7 +317,7 @@ export function SessionsList() {
         }
 
         return { length, offset, index };
-    }, [dataWithSelected, hasActiveSessions]);
+    }, [dataWithSelected, hasVariableHeightItems]);
 
     const renderItem = React.useCallback(({ item, index }: { item: SessionListViewItem & { selected?: boolean }, index: number }) => {
         switch (item.type) {
@@ -393,7 +405,7 @@ export function SessionsList() {
                     data={dataWithSelected}
                     renderItem={renderItem}
                     keyExtractor={keyExtractor}
-                    getItemLayout={hasActiveSessions ? undefined : getItemLayout}
+                    getItemLayout={hasVariableHeightItems ? undefined : getItemLayout}
                     contentContainerStyle={contentContainerStyle}
                     ListHeaderComponent={HeaderComponent}
                 />
@@ -402,7 +414,15 @@ export function SessionsList() {
     );
 }
 
-// Sub-component that handles session message logic
+/**
+ * CollapsibleSessionItem - Renders inactive sessions with progressive disclosure
+ *
+ * Inactive sessions start collapsed (compact view) and can be expanded on tap.
+ * Uses Reanimated for smooth height and opacity animations.
+ *
+ * Collapsed state: Shows avatar, title, and status dot only (56px)
+ * Expanded state: Shows full details including subtitle and context meter (88px)
+ */
 const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle }: {
     session: Session;
     selected?: boolean;
@@ -418,6 +438,11 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle }
     const isTablet = useIsTablet();
     const { showContextMenu } = useSessionContextMenu(session);
 
+    // Inactive sessions start collapsed, expand on tap
+    // Animation value: 0 = collapsed, 1 = expanded
+    const expandProgress = useSharedValue(0);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
     const avatarId = React.useMemo(() => {
         return getSessionAvatarId(session);
     }, [session]);
@@ -427,81 +452,146 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle }
         : sessionStatus.state === 'permission_required' ? styles.sessionItemPermission
         : undefined;
 
+    // Toggle expand/collapse with animation
+    const handlePress = React.useCallback(() => {
+        if (isTablet) {
+            // On tablet, always navigate directly
+            navigateToSession(session.id);
+        } else {
+            // On mobile, toggle expand/collapse first tap, navigate on second
+            if (isExpanded) {
+                navigateToSession(session.id);
+            } else {
+                setIsExpanded(true);
+                expandProgress.value = withTiming(1, {
+                    duration: 250,
+                    easing: Easing.out(Easing.cubic),
+                });
+            }
+        }
+    }, [isTablet, isExpanded, navigateToSession, session.id, expandProgress]);
+
+    const handlePressIn = React.useCallback(() => {
+        if (isTablet) {
+            navigateToSession(session.id);
+        }
+    }, [isTablet, navigateToSession, session.id]);
+
+    // Animated container height
+    const containerAnimatedStyle = useAnimatedStyle(() => {
+        const height = interpolate(
+            expandProgress.value,
+            [0, 1],
+            [SESSION_HEIGHT_COLLAPSED, SESSION_HEIGHT_EXPANDED]
+        );
+        return { height };
+    });
+
+    // Animated subtitle opacity and height
+    const subtitleAnimatedStyle = useAnimatedStyle(() => {
+        const opacity = expandProgress.value;
+        const height = interpolate(expandProgress.value, [0, 1], [0, 18]);
+        const marginBottom = interpolate(expandProgress.value, [0, 1], [0, 4]);
+        return { opacity, height, marginBottom };
+    });
+
+    // Animated status indicators opacity (context meter, etc.)
+    const indicatorsAnimatedStyle = useAnimatedStyle(() => {
+        return { opacity: expandProgress.value };
+    });
+
+    // Chevron rotation for expand indicator
+    const chevronAnimatedStyle = useAnimatedStyle(() => {
+        const rotation = interpolate(expandProgress.value, [0, 1], [0, 90]);
+        const opacity = interpolate(expandProgress.value, [0, 1], [0.4, 0]);
+        return {
+            transform: [{ rotate: `${rotation}deg` }],
+            opacity,
+        };
+    });
+
     return (
-        <Pressable
+        <Animated.View
             style={[
                 styles.sessionItem,
                 selected && styles.sessionItemSelected,
                 activeStateStyle,
                 isSingle ? styles.sessionItemSingle :
                     isFirst ? styles.sessionItemFirst :
-                        isLast ? styles.sessionItemLast : {}
+                        isLast ? styles.sessionItemLast : {},
+                containerAnimatedStyle
             ]}
-            onPressIn={() => {
-                if (isTablet) {
-                    navigateToSession(session.id);
-                }
-            }}
-            onPress={() => {
-                if (!isTablet) {
-                    navigateToSession(session.id);
-                }
-            }}
-            onLongPress={showContextMenu}
-            delayLongPress={500}
         >
-            <View style={styles.avatarContainer}>
-                <Avatar id={avatarId} size={48} monochrome={!sessionStatus.isConnected} flavor={session.metadata?.flavor} />
-                {session.draft && (
-                    <View style={styles.draftIconContainer}>
-                        <Ionicons
-                            name="create-outline"
-                            size={12}
-                            style={styles.draftIconOverlay}
-                        />
-                    </View>
-                )}
-            </View>
-            <View style={styles.sessionContent}>
-                {/* Title line */}
-                <View style={styles.sessionTitleRow}>
-                    <Text style={[
-                        styles.sessionTitle,
-                        sessionStatus.isConnected ? styles.sessionTitleConnected : styles.sessionTitleDisconnected
-                    ]} numberOfLines={1}> {/* {variant !== 'no-path' ? 1 : 2} - issue is we don't have anything to take this space yet and it looks strange - if summaries were more reliably generated, we can add this. While no summary - add something like "New session" or "Empty session", and extend summary to 2 lines once we have it */}
-                        {sessionName}
-                    </Text>
-                </View>
-
-                {/* Subtitle line */}
-                <Text style={styles.sessionSubtitle} numberOfLines={1}>
-                    {sessionSubtitle}
-                </Text>
-
-                {/* Status line with dot */}
-                <View style={styles.statusRow}>
-                    <View style={styles.statusRowLeft}>
-                        <View style={styles.statusDotContainer}>
-                            <StatusDot color={sessionStatus.statusDotColor} isPulsing={sessionStatus.isPulsing} />
+            <Pressable
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                onPressIn={handlePressIn}
+                onPress={handlePress}
+                onLongPress={showContextMenu}
+                delayLongPress={500}
+            >
+                <View style={styles.avatarContainer}>
+                    <Avatar id={avatarId} size={48} monochrome={!sessionStatus.isConnected} flavor={session.metadata?.flavor} />
+                    {session.draft && (
+                        <View style={styles.draftIconContainer}>
+                            <Ionicons
+                                name="create-outline"
+                                size={12}
+                                style={styles.draftIconOverlay}
+                            />
                         </View>
+                    )}
+                </View>
+                <View style={styles.sessionContent}>
+                    {/* Title line */}
+                    <View style={styles.sessionTitleRow}>
                         <Text style={[
-                            styles.statusText,
-                            { color: sessionStatus.statusColor }
-                        ]}>
-                            {sessionStatus.statusText}
+                            styles.sessionTitle,
+                            sessionStatus.isConnected ? styles.sessionTitleConnected : styles.sessionTitleDisconnected
+                        ]} numberOfLines={1}>
+                            {sessionName}
                         </Text>
+                        {/* Expand chevron - shown when collapsed */}
+                        <Animated.View style={[styles.expandChevron, chevronAnimatedStyle]}>
+                            <Ionicons
+                                name="chevron-forward"
+                                size={14}
+                                color={styles.sessionTitleDisconnected.color}
+                            />
+                        </Animated.View>
                     </View>
 
-                    {/* Status indicators on the right side */}
-                    <View style={styles.statusIndicators}>
-                        {/* Context usage indicator */}
-                        {session.latestUsage?.contextSize != null && session.latestUsage.contextSize > 0 && (
-                            <ContextMeter contextSize={session.latestUsage.contextSize} />
-                        )}
+                    {/* Subtitle line - animated visibility */}
+                    <Animated.View style={[styles.sessionSubtitleContainer, subtitleAnimatedStyle]}>
+                        <Text style={styles.sessionSubtitle} numberOfLines={1}>
+                            {sessionSubtitle}
+                        </Text>
+                    </Animated.View>
+
+                    {/* Status line with dot */}
+                    <View style={styles.statusRow}>
+                        <View style={styles.statusRowLeft}>
+                            <View style={styles.statusDotContainer}>
+                                <StatusDot color={sessionStatus.statusDotColor} isPulsing={sessionStatus.isPulsing} />
+                            </View>
+                            <Text style={[
+                                styles.statusText,
+                                { color: sessionStatus.statusColor }
+                            ]}>
+                                {sessionStatus.statusText}
+                            </Text>
+                        </View>
+
+                        {/* Status indicators on the right side - animated visibility */}
+                        <Animated.View style={[styles.statusIndicators, indicatorsAnimatedStyle]}>
+                            {/* Context usage indicator */}
+                            {session.latestUsage?.contextSize != null && session.latestUsage.contextSize > 0 && (
+                                <ContextMeter contextSize={session.latestUsage.contextSize} />
+                            )}
+                        </Animated.View>
                     </View>
                 </View>
-            </View>
-        </Pressable>
+            </Pressable>
+        </Animated.View>
     );
 });
 
