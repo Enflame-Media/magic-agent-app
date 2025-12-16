@@ -24,7 +24,8 @@ const GitStatusButton = React.memo(function GitStatusButton({
     const hasMeaningfulGitStatus = useHasMeaningfulGitStatus(sessionId || '');
     const styles = stylesheet;
 
-    if (!sessionId || !onPress) {
+    // Hide the button entirely when there's no meaningful git status to show
+    if (!sessionId || !onPress || !hasMeaningfulGitStatus) {
         return null;
     }
 
@@ -40,15 +41,7 @@ const GitStatusButton = React.memo(function GitStatusButton({
                 onPress?.();
             }}
         >
-            {hasMeaningfulGitStatus ? (
-                <GitStatusBadge sessionId={sessionId} />
-            ) : (
-                <Octicons
-                    name="git-branch"
-                    size={16}
-                    style={styles.actionButtonIcon}
-                />
-            )}
+            <GitStatusBadge sessionId={sessionId} />
         </Pressable>
     );
 });
