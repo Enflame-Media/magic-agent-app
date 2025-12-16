@@ -48,12 +48,13 @@ export const MultiEditViewFull = React.memo<MultiEditViewFullProps>(({ tool, met
                                 </View>
                             )}
                         </View>
-                        <DiffView 
-                            oldText={oldString} 
-                            newText={newString} 
+                        <DiffView
+                            oldText={oldString}
+                            newText={newString}
                             wrapLines={wrapLinesInDiffs}
                             showLineNumbers={true}
                             showPlusMinusSymbols={true}
+                            enableTruncation={true}
                         />
                         {index < edits.length - 1 && <View style={styles.separator} />}
                     </View>

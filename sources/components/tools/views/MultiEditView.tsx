@@ -30,12 +30,13 @@ export const MultiEditView = React.memo<ToolViewProps>(({ tool }) => {
                 
                 return (
                     <View key={index}>
-                        <DiffView 
-                            oldText={oldString} 
-                            newText={newString} 
+                        <DiffView
+                            oldText={oldString}
+                            newText={newString}
                             wrapLines={wrapLinesInDiffs}
                             showLineNumbers={showLineNumbersInToolViews}
                             showPlusMinusSymbols={showLineNumbersInToolViews}
+                            enableTruncation={true}
                         />
                         {index < edits.length - 1 && <View style={styles.separator} />}
                     </View>
