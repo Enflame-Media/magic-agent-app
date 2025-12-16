@@ -1,8 +1,13 @@
-import React, { useMemo } from 'react';
-import { View, Text, ViewStyle } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, ViewStyle, Pressable, LayoutAnimation } from 'react-native';
 import { calculateUnifiedDiff, DiffToken } from '@/components/diff/calculateDiff';
 import { Typography } from '@/constants/Typography';
 import { useUnistyles } from 'react-native-unistyles';
+import { t } from '@/text';
+
+// Truncation thresholds for large diffs
+const LINE_THRESHOLD = 100;  // Truncate if diff has more than this many lines
+const INITIAL_LINES = 30;    // Show this many lines when truncated
 
 
 interface DiffViewProps {
@@ -18,6 +23,8 @@ interface DiffViewProps {
     maxHeight?: number;
     wrapLines?: boolean;
     fontScaleX?: number;
+    /** Enable truncation for large diffs. Defaults to false for backwards compatibility. */
+    enableTruncation?: boolean;
 }
 
 export const DiffView: React.FC<DiffViewProps> = ({
@@ -29,8 +36,9 @@ export const DiffView: React.FC<DiffViewProps> = ({
     wrapLines = false,
     style,
     fontScaleX = 1,
+    enableTruncation = false,
 }) => {
-    // Always use light theme colors
+    const [expanded, setExpanded] = useState(false);
     const { theme } = useUnistyles();
     const colors = theme.colors.diff;
 
@@ -38,6 +46,21 @@ export const DiffView: React.FC<DiffViewProps> = ({
     const { hunks } = useMemo(() => {
         return calculateUnifiedDiff(oldText, newText, contextLines);
     }, [oldText, newText, contextLines]);
+
+    // Calculate total line count across all hunks
+    const totalLineCount = useMemo(() => {
+        return hunks.reduce((acc, hunk) => acc + hunk.lines.length, 0);
+    }, [hunks]);
+
+    // Determine if truncation is needed
+    const needsTruncation = enableTruncation && totalLineCount > LINE_THRESHOLD;
+    const hiddenLines = needsTruncation && !expanded ? totalLineCount - INITIAL_LINES : 0;
+
+    // Toggle handler with animation
+    const handleToggle = useCallback(() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(!expanded);
+    }, [expanded]);
 
     // Styles
     const containerStyle: ViewStyle = {
@@ -127,13 +150,17 @@ export const DiffView: React.FC<DiffViewProps> = ({
     // Render diff content as separate lines to prevent wrapping
     const renderDiffContent = () => {
         const lines: React.ReactNode[] = [];
-        
-        hunks.forEach((hunk, hunkIndex) => {
-            // Add hunk header for non-first hunks
-            if (hunkIndex > 0) {
+        let linesRendered = 0;
+        const maxLines = needsTruncation && !expanded ? INITIAL_LINES : Infinity;
+
+        outer: for (let hunkIndex = 0; hunkIndex < hunks.length; hunkIndex++) {
+            const hunk = hunks[hunkIndex];
+
+            // Add hunk header for non-first hunks (only if we haven't hit the limit)
+            if (hunkIndex > 0 && linesRendered < maxLines) {
                 lines.push(
-                    <Text 
-                        key={`hunk-header-${hunkIndex}`} 
+                    <Text
+                        key={`hunk-header-${hunkIndex}`}
                         numberOfLines={wrapLines ? undefined : 1}
                         style={{
                             ...Typography.mono(),
@@ -150,12 +177,17 @@ export const DiffView: React.FC<DiffViewProps> = ({
                 );
             }
 
-            hunk.lines.forEach((line, lineIndex) => {
+            for (let lineIndex = 0; lineIndex < hunk.lines.length; lineIndex++) {
+                if (linesRendered >= maxLines) {
+                    break outer;
+                }
+
+                const line = hunk.lines[lineIndex];
                 const isAdded = line.type === 'add';
                 const isRemoved = line.type === 'remove';
                 const textColor = isAdded ? colors.addedText : isRemoved ? colors.removedText : colors.contextText;
                 const bgColor = isAdded ? colors.addedBg : isRemoved ? colors.removedBg : colors.contextBg;
-                
+
                 // Render complete line in a single Text element
                 lines.push(
                     <Text
@@ -189,15 +221,25 @@ export const DiffView: React.FC<DiffViewProps> = ({
                         {renderLineContent(line.content, textColor, line.tokens)}
                     </Text>
                 );
-            });
-        });
-        
+                linesRendered++;
+            }
+        }
+
         return lines;
     };
 
     return (
         <View style={[containerStyle, { overflow: 'hidden' }]}>
             {renderDiffContent()}
+            {needsTruncation && (
+                <Pressable onPress={handleToggle} style={showMoreStyles.container}>
+                    <Text style={[showMoreStyles.text, { color: theme.colors.textLink }]}>
+                        {expanded
+                            ? t('message.showLess')
+                            : t('message.showMore', { lines: hiddenLines })}
+                    </Text>
+                </Pressable>
+            )}
         </View>
     );
 
@@ -238,5 +280,18 @@ export const DiffView: React.FC<DiffViewProps> = ({
     //         </ScrollView>
     //     </View>
     // );
+};
+
+// Styles for the show more/less button
+const showMoreStyles = {
+    container: {
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        alignItems: 'flex-start' as const,
+    },
+    text: {
+        fontSize: 14,
+        fontWeight: '500' as const,
+    },
 };
 

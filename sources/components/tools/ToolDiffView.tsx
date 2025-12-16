@@ -9,24 +9,28 @@ interface ToolDiffViewProps {
     style?: any;
     showLineNumbers?: boolean;
     showPlusMinusSymbols?: boolean;
+    /** Enable truncation for large diffs. Defaults to true for tool outputs. */
+    enableTruncation?: boolean;
 }
 
-export const ToolDiffView = React.memo<ToolDiffViewProps>(({ 
-    oldText, 
-    newText, 
-    style, 
+export const ToolDiffView = React.memo<ToolDiffViewProps>(({
+    oldText,
+    newText,
+    style,
     showLineNumbers = false,
-    showPlusMinusSymbols = false 
+    showPlusMinusSymbols = false,
+    enableTruncation = true
 }) => {
     const wrapLines = useSetting('wrapLinesInDiffs');
-    
+
     const diffView = (
-        <DiffView 
-            oldText={oldText} 
-            newText={newText} 
+        <DiffView
+            oldText={oldText}
+            newText={newText}
             wrapLines={wrapLines}
             showLineNumbers={showLineNumbers}
             showPlusMinusSymbols={showPlusMinusSymbols}
+            enableTruncation={enableTruncation}
             style={{ flex: 1, ...style }}
         />
     );

@@ -1,6 +1,30 @@
 import * as React from 'react';
-import { Text, View, StyleSheet, Platform } from 'react-native';
+import { Text, View, StyleSheet, Platform, Pressable, LayoutAnimation } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
+import { t } from '@/text';
+
+// Truncation thresholds for large command outputs
+const LINE_THRESHOLD = 100;  // Truncate if output has more than this many lines
+const INITIAL_LINES = 30;    // Show this many lines when truncated
+
+// Helper to truncate text content
+function truncateContent(content: string | null | undefined, expanded: boolean, enableTruncation: boolean): { text: string | null; needsTruncation: boolean; hiddenLines: number } {
+    if (!content || !content.trim()) {
+        return { text: null, needsTruncation: false, hiddenLines: 0 };
+    }
+
+    const lines = content.split('\n');
+    const needsTruncation = enableTruncation && lines.length > LINE_THRESHOLD;
+
+    if (needsTruncation && !expanded) {
+        return {
+            text: lines.slice(0, INITIAL_LINES).join('\n'),
+            needsTruncation: true,
+            hiddenLines: lines.length - INITIAL_LINES
+        };
+    }
+    return { text: content, needsTruncation, hiddenLines: 0 };
+}
 
 interface CommandViewProps {
     command: string;
@@ -13,6 +37,8 @@ interface CommandViewProps {
     maxHeight?: number;
     fullWidth?: boolean;
     hideEmptyOutput?: boolean;
+    /** Enable truncation for large outputs. Defaults to true. */
+    enableTruncation?: boolean;
 }
 
 export const CommandView = React.memo<CommandViewProps>(({
@@ -25,10 +51,26 @@ export const CommandView = React.memo<CommandViewProps>(({
     maxHeight,
     fullWidth,
     hideEmptyOutput,
+    enableTruncation = true,
 }) => {
+    const [expanded, setExpanded] = React.useState(false);
     const { theme } = useUnistyles();
     // Use legacy output if new props aren't provided
     const hasNewProps = stdout !== undefined || stderr !== undefined || error !== undefined;
+
+    // Calculate truncation for each output type
+    const stdoutResult = React.useMemo(() => truncateContent(stdout, expanded, enableTruncation), [stdout, expanded, enableTruncation]);
+    const stderrResult = React.useMemo(() => truncateContent(stderr, expanded, enableTruncation), [stderr, expanded, enableTruncation]);
+    const legacyResult = React.useMemo(() => truncateContent(output, expanded, enableTruncation), [output, expanded, enableTruncation]);
+
+    // Calculate total hidden lines
+    const needsTruncation = stdoutResult.needsTruncation || stderrResult.needsTruncation || legacyResult.needsTruncation;
+    const totalHiddenLines = stdoutResult.hiddenLines + stderrResult.hiddenLines + legacyResult.hiddenLines;
+
+    const handleToggle = React.useCallback(() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(!expanded);
+    }, [expanded]);
 
     const styles = StyleSheet.create({
         container: {
@@ -87,6 +129,15 @@ export const CommandView = React.memo<CommandViewProps>(({
             marginTop: 8,
             fontStyle: 'italic',
         },
+        showMoreContainer: {
+            paddingTop: 8,
+            alignItems: 'flex-start' as const,
+        },
+        showMoreText: {
+            color: theme.colors.textLink,
+            fontSize: 14,
+            fontWeight: '500' as const,
+        },
     });
 
     return (
@@ -104,13 +155,13 @@ export const CommandView = React.memo<CommandViewProps>(({
             {hasNewProps ? (
                 <>
                     {/* Standard Output */}
-                    {stdout && stdout.trim() && (
-                        <Text style={styles.stdout}>{stdout}</Text>
+                    {stdoutResult.text && (
+                        <Text style={styles.stdout}>{stdoutResult.text}</Text>
                     )}
 
                     {/* Standard Error */}
-                    {stderr && stderr.trim() && (
-                        <Text style={styles.stderr}>{stderr}</Text>
+                    {stderrResult.text && (
+                        <Text style={styles.stderr}>{stderrResult.text}</Text>
                     )}
 
                     {/* Error Message */}
@@ -125,9 +176,20 @@ export const CommandView = React.memo<CommandViewProps>(({
                 </>
             ) : (
                 /* Legacy output format */
-                output && (
-                    <Text style={styles.commandText}>{'\n---\n' + output}</Text>
+                legacyResult.text && (
+                    <Text style={styles.commandText}>{'\n---\n' + legacyResult.text}</Text>
                 )
+            )}
+
+            {/* Show more/less button */}
+            {needsTruncation && (
+                <Pressable onPress={handleToggle} style={styles.showMoreContainer}>
+                    <Text style={styles.showMoreText}>
+                        {expanded
+                            ? t('message.showLess')
+                            : t('message.showMore', { lines: totalHiddenLines })}
+                    </Text>
+                </Pressable>
             )}
         </View>
     );
