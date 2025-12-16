@@ -3,6 +3,8 @@ import '../theme.css';
 import * as React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Fonts from 'expo-font';
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 // Icon fonts are loaded on-demand by @expo/vector-icons v15+
 // Use direct imports (e.g., '@expo/vector-icons/Ionicons') throughout codebase for tree-shaking
 import { AuthCredentials, TokenStorage } from '@/auth/tokenStorage';
@@ -234,6 +236,38 @@ export default function RootLayout() {
 
     // Track the screens
     useTrackScreens()
+
+    // Handle notification taps - navigates to session when user taps a context warning notification
+    // Uses useLastNotificationResponse which handles:
+    // - Foreground: app is active when notification is tapped
+    // - Background: app is backgrounded when notification is tapped
+    // - Cold start: app was killed and launched by tapping notification
+    const lastNotificationResponse = Notifications.useLastNotificationResponse();
+    React.useEffect(() => {
+        if (!initState || !lastNotificationResponse) {
+            return;
+        }
+        // Only handle default tap action (not custom action buttons)
+        if (lastNotificationResponse.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
+            return;
+        }
+        // Cast to expected notification data shape from CLI
+        // Format: { screen: 'session', params: { id: sessionId } }
+        const data = lastNotificationResponse.notification.request.content.data as {
+            screen?: string;
+            params?: { id?: string };
+        };
+        // Navigate to session if notification contains session screen data
+        if (data?.screen === 'session' && data?.params?.id) {
+            const sessionId = data.params.id;
+            // Basic validation - session IDs should be non-empty strings
+            if (sessionId.length > 0) {
+                router.push(`/(app)/session/${sessionId}`);
+                // Clear the response so we don't navigate again on re-renders
+                Notifications.clearLastNotificationResponseAsync();
+            }
+        }
+    }, [initState, lastNotificationResponse]);
 
     //
     // Not inited - show debug info while loading
