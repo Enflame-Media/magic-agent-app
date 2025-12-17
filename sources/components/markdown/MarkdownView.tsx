@@ -11,6 +11,7 @@ import { useLocalSetting } from '@/sync/storage';
 import { storeTempText } from '@/sync/persistence';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import { MermaidRenderer } from './MermaidRenderer';
 import { t } from '@/text';
 
@@ -145,6 +146,10 @@ function RenderCodeBlock(props: { content: string, language: string | null, firs
 
     const copyCode = React.useCallback(async () => {
         try {
+            // Haptic feedback on native platforms for tactile confirmation
+            if (Platform.OS !== 'web') {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
             await Clipboard.setStringAsync(props.content);
             Modal.alert(t('common.success'), t('markdown.codeCopied'), [{ text: t('common.ok'), style: 'cancel' }]);
         } catch (error) {
@@ -161,20 +166,15 @@ function RenderCodeBlock(props: { content: string, language: string | null, firs
             Animated.timing(opacity, {
                 toValue: 1,
                 duration: 150,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }).start();
         });
         return () => task.cancel();
     }, [opacity]);
 
-    return (
-        <View
-            style={[style.codeBlock, props.first && style.first, props.last && style.last, { minHeight: estimatedHeight }]}
-            // @ts-ignore - Web only events for hover copy button
-            onMouseEnter={Platform.OS === 'web' ? () => setIsHovered(true) : undefined}
-            // @ts-ignore - Web only events
-            onMouseLeave={Platform.OS === 'web' ? () => setIsHovered(false) : undefined}
-        >
+    // Code block content shared between web and native
+    const codeBlockContent = (
+        <>
             {props.language && <Text selectable={props.selectable} style={style.codeLanguage}>{props.language}</Text>}
             {!isReady ? (
                 // Placeholder: Same background, just empty space
@@ -204,6 +204,32 @@ function RenderCodeBlock(props: { content: string, language: string | null, firs
                     </Pressable>
                 </View>
             )}
+        </>
+    );
+
+    // Native platforms: Long-press to copy with haptic feedback
+    // Web: Hover-based copy button (unchanged)
+    if (Platform.OS !== 'web') {
+        return (
+            <Pressable
+                onLongPress={copyCode}
+                delayLongPress={400}
+                style={[style.codeBlock, props.first && style.first, props.last && style.last, { minHeight: estimatedHeight }]}
+            >
+                {codeBlockContent}
+            </Pressable>
+        );
+    }
+
+    return (
+        <View
+            style={[style.codeBlock, props.first && style.first, props.last && style.last, { minHeight: estimatedHeight }]}
+            // @ts-ignore - Web only events for hover copy button
+            onMouseEnter={() => setIsHovered(true)}
+            // @ts-ignore - Web only events
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {codeBlockContent}
         </View>
     );
 }
