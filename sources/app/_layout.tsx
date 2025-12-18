@@ -3,7 +3,7 @@ import '../theme.css';
 import * as React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Fonts from 'expo-font';
-import { markAppStart, markFirstRender } from '@/utils/performance';
+import { markAppStart, markFirstRender, useResourceMonitoring } from '@/utils/performance';
 
 // Mark app start as early as possible in module load
 markAppStart();
@@ -241,6 +241,9 @@ export default function RootLayout() {
 
     // Track the screens
     useTrackScreens()
+
+    // Monitor JS thread blocking and memory usage (HAP-381)
+    useResourceMonitoring();
 
     //
     // Not inited - show debug info while loading
