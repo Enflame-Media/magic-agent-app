@@ -387,6 +387,7 @@ export const pl: TranslationStructure = {
         copySessionId: 'Kopiuj ID sesji',
         changeMode: 'Zmień tryb',
         changeModel: 'Zmień model',
+        select: 'Wybierz',
     },
 
     swipeActions: {

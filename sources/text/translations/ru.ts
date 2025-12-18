@@ -336,6 +336,7 @@ export const ru: TranslationStructure = {
         copySessionId: 'Копировать ID сессии',
         changeMode: 'Изменить режим',
         changeModel: 'Изменить модель',
+        select: 'Выбрать',
     },
 
     swipeActions: {

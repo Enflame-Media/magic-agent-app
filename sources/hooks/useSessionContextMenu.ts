@@ -30,12 +30,18 @@ import { useHappyAction } from './useHappyAction';
 
 const ARCHIVE_UNDO_DURATION = 5000; // 5 seconds to undo
 
+interface UseSessionContextMenuOptions {
+    /** Optional callback when "Select" is chosen - enters multi-select mode and pre-selects this session */
+    onSelect?: () => void;
+}
+
 /**
  * Hook that returns a function to show context menu for a session
  * @param session - The session to show actions for
+ * @param options - Optional configuration including onSelect callback for multi-select mode
  * @returns Object with showContextMenu function
  */
-export function useSessionContextMenu(session: Session) {
+export function useSessionContextMenu(session: Session, options?: UseSessionContextMenuOptions) {
     const router = useRouter();
     const sessionStatus = useSessionStatus(session);
 
@@ -81,10 +87,10 @@ export function useSessionContextMenu(session: Session) {
         // Trigger haptic feedback
         hapticsLight();
 
-        const options: ActionSheetOption[] = [];
+        const menuOptions: ActionSheetOption[] = [];
 
         // View session info - always available
-        options.push({
+        menuOptions.push({
             label: t('sessionContextMenu.viewInfo'),
             onPress: () => {
                 router.push(`/session/${session.id}/info`);
@@ -92,7 +98,7 @@ export function useSessionContextMenu(session: Session) {
         });
 
         // Copy session ID - always available
-        options.push({
+        menuOptions.push({
             label: t('sessionContextMenu.copySessionId'),
             onPress: async () => {
                 try {
@@ -104,11 +110,21 @@ export function useSessionContextMenu(session: Session) {
             },
         });
 
+        // Select - only when onSelect callback is provided (for multi-select eligible sessions)
+        if (options?.onSelect) {
+            menuOptions.push({
+                label: t('sessionContextMenu.select'),
+                onPress: () => {
+                    options.onSelect?.();
+                },
+            });
+        }
+
         // Change mode - only for connected sessions
         if (sessionStatus.isConnected) {
             const isCodex = session.metadata?.flavor === 'gpt' || session.metadata?.flavor === 'openai';
 
-            options.push({
+            menuOptions.push({
                 label: t('sessionContextMenu.changeMode'),
                 onPress: () => {
                     const modeOptions: ActionSheetOption[] = isCodex
@@ -157,7 +173,7 @@ export function useSessionContextMenu(session: Session) {
             });
 
             // Change model - only for connected sessions
-            options.push({
+            menuOptions.push({
                 label: t('sessionContextMenu.changeModel'),
                 onPress: () => {
                     const modelOptions: ActionSheetOption[] = isCodex
@@ -204,7 +220,7 @@ export function useSessionContextMenu(session: Session) {
 
         // Archive session - only for connected sessions (uses undo toast pattern)
         if (sessionStatus.isConnected) {
-            options.push({
+            menuOptions.push({
                 label: t('sessionInfo.archiveSession'),
                 destructive: true,
                 onPress: () => {
@@ -236,7 +252,7 @@ export function useSessionContextMenu(session: Session) {
 
         // Delete session - only for disconnected, inactive sessions
         if (!sessionStatus.isConnected && !session.active) {
-            options.push({
+            menuOptions.push({
                 label: t('sessionInfo.deleteSession'),
                 destructive: true,
                 onPress: () => {
@@ -257,9 +273,9 @@ export function useSessionContextMenu(session: Session) {
         }
 
         showActionSheet({
-            options,
+            options: menuOptions,
         });
-    }, [session, sessionStatus, router, performArchive, performDelete, handleUndoArchive]);
+    }, [session, sessionStatus, router, performArchive, performDelete, handleUndoArchive, options]);
 
     return { showContextMenu };
 }

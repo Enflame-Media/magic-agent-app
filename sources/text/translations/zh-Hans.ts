@@ -378,6 +378,7 @@ export const zhHans: TranslationStructure = {
         copySessionId: '复制会话 ID',
         changeMode: '更改模式',
         changeModel: '更改模型',
+        select: '选择',
     },
 
     swipeActions: {

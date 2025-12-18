@@ -475,9 +475,19 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle, 
     const sessionSubtitle = getSessionSubtitle(session);
     const navigateToSession = useNavigateToSession();
     const isTablet = useIsTablet();
-    const { showContextMenu } = useSessionContextMenu(session);
     const { messages } = useSessionMessages(session.id);
-    const { isSelectMode, isSelected, toggleItem } = useMultiSelectContext();
+    const { isSelectMode, isSelected, toggleItem, enterSelectMode } = useMultiSelectContext();
+
+    // Callback for "Select" option in context menu - enters multi-select mode and pre-selects this session
+    const handleSelectFromContextMenu = React.useCallback(() => {
+        enterSelectMode();
+        toggleItem(session.id);
+    }, [enterSelectMode, toggleItem, session.id]);
+
+    // Pass onSelect callback only for eligible sessions
+    const { showContextMenu } = useSessionContextMenu(session, isEligibleForSelect ? {
+        onSelect: handleSelectFromContextMenu,
+    } : undefined);
 
     // Get last user message preview for session identification
     const messagePreview = React.useMemo(() => {

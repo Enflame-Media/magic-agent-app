@@ -376,6 +376,7 @@ export const ca: TranslationStructure = {
         copySessionId: 'Copia l\'ID de la sessió',
         changeMode: 'Canvia el mode',
         changeModel: 'Canvia el model',
+        select: 'Selecciona',
     },
 
     swipeActions: {

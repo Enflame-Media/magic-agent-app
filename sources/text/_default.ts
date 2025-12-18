@@ -473,6 +473,7 @@ export const en = {
         copySessionId: 'Copy Session ID',
         changeMode: 'Change Mode',
         changeModel: 'Change Model',
+        select: 'Select',
     },
 
     swipeActions: {
