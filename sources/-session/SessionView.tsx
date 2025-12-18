@@ -629,11 +629,9 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
 
     return (
         <>
-            {/* Voice Assistant Status Bar - positioned as overlay at top */}
+            {/* Voice Assistant Status Bar - HAP-313: Minimal floating indicator */}
             {!isTablet && !(isLandscape && deviceType === 'phone') && realtimeStatus !== 'disconnected' && (
-                <View style={styles.voiceStatusBarPosition}>
-                    <VoiceAssistantStatusBar variant="full" />
-                </View>
+                <VoiceAssistantStatusBar variant="floating" />
             )}
 
             {/* HAP-327: Session Tabs - horizontal scrollable tab bar for quick session switching */}
@@ -764,14 +762,6 @@ const stylesheet = StyleSheet.create((theme) => ({
         marginTop: 8,
         textAlign: 'center',
         paddingHorizontal: 32,
-    },
-    // Voice status bar position
-    voiceStatusBarPosition: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 999,
     },
     // HAP-327: Session tabs position - below header, above expandable metadata
     sessionTabsPosition: {

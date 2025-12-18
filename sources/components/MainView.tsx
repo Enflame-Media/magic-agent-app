@@ -154,8 +154,9 @@ export const MainView = React.memo(({ variant }: MainViewProps) => {
     // Regular phone mode with tabs
     return (
         <>
+            {/* HAP-313: Minimal floating indicator */}
             {realtimeStatus !== 'disconnected' && (
-                <VoiceAssistantStatusBar variant="full" />
+                <VoiceAssistantStatusBar variant="floating" />
             )}
             <View style={styles.phoneContainer}>
                 {renderTabContent()}
