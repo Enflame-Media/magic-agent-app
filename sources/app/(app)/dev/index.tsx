@@ -223,6 +223,12 @@ function DevScreen() {
                     onPress={() => router.push('/dev/shimmer-demo')}
                 />
                 <Item
+                    title="Masked Progress"
+                    subtitle="Gradient progress indicators with masks"
+                    icon={<Ionicons name="pie-chart-outline" size={28} color="#8B5CF6" />}
+                    onPress={() => router.push('/dev/masked-progress')}
+                />
+                <Item
                     title="Multi Text Input"
                     subtitle="Auto-growing multiline text input"
                     icon={<Ionicons name="create-outline" size={28} color="#007AFF" />}

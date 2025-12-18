@@ -54,7 +54,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 Animated.timing(fadeAnim, {
                     toValue: 0,
                     duration: 200,
-                    useNativeDriver: true,
+                    useNativeDriver: Platform.OS !== 'web',
                 }).start(() => {
                     setState({ current: null });
                 });
@@ -92,7 +92,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         fadeAnim.setValue(0);
         Animated.spring(fadeAnim, {
             toValue: 1,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
             damping: 15,
             stiffness: 150,
         }).start();

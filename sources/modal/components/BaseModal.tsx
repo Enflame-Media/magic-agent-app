@@ -32,13 +32,13 @@ export function BaseModal({
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 200,
-                useNativeDriver: true
+                useNativeDriver: Platform.OS !== 'web'
             }).start();
         } else {
             Animated.timing(fadeAnim, {
                 toValue: 0,
                 duration: 200,
-                useNativeDriver: true
+                useNativeDriver: Platform.OS !== 'web'
             }).start();
         }
     }, [visible, fadeAnim]);
