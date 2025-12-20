@@ -286,6 +286,9 @@ export const zhHans: TranslationStructure = {
         noMachineSelected: '请选择一台设备以启动会话',
         noPathSelected: '请选择一个目录以启动会话',
         sessionStartingSlow: '会话正在缓慢启动。准备就绪后将出现在您的会话列表中。您可能需要重新发送提示词。',
+        sessionPolling: '会话正在启动，请稍候...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `等待会话中... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: '会话启动失败。守护进程可能未能及时响应。请检查 CLI 日志并重试。',
         sessionType: {
             title: '会话类型',
             simple: '简单',

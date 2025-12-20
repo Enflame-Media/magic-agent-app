@@ -279,6 +279,9 @@ export const en = {
         noMachineSelected: 'Please select a machine to start the session',
         noPathSelected: 'Please select a directory to start the session in',
         sessionStartingSlow: 'Session is starting slowly. It will appear in your sessions list once ready. You may need to send your prompt again.',
+        sessionPolling: 'Session starting, please wait...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `Waiting for session... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: 'Session failed to start. The daemon may not have responded in time. Please check CLI logs and try again.',
         sessionType: {
             title: 'Session Type',
             simple: 'Simple',

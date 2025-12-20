@@ -5,6 +5,7 @@
 
 import { apiSocket } from './apiSocket';
 import { sync } from './sync';
+import { storage } from './storage';
 import type { MachineMetadata } from './storageTypes';
 import { AppError, ErrorCodes } from '@/utils/errors';
 
@@ -139,6 +140,66 @@ export type SpawnSessionResult =
  */
 export function isTemporaryPidSessionId(sessionId: string): boolean {
     return sessionId.startsWith('PID-');
+}
+
+/**
+ * Options for polling for a real session after temporary PID-based ID was returned
+ */
+export interface PollForSessionOptions {
+    /** Polling interval in milliseconds (default: 5000) */
+    interval?: number;
+    /** Maximum number of polling attempts (default: 24, = 2 minutes with 5s interval) */
+    maxAttempts?: number;
+    /** Callback invoked on each poll attempt (for UI updates) */
+    onPoll?: (attempt: number, maxAttempts: number) => void;
+}
+
+/**
+ * Polls for a real session ID after daemon returned a temporary PID-based ID.
+ *
+ * When the daemon's webhook times out, it returns a PID-{pid} session ID.
+ * The actual session may still be starting. This function polls the session list
+ * waiting for a real session to appear on the specified machine.
+ *
+ * @param machineId - The machine where the session was spawned
+ * @param spawnStartTime - Timestamp when spawn was initiated (sessions created after this are considered)
+ * @param options - Polling configuration
+ * @returns The real session ID if found, null if polling timed out
+ */
+export async function pollForRealSession(
+    machineId: string,
+    spawnStartTime: number,
+    options: PollForSessionOptions = {}
+): Promise<string | null> {
+    const { interval = 5000, maxAttempts = 24, onPoll } = options;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        // Wait before polling (skip first iteration to allow immediate check)
+        if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, interval));
+        }
+
+        // Notify caller of progress
+        onPoll?.(attempt + 1, maxAttempts);
+
+        // Refresh sessions from server
+        await sync.refreshSessions();
+
+        // Check for new session on this machine created after spawn start
+        const sessions = storage.getState().sessions;
+        const newSession = Object.values(sessions).find(
+            session =>
+                session.metadata?.machineId === machineId &&
+                session.createdAt > spawnStartTime
+        );
+
+        if (newSession) {
+            return newSession.id;
+        }
+    }
+
+    // Polling timed out - session never appeared
+    return null;
 }
 
 // Options for spawning a session

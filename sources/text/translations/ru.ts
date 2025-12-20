@@ -267,6 +267,9 @@ export const ru: TranslationStructure = {
         noMachineSelected: 'Пожалуйста, выберите машину для запуска сессии',
         noPathSelected: 'Пожалуйста, выберите директорию для запуска сессии',
         sessionStartingSlow: 'Сессия запускается медленно. Она появится в списке сессий, когда будет готова. Возможно, вам придётся отправить запрос повторно.',
+        sessionPolling: 'Сессия запускается, пожалуйста подождите...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `Ожидание сессии... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: 'Не удалось запустить сессию. Daemon мог не ответить вовремя. Проверьте логи CLI и попробуйте снова.',
         sessionType: {
             title: 'Тип сессии',
             simple: 'Простая',

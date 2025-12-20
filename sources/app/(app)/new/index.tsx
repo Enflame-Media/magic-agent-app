@@ -13,7 +13,7 @@ import { MultiTextInputHandle } from '@/components/MultiTextInput';
 import { useHeaderHeight } from '@/utils/responsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
-import { machineSpawnNewSession, isTemporaryPidSessionId } from '@/sync/ops';
+import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
 import { Modal } from '@/modal';
 import { sync } from '@/sync/sync';
 import { SessionTypeSelector } from '@/components/SessionTypeSelector';
@@ -141,6 +141,8 @@ function NewSessionScreen() {
     });
     const [isSending, setIsSending] = React.useState(false);
     const [sessionType, setSessionType] = React.useState<'simple' | 'worktree'>('simple');
+    // State for pending session polling (HAP-443)
+    const [pendingSessionStatus, setPendingSessionStatus] = React.useState<string | null>(null);
     const ref = React.useRef<MultiTextInputHandle>(null);
     const headerHeight = useHeaderHeight();
     const safeArea = useSafeAreaInsets();
@@ -445,17 +447,46 @@ function NewSessionScreen() {
 
             // Use sessionId to check for success for backwards compatibility
             if ('sessionId' in result && result.sessionId) {
+                let sessionId = result.sessionId;
+
                 // Check if this is a temporary PID-based session ID
                 // (returned when daemon's webhook timeout exceeded but process was spawned)
+                // HAP-443: Poll for the real session instead of redirecting immediately
                 if (isTemporaryPidSessionId(result.sessionId)) {
-                    // Session is starting slowly - inform user and go to home
-                    // The session will appear once it's fully created
-                    Modal.alert(
-                        t('common.note'),
-                        t('newSession.sessionStartingSlow')
+                    setPendingSessionStatus(t('newSession.sessionPolling'));
+
+                    // Record spawn time for session matching
+                    const spawnStartTime = Date.now();
+
+                    // Poll for the real session ID (5s intervals, up to 2 minutes)
+                    const realSessionId = await pollForRealSession(
+                        selectedMachineId,
+                        spawnStartTime,
+                        {
+                            interval: 5000,
+                            maxAttempts: 24,
+                            onPoll: (attempt, maxAttempts) => {
+                                setPendingSessionStatus(
+                                    t('newSession.sessionPollingProgress', { attempt, maxAttempts })
+                                );
+                            }
+                        }
                     );
-                    router.replace('/');
-                    return;
+
+                    if (!realSessionId) {
+                        // Polling timed out - session never appeared
+                        setPendingSessionStatus(null);
+                        Modal.alert(
+                            t('common.error'),
+                            t('newSession.sessionStartFailed')
+                        );
+                        router.replace('/');
+                        return;
+                    }
+
+                    // Use the real session ID from now on
+                    sessionId = realSessionId;
+                    setPendingSessionStatus(null);
                 }
 
                 // Store worktree metadata if applicable
@@ -470,7 +501,7 @@ function NewSessionScreen() {
                         : `Clarify: ${tempSessionData.taskTitle}`;
                     await linkTaskToSession(
                         tempSessionData.taskId,
-                        result.sessionId,
+                        sessionId,
                         tempSessionData.taskTitle,
                         promptDisplayTitle
                     );
@@ -480,13 +511,13 @@ function NewSessionScreen() {
                 await sync.refreshSessions();
 
                 // Set permission and model modes on the session
-                storage.getState().updateSessionPermissionMode(result.sessionId, permissionMode);
-                storage.getState().updateSessionModelMode(result.sessionId, modelMode);
+                storage.getState().updateSessionPermissionMode(sessionId, permissionMode);
+                storage.getState().updateSessionModelMode(sessionId, modelMode);
 
                 // Send message
-                await sync.sendMessage(result.sessionId, input);
+                await sync.sendMessage(sessionId, input);
                 // Navigate to session
-                router.replace(`/session/${result.sessionId}`, {
+                router.replace(`/session/${sessionId}`, {
                     dangerouslySingular() {
                         return 'session'
                     },
@@ -551,7 +582,7 @@ function NewSessionScreen() {
                     value={input}
                     onChangeText={setInput}
                     onSend={doCreate}
-                    isSending={isSending}
+                    isSending={isSending || pendingSessionStatus !== null}
                     agentType={agentType}
                     onAgentClick={handleAgentClick}
                     machineName={selectedMachine?.metadata?.displayName || selectedMachine?.metadata?.host || null}
@@ -563,6 +594,26 @@ function NewSessionScreen() {
                     autocompletePrefixes={[]}
                     autocompleteSuggestions={async () => []}
                 />
+
+                {/* Pending session status indicator (HAP-443) */}
+                {pendingSessionStatus && (
+                    <View style={[
+                        { paddingHorizontal: screenWidth > 700 ? 16 : 8, flexDirection: 'row', justifyContent: 'center' }
+                    ]}>
+                        <View style={[
+                            { maxWidth: layout.maxWidth, flex: 1, paddingVertical: 8 }
+                        ]}>
+                            <Text style={{
+                                fontSize: 13,
+                                color: theme.colors.textSecondary,
+                                textAlign: 'center',
+                                ...Typography.default('regular'),
+                            }}>
+                                {pendingSessionStatus}
+                            </Text>
+                        </View>
+                    </View>
+                )}
 
                 <View style={[
                     { paddingHorizontal: screenWidth > 700 ? 16 : 8, flexDirection: 'row', justifyContent: 'center' }

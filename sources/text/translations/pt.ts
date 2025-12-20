@@ -284,6 +284,9 @@ export const pt: TranslationStructure = {
         noMachineSelected: 'Por favor, selecione uma máquina para iniciar a sessão',
         noPathSelected: 'Por favor, selecione um diretório para iniciar a sessão',
         sessionStartingSlow: 'A sessão está iniciando lentamente. Ela aparecerá na sua lista de sessões quando estiver pronta. Pode ser necessário enviar seu prompt novamente.',
+        sessionPolling: 'Sessão iniciando, por favor aguarde...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `Aguardando sessão... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: 'Falha ao iniciar a sessão. O daemon pode não ter respondido a tempo. Verifique os logs do CLI e tente novamente.',
         sessionType: {
             title: 'Tipo de sessão',
             simple: 'Simples',

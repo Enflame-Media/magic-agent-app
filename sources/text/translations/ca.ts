@@ -284,6 +284,9 @@ export const ca: TranslationStructure = {
         noMachineSelected: 'Si us plau, selecciona una màquina per iniciar la sessió',
         noPathSelected: 'Si us plau, selecciona un directori per iniciar la sessió',
         sessionStartingSlow: 'La sessió s\'està iniciant lentament. Apareixerà a la llista de sessions quan estigui llesta. Pot ser que hagis de tornar a enviar el missatge.',
+        sessionPolling: 'La sessió s\'està iniciant, si us plau espera...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `Esperant la sessió... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: 'No s\'ha pogut iniciar la sessió. El dimoni pot no haver respost a temps. Comprova els registres del CLI i torna-ho a provar.',
         sessionType: {
             title: 'Tipus de sessió',
             simple: 'Simple',

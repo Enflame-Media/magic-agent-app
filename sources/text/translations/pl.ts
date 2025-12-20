@@ -295,6 +295,9 @@ export const pl: TranslationStructure = {
         noMachineSelected: 'Proszę wybrać maszynę do rozpoczęcia sesji',
         noPathSelected: 'Proszę wybrać katalog do rozpoczęcia sesji',
         sessionStartingSlow: 'Sesja uruchamia się powoli. Pojawi się na liście sesji, gdy będzie gotowa. Może być konieczne ponowne wysłanie polecenia.',
+        sessionPolling: 'Sesja uruchamia się, proszę czekać...',
+        sessionPollingProgress: ({ attempt, maxAttempts }: { attempt: number; maxAttempts: number }) => `Oczekiwanie na sesję... (${attempt}/${maxAttempts})`,
+        sessionStartFailed: 'Nie udało się uruchomić sesji. Daemon mógł nie odpowiedzieć na czas. Sprawdź logi CLI i spróbuj ponownie.',
         sessionType: {
             title: 'Typ sesji',
             simple: 'Prosta',
