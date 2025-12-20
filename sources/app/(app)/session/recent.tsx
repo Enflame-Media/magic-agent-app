@@ -13,7 +13,7 @@ import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { Pressable } from 'react-native';
 import { t } from '@/text';
 import { isMachineOnline } from '@/utils/machineUtils';
-import { machineSpawnNewSession } from '@/sync/ops';
+import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
 import { Modal } from '@/modal';
 import { sync } from '@/sync/sync';
 import { useRouter } from 'expo-router';
@@ -264,11 +264,30 @@ function SessionHistory() {
             });
 
             if ('sessionId' in result && result.sessionId) {
+                let sessionId = result.sessionId;
+
+                // HAP-488: Check for temporary PID-based session ID
+                if (isTemporaryPidSessionId(result.sessionId)) {
+                    const spawnStartTime = Date.now();
+                    const realSessionId = await pollForRealSession(
+                        session.metadata.machineId,
+                        spawnStartTime,
+                        { interval: 5000, maxAttempts: 24 }
+                    );
+
+                    if (!realSessionId) {
+                        Modal.alert(t('common.error'), t('newSession.sessionStartFailed'));
+                        return;
+                    }
+
+                    sessionId = realSessionId;
+                }
+
                 // Refresh sessions to get the new one
                 await sync.refreshSessions();
 
                 // Navigate to the new session
-                router.replace(`/session/${result.sessionId}`, {
+                router.replace(`/session/${sessionId}`, {
                     dangerouslySingular() {
                         return 'session';
                     },

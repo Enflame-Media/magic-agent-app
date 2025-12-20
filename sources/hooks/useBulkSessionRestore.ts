@@ -15,7 +15,7 @@
  * await restore(sessions); // Sessions to restore
  */
 import * as React from 'react';
-import { machineSpawnNewSession, SpawnSessionResult } from '@/sync/ops';
+import { machineSpawnNewSession, SpawnSessionResult, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
 import { Session } from '@/sync/storageTypes';
 import { useAllMachines } from '@/sync/storage';
 import { isMachineOnline } from '@/utils/machineUtils';
@@ -192,11 +192,34 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                     );
 
                     if (result.type === 'success') {
+                        let newSessionId = result.sessionId;
+
+                        // HAP-488: Check for temporary PID-based session ID
+                        if (isTemporaryPidSessionId(result.sessionId)) {
+                            const spawnStartTime = Date.now();
+                            const realSessionId = await pollForRealSession(
+                                session.metadata.machineId,
+                                spawnStartTime,
+                                { interval: 5000, maxAttempts: 24 }
+                            );
+
+                            if (!realSessionId) {
+                                return {
+                                    sessionId: session.id,
+                                    sessionName,
+                                    success: false,
+                                    error: t('newSession.sessionStartFailed'),
+                                };
+                            }
+
+                            newSessionId = realSessionId;
+                        }
+
                         return {
                             sessionId: session.id,
                             sessionName,
                             success: true,
-                            newSessionId: result.sessionId,
+                            newSessionId,
                         };
                     } else if (result.type === 'error') {
                         return {

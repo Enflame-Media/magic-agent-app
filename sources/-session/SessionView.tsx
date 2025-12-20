@@ -13,7 +13,7 @@ import { Modal } from '@/modal';
 import { voiceHooks } from '@/realtime/hooks/voiceHooks';
 import { startRealtimeSession, stopRealtimeSession, updateCurrentSessionId } from '@/realtime/RealtimeSession';
 import { gitStatusSync } from '@/sync/gitStatusSync';
-import { sessionAbort, machineSpawnNewSession } from '@/sync/ops';
+import { sessionAbort, machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
 import { storage, useIsDataReady, useLocalSetting, useRealtimeStatus, useSessionMessages, useSessionUsage, useSetting, useAllSessions, useMachine } from '@/sync/storage';
 import { useSession } from '@/sync/storage';
 import { isMachineOnline } from '@/utils/machineUtils';
@@ -569,8 +569,26 @@ function SessionViewLoaded({ sessionId, session }: { sessionId: string, session:
             throw new HappyError(t('sessionInfo.failedToRestoreSession'), false);
         }
 
+        let sessionId = result.sessionId;
+
+        // HAP-488: Check for temporary PID-based session ID
+        if (isTemporaryPidSessionId(result.sessionId)) {
+            const spawnStartTime = Date.now();
+            const realSessionId = await pollForRealSession(
+                session.metadata.machineId,
+                spawnStartTime,
+                { interval: 5000, maxAttempts: 24 }
+            );
+
+            if (!realSessionId) {
+                throw new HappyError(t('newSession.sessionStartFailed'), false);
+            }
+
+            sessionId = realSessionId;
+        }
+
         Toast.show({ message: t('sessionInfo.restoreSessionSuccess') });
-        router.replace(`/session/${result.sessionId}`);
+        router.replace(`/session/${sessionId}`);
     });
 
     const input = (

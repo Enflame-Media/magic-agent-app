@@ -17,7 +17,7 @@ import { sync } from '@/sync/sync';
 import { useUnistyles, StyleSheet } from 'react-native-unistyles';
 import { t } from '@/text';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
-import { machineSpawnNewSession } from '@/sync/ops';
+import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
 import { resolveAbsolutePath } from '@/utils/pathUtils';
 import { MultiTextInput, type MultiTextInputHandle } from '@/components/MultiTextInput';
 
@@ -218,12 +218,32 @@ function MachineDetailScreen() {
                 approvedNewDirectoryCreation
             });
             switch (result.type) {
-                case 'success':
+                case 'success': {
+                    let sessionId = result.sessionId;
+
+                    // HAP-488: Check for temporary PID-based session ID
+                    if (isTemporaryPidSessionId(result.sessionId)) {
+                        const spawnStartTime = Date.now();
+                        const realSessionId = await pollForRealSession(
+                            machineId!,
+                            spawnStartTime,
+                            { interval: 5000, maxAttempts: 24 }
+                        );
+
+                        if (!realSessionId) {
+                            Modal.alert(t('common.error'), t('newSession.sessionStartFailed'));
+                            return;
+                        }
+
+                        sessionId = realSessionId;
+                    }
+
                     // Dismiss machine picker & machine detail screen
                     router.back();
                     router.back();
-                    navigateToSession(result.sessionId);
+                    navigateToSession(sessionId);
                     break;
+                }
                 case 'requestToApproveDirectoryCreation': {
                     const approved = await Modal.confirm('Create Directory?', `The directory '${result.directory}' does not exist. Would you like to create it?`, { cancelText: t('common.cancel'), confirmText: t('common.create') });
                     if (approved) {
