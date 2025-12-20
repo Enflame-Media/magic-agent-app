@@ -129,5 +129,3 @@ const styles = StyleSheet.create((theme) => ({
         width: 160,
     },
 }));
-
-export default ErrorBoundary;

@@ -8,6 +8,7 @@ import { isMachineOnline } from '@/utils/machineUtils';
 import { useRouter } from 'expo-router';
 import { t } from '@/text';
 import { OnboardingIllustration } from '@/components/OnboardingIllustration';
+import { LazyLottie } from '@/components/LazyLottie';
 
 const stylesheet = StyleSheet.create((theme) => ({
     container: {
@@ -140,12 +141,14 @@ export function EmptySessionsTablet() {
 
     return (
         <View style={styles.container}>
-            <Ionicons
-                name="terminal-outline"
-                size={64}
-                color={theme.colors.textSecondary}
-                style={styles.iconContainer}
-            />
+            <View style={styles.iconContainer}>
+                <LazyLottie
+                    name="robot"
+                    size={100}
+                    loop={true}
+                    speed={0.7}
+                />
+            </View>
 
             <Text style={styles.titleText}>
                 {t('components.emptySessionsTablet.noActiveSessions')}

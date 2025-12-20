@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Header } from './navigation/Header';
-import { useSocketStatus, useFriendRequests } from '@/sync/storage';
+import { useSocketStatus, useFriendRequests, useEntitlement } from '@/sync/storage';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { Typography } from '@/constants/Typography';
 import { StatusDot } from './StatusDot';
@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { t } from '@/text';
 import { useInboxHasContent } from '@/hooks/useInboxHasContent';
+import { PlusPlus } from './PlusPlus';
 
 const stylesheet = StyleSheet.create((theme) => ({
     headerButton: {
@@ -212,14 +213,19 @@ function HeaderRightNotAuth() {
 function HeaderLeft() {
     const styles = stylesheet;
     const { theme } = useUnistyles();
+    const isPro = __DEV__ || useEntitlement('pro');
+
     return (
-        <View style={styles.logoContainer}>
-            <Image
-                source={require('@/assets/images/logo-black.png')}
-                contentFit="contain"
-                style={[{ width: 24, height: 24 }]}
-                tintColor={theme.colors.header.tint}
-            />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.logoContainer}>
+                <Image
+                    source={require('@/assets/images/logo-black.png')}
+                    contentFit="contain"
+                    style={[{ width: 24, height: 24 }]}
+                    tintColor={theme.colors.header.tint}
+                />
+            </View>
+            {isPro && <PlusPlus fontSize={16} />}
         </View>
     );
 }
