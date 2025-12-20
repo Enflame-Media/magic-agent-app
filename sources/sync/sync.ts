@@ -1814,15 +1814,12 @@ class Sync {
     }
 
     private handleUpdate = async (update: unknown) => {
-        console.log('🔄 Sync: handleUpdate called with:', JSON.stringify(update).substring(0, 300));
         const validatedUpdate = ApiUpdateContainerSchema.safeParse(update);
         if (!validatedUpdate.success) {
-            console.log('❌ Sync: Invalid update received:', validatedUpdate.error);
-            console.error('❌ Sync: Invalid update data:', update);
+            log.log(`❌ Invalid update received: ${validatedUpdate.error}`);
             return;
         }
         const updateData = validatedUpdate.data;
-        console.log(`🔄 Sync: Validated update type: ${updateData.body.t}`);
 
         // HAP-441: Track seq for delta sync on reconnection
         // Map update types to their entity type for seq tracking
@@ -1863,7 +1860,6 @@ class Sync {
 
                     // Update messages
                     if (lastMessage) {
-                        console.log('🔄 Sync: Applying message:', JSON.stringify(lastMessage));
                         this.applyMessages(updateData.body.sid, [lastMessage]);
                         let hasMutableTool = false;
                         if (lastMessage.role === 'agent' && lastMessage.content[0] && lastMessage.content[0].type === 'tool-result') {
