@@ -141,6 +141,13 @@ class Sync {
      */
     private lastKnownSeq = new Map<string, number>();
 
+    /**
+     * HAP-491: ETag for profile conditional requests.
+     * When set, fetchProfile sends If-None-Match header. Server returns 304
+     * if profile unchanged, saving bandwidth on frequently polled data.
+     */
+    private profileETag: string | null = null;
+
     // Generic locking mechanism
     private recalculationLockCount = 0;
     private lastRecalculationTime = 0;
@@ -1441,15 +1448,36 @@ class Sync {
         if (!this.credentials) return;
 
         const API_ENDPOINT = getServerUrl();
+
+        // HAP-491: Build headers with conditional request support
+        const headers: HeadersInit = {
+            'Authorization': `Bearer ${this.credentials.token}`,
+            'Content-Type': 'application/json'
+        };
+
+        // Include If-None-Match header if we have a cached ETag
+        if (this.profileETag) {
+            headers['If-None-Match'] = this.profileETag;
+        }
+
         const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/account/profile`, {
-            headers: {
-                'Authorization': `Bearer ${this.credentials.token}`,
-                'Content-Type': 'application/json'
-            }
+            headers
         });
+
+        // HAP-491: Handle 304 Not Modified - profile unchanged, skip processing
+        if (response.status === 304) {
+            log.log('[sync] Profile unchanged (304)');
+            return;
+        }
 
         if (!response.ok) {
             throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to fetch profile: ${response.status}`, { canTryAgain: true });
+        }
+
+        // HAP-491: Store ETag from response for next conditional request
+        const newETag = response.headers.get('ETag');
+        if (newETag) {
+            this.profileETag = newETag;
         }
 
         const data = await response.json();
