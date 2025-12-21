@@ -23,13 +23,7 @@ export type FeedItem = z.infer<typeof FeedItemSchema>;
 
 // Feed response schema
 export const FeedResponseSchema = z.object({
-    items: z.array(z.object({
-        id: z.string(),
-        body: FeedBodySchema,
-        repeatKey: z.string().nullable(),
-        cursor: z.string(),
-        createdAt: z.number()
-    })),
+    items: z.array(FeedItemSchema),
     hasMore: z.boolean()
 });
 
