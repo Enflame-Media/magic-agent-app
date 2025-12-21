@@ -7,13 +7,32 @@ import { checkAuthError } from './apiHelper';
 import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 /**
- * Fetch all artifacts for the account
+ * Response from fetch artifacts endpoint
+ * HAP-492: Now includes maxSeq for incremental sync tracking
  */
-export async function fetchArtifacts(credentials: AuthCredentials): Promise<Artifact[]> {
+export interface FetchArtifactsResponse {
+    artifacts: Artifact[];
+    maxSeq: number;
+}
+
+/**
+ * Fetch artifacts for the account
+ * HAP-492: Supports incremental sync via optional sinceSeq parameter
+ * @param credentials - Auth credentials
+ * @param sinceSeq - Optional sequence number to fetch only newer artifacts
+ * @returns Response with artifacts and maxSeq for tracking
+ */
+export async function fetchArtifacts(credentials: AuthCredentials, sinceSeq?: number): Promise<FetchArtifactsResponse> {
     const API_ENDPOINT = getServerUrl();
 
     return await backoff(async () => {
-        const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/artifacts`, {
+        // Build URL with optional sinceSeq query parameter
+        const url = new URL(`${API_ENDPOINT}/v1/artifacts`);
+        if (sinceSeq !== undefined && sinceSeq > 0) {
+            url.searchParams.set('sinceSeq', sinceSeq.toString());
+        }
+
+        const response = await fetchWithTimeout(url.toString(), {
             headers: {
                 'Authorization': `Bearer ${credentials.token}`,
                 'Content-Type': 'application/json'
@@ -25,8 +44,11 @@ export async function fetchArtifacts(credentials: AuthCredentials): Promise<Arti
             throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to fetch artifacts: ${response.status}`, { canTryAgain: true });
         }
 
-        const data = await response.json() as { artifacts: Artifact[] };
-        return data.artifacts ?? [];
+        const data = await response.json() as FetchArtifactsResponse;
+        return {
+            artifacts: data.artifacts ?? [],
+            maxSeq: data.maxSeq ?? 0
+        };
     });
 }
 

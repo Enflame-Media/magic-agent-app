@@ -711,6 +711,11 @@ class Sync {
     }
 
     // Artifact methods
+    /**
+     * HAP-492: Fetch artifacts with incremental sync support.
+     * Uses lastKnownSeq to fetch only new/updated artifacts since last sync.
+     * Falls back to full fetch when sinceSeq is 0 (first sync or forced refresh).
+     */
     public fetchArtifactsList = async (): Promise<void> => {
         log.log('📦 fetchArtifactsList: Starting artifact sync');
         if (!this.credentials) {
@@ -719,9 +724,26 @@ class Sync {
         }
 
         try {
-            log.log('📦 fetchArtifactsList: Fetching artifacts from server');
-            const artifacts = await fetchArtifacts(this.credentials);
-            log.log(`📦 fetchArtifactsList: Received ${artifacts.length} artifacts from server`);
+            // HAP-492: Get last known seq for incremental fetch
+            const sinceSeq = this.getLastKnownSeq('artifacts');
+            const isIncremental = sinceSeq > 0;
+
+            log.log(`📦 fetchArtifactsList: Fetching artifacts from server (sinceSeq=${sinceSeq}, incremental=${isIncremental})`);
+            const response = await fetchArtifacts(this.credentials, sinceSeq);
+            const { artifacts, maxSeq } = response;
+            log.log(`📦 fetchArtifactsList: Received ${artifacts.length} artifacts from server (maxSeq=${maxSeq})`);
+
+            // HAP-492: Update the lastKnownSeq for artifacts from response
+            if (maxSeq > sinceSeq) {
+                this.trackSeq('artifacts', maxSeq);
+            }
+
+            // If no new artifacts, nothing to process
+            if (artifacts.length === 0) {
+                log.log('📦 fetchArtifactsList: No new artifacts to process');
+                return;
+            }
+
             const decryptedArtifacts: DecryptedArtifact[] = [];
 
             for (const artifact of artifacts) {
@@ -741,7 +763,7 @@ class Sync {
 
                     // Decrypt header
                     const header = await artifactEncryption.decryptHeader(artifact.header);
-                    
+
                     decryptedArtifacts.push({
                         id: artifact.id,
                         title: header?.title || null,
@@ -772,6 +794,7 @@ class Sync {
             }
 
             log.log(`📦 fetchArtifactsList: Successfully decrypted ${decryptedArtifacts.length} artifacts`);
+            // HAP-492: applyArtifacts already merges (doesn't replace), so both full and incremental work correctly
             storage.getState().applyArtifacts(decryptedArtifacts);
             log.log('📦 fetchArtifactsList: Artifacts applied to storage');
         } catch (error) {
