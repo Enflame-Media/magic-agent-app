@@ -15,9 +15,9 @@
  * Technical details are kept in the `cause` property for debugging/logging.
  */
 
-// Re-export AppError and types from shared package
-export { AppError } from '@happy/errors';
-export type { AppErrorOptions, AppErrorJSON } from '@happy/errors';
+// Re-export AppError, ErrorCodes, and types from shared package
+export { AppError, ErrorCodes } from '@happy/errors';
+export type { AppErrorOptions, AppErrorJSON, ErrorCode } from '@happy/errors';
 
 /**
  * User-friendly messages for each error code.
@@ -92,60 +92,8 @@ export function getUserFriendlyMessage(code: string): string {
     return UserFriendlyMessages[code] || 'Something went wrong. Please try again.';
 }
 
-/**
- * Standardized error codes for the happy-app application.
- * These codes provide programmatic error identification and consistent categorization.
- */
-export const ErrorCodes = {
-    // Auth errors
-    AUTH_FAILED: 'AUTH_FAILED',
-    INVALID_KEY: 'INVALID_KEY',
-    NOT_AUTHENTICATED: 'NOT_AUTHENTICATED',
-    TOKEN_EXPIRED: 'TOKEN_EXPIRED', // 401 from server - triggers logout, never retried
-
-    // Socket/RPC errors
-    SOCKET_NOT_CONNECTED: 'SOCKET_NOT_CONNECTED',
-    RPC_CANCELLED: 'RPC_CANCELLED',
-    RPC_FAILED: 'RPC_FAILED',
-    SYNC_FAILED: 'SYNC_FAILED',
-
-    // API errors
-    API_ERROR: 'API_ERROR',
-    FETCH_FAILED: 'FETCH_FAILED',
-    FETCH_ABORTED: 'FETCH_ABORTED',
-    TIMEOUT: 'TIMEOUT',
-
-    // Encryption errors
-    ENCRYPTION_ERROR: 'ENCRYPTION_ERROR',
-    DECRYPTION_FAILED: 'DECRYPTION_FAILED',
-
-    // Resource errors
-    NOT_FOUND: 'NOT_FOUND',
-    VERSION_CONFLICT: 'VERSION_CONFLICT',
-    ALREADY_EXISTS: 'ALREADY_EXISTS',
-
-    // Validation errors
-    INVALID_INPUT: 'INVALID_INPUT',
-    VALIDATION_FAILED: 'VALIDATION_FAILED',
-
-    // Configuration errors
-    NOT_CONFIGURED: 'NOT_CONFIGURED',
-
-    // Subscription/Purchase errors
-    PRODUCT_NOT_FOUND: 'PRODUCT_NOT_FOUND',
-
-    // Service errors
-    SERVICE_ERROR: 'SERVICE_ERROR',
-    SERVICE_NOT_CONNECTED: 'SERVICE_NOT_CONNECTED',
-
-    // Internal errors
-    INTERNAL_ERROR: 'INTERNAL_ERROR',
-} as const;
-
-/**
- * Type representing valid error codes from the ErrorCodes constant.
- */
-export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+// ErrorCodes and ErrorCode type are now imported from @happy/errors above.
+// This provides unified error codes across all Happy projects (CLI, App, Server).
 
 // Import AppError for the extended utilities below
 import { AppError } from '@happy/errors';
@@ -165,18 +113,4 @@ import { AppError } from '@happy/errors';
  */
 export function getAppErrorUserMessage(error: AppError): string {
     return getUserFriendlyMessage(error.code);
-}
-
-/**
- * HappyError is an alias for AppError for backward compatibility.
- * New code should use AppError directly.
- *
- * @deprecated Use AppError instead
- */
-export class HappyError extends AppError {
-    constructor(message: string, canTryAgain: boolean) {
-        super(ErrorCodes.INTERNAL_ERROR, message, { canTryAgain });
-        this.name = 'HappyError';
-        Object.setPrototypeOf(this, HappyError.prototype);
-    }
 }
