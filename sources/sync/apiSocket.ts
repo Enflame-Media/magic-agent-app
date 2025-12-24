@@ -51,10 +51,17 @@ interface WebSocketConfig {
     ackTimeout: number;
 }
 
+/**
+ * Default WebSocket reconnection configuration.
+ *
+ * HAP-477: Max delay increased from 5s to 30s to match CLI behavior
+ * and better handle poor network conditions. Mobile devices especially
+ * benefit from patience on unstable connections.
+ */
 const DEFAULT_CONFIG: WebSocketConfig = {
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    randomizationFactor: 0.5,
+    reconnectionDelay: 1000,        // Start with 1 second delay
+    reconnectionDelayMax: 30000,    // Cap at 30 seconds (HAP-477: was 5s)
+    randomizationFactor: 0.5,       // ±50% jitter (centered around base)
     ackTimeout: 30000,
 };
 
@@ -196,7 +203,21 @@ class ApiSocket {
     }
 
     /**
-     * Schedule a reconnection attempt with exponential backoff.
+     * Schedule a reconnection attempt with exponential backoff and jitter.
+     *
+     * Jitter Algorithm (HAP-477):
+     * Uses "centered jitter" to spread reconnection times both above and below
+     * the base delay, preventing thundering herd when many clients reconnect
+     * after a server outage.
+     *
+     * With randomizationFactor=0.5:
+     * - Base delay: 1000ms * 2^attempt (capped at max)
+     * - Jitter range: ±50% of base delay
+     * - Actual delay: 500ms to 1500ms for first attempt
+     *
+     * Formula: delay = base * (1 - factor + random * factor * 2)
+     * This centers the distribution around the base delay rather than
+     * always adding extra time (which would still cause clustering).
      */
     private scheduleReconnect(): void {
         if (this.reconnectTimeout) {
@@ -207,13 +228,15 @@ class ApiSocket {
             return;
         }
 
-        // Calculate delay with exponential backoff and jitter
+        // Calculate delay with exponential backoff and centered jitter (HAP-477)
         const baseDelay = Math.min(
             this.wsConfig.reconnectionDelay * Math.pow(2, this.reconnectAttempts),
             this.wsConfig.reconnectionDelayMax
         );
-        const jitter = baseDelay * this.wsConfig.randomizationFactor * Math.random();
-        const delay = baseDelay + jitter;
+        // Centered jitter: spreads delay ±factor around base, not just +factor
+        // With factor=0.5: delay ranges from base*0.5 to base*1.5
+        const jitterMultiplier = 1 - this.wsConfig.randomizationFactor + (Math.random() * this.wsConfig.randomizationFactor * 2);
+        const delay = Math.max(100, baseDelay * jitterMultiplier); // Minimum 100ms floor
 
         this.reconnectAttempts++;
 
