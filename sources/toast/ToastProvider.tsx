@@ -2,7 +2,8 @@
  * ToastProvider - Context provider and UI renderer for toast notifications
  *
  * Features:
- * - Single toast at a time (new toast replaces previous)
+ * - FIFO queue: Multiple toasts are queued and shown sequentially
+ * - Configurable queue size (default: 5) and duplicate prevention
  * - Auto-dismiss after duration
  * - Optional action button (e.g., Undo)
  * - Haptic feedback on show
@@ -17,9 +18,11 @@ import { StyleSheet } from 'react-native-unistyles';
 import { Typography } from '@/constants/Typography';
 import { hapticsLight } from '@/components/haptics';
 import { Toast } from './ToastManager';
-import { ToastConfig, ToastState, ToastContextValue } from './types';
+import { ToastConfig, ToastState, ToastContextValue, ToastQueueConfig } from './types';
 
 const DEFAULT_DURATION = 5000; // 5 seconds for undo actions
+const DEFAULT_MAX_QUEUE_SIZE = 5;
+const DEFAULT_PREVENT_DUPLICATES = true;
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
@@ -29,7 +32,7 @@ export function useToast() {
         // Return a no-op implementation when used outside provider
         // This prevents crashes when Toast.show() is called before provider mounts
         return {
-            state: { current: null },
+            state: { current: null, queue: [] },
             showToast: () => '',
             hideToast: () => {},
         };
@@ -37,8 +40,17 @@ export function useToast() {
     return context;
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-    const [state, setState] = useState<ToastState>({ current: null });
+interface ToastProviderProps {
+    children: React.ReactNode;
+    /** Queue configuration options */
+    queueConfig?: ToastQueueConfig;
+}
+
+export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
+    const maxQueueSize = queueConfig?.maxQueueSize ?? DEFAULT_MAX_QUEUE_SIZE;
+    const preventDuplicates = queueConfig?.preventDuplicates ?? DEFAULT_PREVENT_DUPLICATES;
+
+    const [state, setState] = useState<ToastState>({ current: null, queue: [] });
     const insets = useSafeAreaInsets();
     const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -47,36 +59,83 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }, []);
 
+    // Use ref to break circular dependency between hideToast and showNextFromQueue
+    const hideToastRef = useRef<(id: string) => void>(() => {});
+
+    const showNextFromQueue = useCallback(() => {
+        setState((prev) => {
+            if (prev.queue.length === 0) {
+                return { ...prev, current: null };
+            }
+
+            // Get the next toast from queue
+            const [nextToast, ...remainingQueue] = prev.queue;
+
+            // Schedule the animation and timer for the next toast
+            // We do this in a setTimeout to ensure state is updated first
+            setTimeout(() => {
+                fadeAnim.setValue(0);
+                Animated.spring(fadeAnim, {
+                    toValue: 1,
+                    useNativeDriver: Platform.OS !== 'web',
+                    damping: 15,
+                    stiffness: 150,
+                }).start();
+
+                // Haptic feedback
+                if (Platform.OS !== 'web') {
+                    hapticsLight();
+                }
+
+                // Accessibility announcement
+                AccessibilityInfo.announceForAccessibility(nextToast.message);
+
+                // Set auto-dismiss timer
+                const duration = nextToast.duration ?? DEFAULT_DURATION;
+                dismissTimerRef.current = setTimeout(() => {
+                    hideToastRef.current(nextToast.id);
+                }, duration);
+            }, 0);
+
+            return { current: nextToast, queue: remainingQueue };
+        });
+    }, [fadeAnim]);
+
     const hideToast = useCallback((id: string) => {
         setState((prev) => {
-            if (prev.current?.id === id) {
-                // Animate out
-                Animated.timing(fadeAnim, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: Platform.OS !== 'web',
-                }).start(() => {
-                    setState({ current: null });
-                });
-                return prev; // Let animation complete before clearing
+            // Also check if this toast is in the queue and remove it
+            if (prev.current?.id !== id) {
+                const filteredQueue = prev.queue.filter((t) => t.id !== id);
+                if (filteredQueue.length !== prev.queue.length) {
+                    return { ...prev, queue: filteredQueue };
+                }
+                return prev;
             }
-            return prev;
+
+            // Animate out the current toast
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: Platform.OS !== 'web',
+            }).start(() => {
+                // After animation, show next toast from queue
+                showNextFromQueue();
+            });
+            return prev; // Let animation complete before clearing
         });
 
-        // Clear timer
+        // Clear timer for current toast
         if (dismissTimerRef.current) {
             clearTimeout(dismissTimerRef.current);
             dismissTimerRef.current = null;
         }
-    }, [fadeAnim]);
+    }, [fadeAnim, showNextFromQueue]);
+
+    // Keep ref in sync with latest hideToast
+    hideToastRef.current = hideToast;
 
     const showToast = useCallback((config: Omit<ToastConfig, 'id'>): string => {
         const id = generateId();
-
-        // Clear any existing timer
-        if (dismissTimerRef.current) {
-            clearTimeout(dismissTimerRef.current);
-        }
 
         // Create the toast config
         const toastConfig: ToastConfig = {
@@ -85,34 +144,62 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             duration: config.duration ?? DEFAULT_DURATION,
         };
 
-        // Set state immediately (replaces any existing toast)
-        setState({ current: toastConfig });
+        setState((prev) => {
+            // Check for duplicate messages if prevention is enabled
+            if (preventDuplicates) {
+                const isDuplicate =
+                    prev.current?.message === config.message ||
+                    prev.queue.some((t) => t.message === config.message);
+                if (isDuplicate) {
+                    return prev; // Skip duplicate
+                }
+            }
 
-        // Animate in
-        fadeAnim.setValue(0);
-        Animated.spring(fadeAnim, {
-            toValue: 1,
-            useNativeDriver: Platform.OS !== 'web',
-            damping: 15,
-            stiffness: 150,
-        }).start();
+            // If no current toast, show immediately
+            if (!prev.current) {
+                // Clear any existing timer (safety)
+                if (dismissTimerRef.current) {
+                    clearTimeout(dismissTimerRef.current);
+                }
 
-        // Haptic feedback
-        if (Platform.OS !== 'web') {
-            hapticsLight();
-        }
+                // Animate in
+                fadeAnim.setValue(0);
+                Animated.spring(fadeAnim, {
+                    toValue: 1,
+                    useNativeDriver: Platform.OS !== 'web',
+                    damping: 15,
+                    stiffness: 150,
+                }).start();
 
-        // Accessibility announcement
-        AccessibilityInfo.announceForAccessibility(config.message);
+                // Haptic feedback
+                if (Platform.OS !== 'web') {
+                    hapticsLight();
+                }
 
-        // Set auto-dismiss timer
-        const duration = toastConfig.duration ?? DEFAULT_DURATION;
-        dismissTimerRef.current = setTimeout(() => {
-            hideToast(id);
-        }, duration);
+                // Accessibility announcement
+                AccessibilityInfo.announceForAccessibility(config.message);
+
+                // Set auto-dismiss timer
+                const duration = toastConfig.duration ?? DEFAULT_DURATION;
+                dismissTimerRef.current = setTimeout(() => {
+                    hideToast(id);
+                }, duration);
+
+                return { ...prev, current: toastConfig };
+            }
+
+            // Otherwise, add to queue (respecting max size)
+            if (prev.queue.length >= maxQueueSize) {
+                // Queue is full, drop the oldest queued toast to make room
+                const newQueue = [...prev.queue.slice(1), toastConfig];
+                return { ...prev, queue: newQueue };
+            }
+
+            return { ...prev, queue: [...prev.queue, toastConfig] };
+        });
 
         return id;
-    }, [generateId, fadeAnim, hideToast]);
+    }, [generateId, fadeAnim, hideToast, preventDuplicates, maxQueueSize]);
 
     // Register functions with ToastManager
     useEffect(() => {

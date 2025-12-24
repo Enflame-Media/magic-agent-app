@@ -24,9 +24,18 @@ export interface ToastConfig {
     type?: 'default' | 'success' | 'error';
 }
 
+export interface ToastQueueConfig {
+    /** Maximum number of toasts to queue (default: 5) */
+    maxQueueSize?: number;
+    /** If true, duplicate messages (same message text) are ignored (default: true) */
+    preventDuplicates?: boolean;
+}
+
 export interface ToastState {
-    /** Currently displayed toast (only one at a time) */
+    /** Currently displayed toast */
     current: ToastConfig | null;
+    /** Queue of pending toasts (FIFO) */
+    queue: ToastConfig[];
 }
 
 export interface ToastContextValue {
