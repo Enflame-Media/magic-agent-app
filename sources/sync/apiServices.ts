@@ -2,7 +2,7 @@ import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 import { AppError, ErrorCodes } from '@/utils/errors';
-import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
+import { authenticatedFetch } from './apiHelper';
 
 /**
  * Connect a service to the user's account
@@ -15,14 +15,17 @@ export async function connectService(
     const API_ENDPOINT = getServerUrl();
 
     return await backoff(async () => {
-        const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/connect/${service}/register`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`,
-                'Content-Type': 'application/json'
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/connect/${service}/register`,
+            credentials,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: JSON.stringify(token) })
             },
-            body: JSON.stringify({ token: JSON.stringify(token) })
-        });
+            `connecting ${service}`
+        );
 
         if (!response.ok) {
             throw new AppError(ErrorCodes.SERVICE_ERROR, `Failed to connect ${service}: ${response.status}`);
@@ -42,12 +45,13 @@ export async function disconnectService(credentials: AuthCredentials, service: s
     const API_ENDPOINT = getServerUrl();
 
     return await backoff(async () => {
-        const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/connect/${service}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`
-            }
-        });
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/connect/${service}`,
+            credentials,
+            { method: 'DELETE' },
+            `disconnecting ${service}`
+        );
 
         if (!response.ok) {
             if (response.status === 404) {

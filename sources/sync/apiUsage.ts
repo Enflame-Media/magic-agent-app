@@ -2,7 +2,7 @@ import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 import { AppError, ErrorCodes } from '@/utils/errors';
-import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
+import { authenticatedFetch } from './apiHelper';
 
 export interface UsageDataPoint {
     timestamp: number;
@@ -30,16 +30,19 @@ export async function queryUsage(
     params: UsageQueryParams = {}
 ): Promise<UsageResponse> {
     const API_ENDPOINT = getServerUrl();
-    
+
     return await backoff(async () => {
-        const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/usage/query`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`,
-                'Content-Type': 'application/json'
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/usage/query`,
+            credentials,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
             },
-            body: JSON.stringify(params)
-        });
+            'querying usage data'
+        );
 
         if (!response.ok) {
             if (response.status === 404 && params.sessionId) {

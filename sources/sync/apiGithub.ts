@@ -2,8 +2,7 @@ import { AuthCredentials } from '@/auth/tokenStorage';
 import { backoff } from '@/utils/time';
 import { getServerUrl } from './serverConfig';
 import { AppError, ErrorCodes } from '@/utils/errors';
-import { deduplicatedFetch } from './apiHelper';
-import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
+import { authenticatedFetch } from './apiHelper';
 
 export interface GitHubOAuthParams {
     url: string;
@@ -28,15 +27,15 @@ export interface AccountProfile {
  */
 export async function getGitHubOAuthParams(credentials: AuthCredentials): Promise<GitHubOAuthParams> {
     const API_ENDPOINT = getServerUrl();
-    
+
     return await backoff(async () => {
-        const response = await deduplicatedFetch(`${API_ENDPOINT}/v1/connect/github/params`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/connect/github/params`,
+            credentials,
+            { useDedupe: true, headers: { 'Content-Type': 'application/json' } },
+            'fetching GitHub OAuth params'
+        );
 
         if (!response.ok) {
             if (response.status === 400) {
@@ -56,15 +55,15 @@ export async function getGitHubOAuthParams(credentials: AuthCredentials): Promis
  */
 export async function getAccountProfile(credentials: AuthCredentials): Promise<AccountProfile> {
     const API_ENDPOINT = getServerUrl();
-    
+
     return await backoff(async () => {
-        const response = await deduplicatedFetch(`${API_ENDPOINT}/v1/account/profile`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/account/profile`,
+            credentials,
+            { useDedupe: true, headers: { 'Content-Type': 'application/json' } },
+            'fetching account profile'
+        );
 
         if (!response.ok) {
             throw new AppError(ErrorCodes.FETCH_FAILED, `Failed to get account profile: ${response.status}`, { canTryAgain: true });
@@ -80,14 +79,15 @@ export async function getAccountProfile(credentials: AuthCredentials): Promise<A
  */
 export async function disconnectGitHub(credentials: AuthCredentials): Promise<void> {
     const API_ENDPOINT = getServerUrl();
-    
+
     return await backoff(async () => {
-        const response = await fetchWithTimeout(`${API_ENDPOINT}/v1/connect/github`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${credentials.token}`
-            }
-        });
+        // HAP-529: Use authenticatedFetch for automatic 401 retry after token refresh
+        const response = await authenticatedFetch(
+            `${API_ENDPOINT}/v1/connect/github`,
+            credentials,
+            { method: 'DELETE' },
+            'disconnecting GitHub'
+        );
 
         if (!response.ok) {
             if (response.status === 404) {
