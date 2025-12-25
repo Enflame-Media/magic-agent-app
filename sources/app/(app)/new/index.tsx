@@ -21,7 +21,7 @@ import { createWorktree } from '@/utils/createWorktree';
 import { getTempData, type NewSessionData } from '@/utils/tempDataStore';
 import { linkTaskToSession } from '@/-zen/model/taskSessionLink';
 import { PermissionMode, ModelMode } from '@/components/PermissionModeSelector';
-import { AppError, ErrorCodes } from '@/utils/errors';
+import { AppError, ErrorCodes, getSmartErrorMessage } from '@/utils/errors';
 import { RecentPathsDropdown } from '@/components/RecentPathsDropdown';
 
 
@@ -528,13 +528,20 @@ function NewSessionScreen() {
         } catch (error) {
             console.error('Failed to start session', error);
 
-            let errorMessage = 'Failed to start session. Make sure the daemon is running on the target machine.';
-            if (error instanceof Error) {
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            let errorMessage: string;
+            if (AppError.isAppError(error)) {
+                errorMessage = getSmartErrorMessage(error);
+            } else if (error instanceof Error) {
                 if (error.message.includes('timeout')) {
                     errorMessage = 'Session startup timed out. The machine may be slow or the daemon may not be responding.';
                 } else if (error.message.includes('Socket not connected')) {
                     errorMessage = 'Not connected to server. Check your internet connection.';
+                } else {
+                    errorMessage = 'Failed to start session. Make sure the daemon is running on the target machine.';
                 }
+            } else {
+                errorMessage = 'Failed to start session. Make sure the daemon is running on the target machine.';
             }
 
             Modal.alert(t('common.error'), errorMessage);

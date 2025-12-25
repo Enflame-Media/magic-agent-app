@@ -18,6 +18,7 @@ import { useUnistyles, StyleSheet } from 'react-native-unistyles';
 import { t } from '@/text';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 import { resolveAbsolutePath } from '@/utils/pathUtils';
 import { MultiTextInput, type MultiTextInputHandle } from '@/components/MultiTextInput';
 
@@ -144,8 +145,12 @@ function MachineDetailScreen() {
                             Modal.alert('Daemon Stopped', result.message);
                             // Refresh to get updated metadata
                             await sync.refreshMachines();
-                        } catch {
-                            Modal.alert(t('common.error'), 'Failed to stop daemon. It may not be running.');
+                        } catch (error) {
+                            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+                            const errorMessage = AppError.isAppError(error)
+                                ? getSmartErrorMessage(error)
+                                : 'Failed to stop daemon. It may not be running.';
+                            Modal.alert(t('common.error'), errorMessage);
                         } finally {
                             setIsStoppingDaemon(false);
                         }
@@ -193,10 +198,13 @@ function MachineDetailScreen() {
                 
                 Modal.alert(t('common.success'), 'Machine renamed successfully');
             } catch (error) {
-                Modal.alert(
-                    'Error',
-                    error instanceof Error ? error.message : 'Failed to rename machine'
-                );
+                // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+                const errorMessage = AppError.isAppError(error)
+                    ? getSmartErrorMessage(error)
+                    : error instanceof Error
+                        ? error.message
+                        : 'Failed to rename machine';
+                Modal.alert(t('common.error'), errorMessage);
                 // Refresh to get latest state
                 await sync.refreshMachines();
             } finally {
@@ -256,9 +264,14 @@ function MachineDetailScreen() {
                     break;
             }
         } catch (error) {
-            let errorMessage = 'Failed to start session. Make sure the daemon is running on the target machine.';
-            if (error instanceof Error && !error.message.includes('Failed to spawn session')) {
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            let errorMessage: string;
+            if (AppError.isAppError(error)) {
+                errorMessage = getSmartErrorMessage(error);
+            } else if (error instanceof Error && !error.message.includes('Failed to spawn session')) {
                 errorMessage = error.message;
+            } else {
+                errorMessage = 'Failed to start session. Make sure the daemon is running on the target machine.';
             }
             Modal.alert(t('common.error'), errorMessage);
         } finally {

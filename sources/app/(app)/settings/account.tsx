@@ -23,6 +23,7 @@ import { Image } from 'expo-image';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { disconnectGitHub } from '@/sync/apiGithub';
 import { disconnectService } from '@/sync/apiServices';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 export default React.memo(() => {
     const { theme } = useUnistyles();
@@ -71,8 +72,12 @@ export default React.memo(() => {
                 await disconnectService(auth.credentials!, service);
                 await sync.refreshProfile();
                 // The profile will be updated via sync
-            } catch {
-                Modal.alert(t('common.error'), t('errors.disconnectServiceFailed', { service: displayName }));
+            } catch (error) {
+                // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+                const errorMessage = AppError.isAppError(error)
+                    ? getSmartErrorMessage(error)
+                    : t('errors.disconnectServiceFailed', { service: displayName });
+                Modal.alert(t('common.error'), errorMessage);
             } finally {
                 setDisconnectingService(null);
             }

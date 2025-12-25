@@ -15,6 +15,7 @@ import { useHappyAction } from '@/hooks/useHappyAction';
 import { Modal } from '@/modal';
 import { t } from '@/text';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 function UserProfileScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,7 +36,11 @@ function UserProfileScreen() {
                 setUserProfile(profile);
             } catch (error) {
                 console.error('Failed to load user profile:', error);
-                await Modal.alert(t('errors.failedToLoadProfile'), '', [
+                // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+                const errorMessage = AppError.isAppError(error)
+                    ? getSmartErrorMessage(error)
+                    : t('errors.failedToLoadProfile');
+                await Modal.alert(t('common.error'), errorMessage, [
                     {
                         text: t('common.ok'),
                         onPress: () => router.back()

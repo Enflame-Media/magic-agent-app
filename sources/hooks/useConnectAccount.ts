@@ -8,6 +8,7 @@ import { authAccountApprove } from '@/auth/authAccountApprove';
 import { useCheckScannerPermissions } from '@/hooks/useCheckCameraPermissions';
 import { Modal } from '@/modal';
 import { t } from '@/text';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 interface UseConnectAccountOptions {
     onSuccess?: () => void;
@@ -41,7 +42,11 @@ export function useConnectAccount(options?: UseConnectAccountOptions) {
             return true;
         } catch (e) {
             console.error(e);
-            Modal.alert(t('common.error'), t('modals.failedToLinkDevice'), [{ text: t('common.ok') }]);
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            const errorMessage = AppError.isAppError(e)
+                ? getSmartErrorMessage(e)
+                : t('modals.failedToLinkDevice');
+            Modal.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
             options?.onError?.(e);
             return false;
         } finally {

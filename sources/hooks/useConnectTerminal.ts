@@ -9,6 +9,7 @@ import { useCheckScannerPermissions } from '@/hooks/useCheckCameraPermissions';
 import { Modal } from '@/modal';
 import { t } from '@/text';
 import { sync } from '@/sync/sync';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 interface UseConnectTerminalOptions {
     onSuccess?: () => void;
@@ -46,7 +47,11 @@ export function useConnectTerminal(options?: UseConnectTerminalOptions) {
             return true;
         } catch (e) {
             console.error(e);
-            Modal.alert(t('common.error'), t('modals.failedToConnectTerminal'), [{ text: t('common.ok') }]);
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            const errorMessage = AppError.isAppError(e)
+                ? getSmartErrorMessage(e)
+                : t('modals.failedToConnectTerminal');
+            Modal.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
             options?.onError?.(e);
             return false;
         } finally {

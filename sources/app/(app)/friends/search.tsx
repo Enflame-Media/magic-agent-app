@@ -10,6 +10,7 @@ import { t } from '@/text';
 import { ItemList } from '@/components/ItemList';
 import { ItemGroup } from '@/components/ItemGroup';
 import { useSearch } from '@/hooks/useSearch';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 function SearchFriendsScreen() {
     const { credentials } = useAuth();
@@ -39,10 +40,13 @@ function SearchFriendsScreen() {
             } else {
                 await Modal.alert(t('friends.bothMustHaveGithub'));
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to send friend request:', error);
-            if (error.message?.includes('yourself')) {
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            if (error instanceof Error && error.message?.includes('yourself')) {
                 await Modal.alert(t('friends.cannotAddYourself'));
+            } else if (AppError.isAppError(error)) {
+                await Modal.alert(t('common.error'), getSmartErrorMessage(error));
             } else {
                 await Modal.alert(t('errors.failedToSendRequest'));
             }

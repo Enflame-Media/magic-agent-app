@@ -17,6 +17,7 @@ import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } f
 import { Modal } from '@/modal';
 import { sync } from '@/sync/sync';
 import { useRouter } from 'expo-router';
+import { AppError, getSmartErrorMessage } from '@/utils/errors';
 
 interface SessionHistoryItem {
     type: 'session' | 'date-header';
@@ -297,7 +298,11 @@ function SessionHistory() {
             }
         } catch (error) {
             console.error('Failed to resume session:', error);
-            Modal.alert(t('common.error'), t('sessionHistory.resumeFailed'));
+            // HAP-530: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+            const errorMessage = AppError.isAppError(error)
+                ? getSmartErrorMessage(error)
+                : t('sessionHistory.resumeFailed');
+            Modal.alert(t('common.error'), errorMessage);
         } finally {
             setResumingSessionId(null);
         }
