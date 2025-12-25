@@ -32,7 +32,7 @@ export function useToast() {
         // Return a no-op implementation when used outside provider
         // This prevents crashes when Toast.show() is called before provider mounts
         return {
-            state: { current: null, queue: [] },
+            state: { current: null, queue: [], interrupted: null },
             showToast: () => '',
             hideToast: () => {},
             clearAllToasts: () => {},
@@ -51,10 +51,12 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
     const maxQueueSize = queueConfig?.maxQueueSize ?? DEFAULT_MAX_QUEUE_SIZE;
     const preventDuplicates = queueConfig?.preventDuplicates ?? DEFAULT_PREVENT_DUPLICATES;
 
-    const [state, setState] = useState<ToastState>({ current: null, queue: [] });
+    const [state, setState] = useState<ToastState>({ current: null, queue: [], interrupted: null });
     const insets = useSafeAreaInsets();
     const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    // Track when current toast started showing (for calculating remaining duration on interrupt)
+    const toastStartTimeRef = useRef<number | null>(null);
 
     const generateId = useCallback(() => {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -65,7 +67,48 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
 
     const showNextFromQueue = useCallback(() => {
         setState((prev) => {
+            // Priority 1: Check for interrupted toast that should resume
+            if (prev.interrupted) {
+                const resumingToast: ToastConfig = {
+                    id: prev.interrupted.id,
+                    message: prev.interrupted.message,
+                    duration: prev.interrupted.remainingDuration,
+                    action: prev.interrupted.action,
+                    type: prev.interrupted.type,
+                    priority: prev.interrupted.priority,
+                };
+
+                // Schedule the animation and timer for the resuming toast
+                setTimeout(() => {
+                    toastStartTimeRef.current = Date.now();
+                    fadeAnim.setValue(0);
+                    Animated.spring(fadeAnim, {
+                        toValue: 1,
+                        useNativeDriver: Platform.OS !== 'web',
+                        damping: 15,
+                        stiffness: 150,
+                    }).start();
+
+                    // Haptic feedback
+                    if (Platform.OS !== 'web') {
+                        hapticsLight();
+                    }
+
+                    // Accessibility announcement
+                    AccessibilityInfo.announceForAccessibility(resumingToast.message);
+
+                    // Set auto-dismiss timer with remaining duration
+                    dismissTimerRef.current = setTimeout(() => {
+                        hideToastRef.current(resumingToast.id);
+                    }, resumingToast.duration ?? DEFAULT_DURATION);
+                }, 0);
+
+                return { current: resumingToast, queue: prev.queue, interrupted: null };
+            }
+
+            // Priority 2: Check queue
             if (prev.queue.length === 0) {
+                toastStartTimeRef.current = null;
                 return { ...prev, current: null };
             }
 
@@ -75,6 +118,7 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
             // Schedule the animation and timer for the next toast
             // We do this in a setTimeout to ensure state is updated first
             setTimeout(() => {
+                toastStartTimeRef.current = Date.now();
                 fadeAnim.setValue(0);
                 Animated.spring(fadeAnim, {
                     toValue: 1,
@@ -98,7 +142,7 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
                 }, duration);
             }, 0);
 
-            return { current: nextToast, queue: remainingQueue };
+            return { current: nextToast, queue: remainingQueue, interrupted: prev.interrupted };
         });
     }, [fadeAnim]);
 
@@ -141,12 +185,13 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
             clearTimeout(dismissTimerRef.current);
             dismissTimerRef.current = null;
         }
+        toastStartTimeRef.current = null;
 
         setState((prev) => {
             if (skipAnimation || !prev.current) {
                 // Instant clear - no animation needed
                 fadeAnim.setValue(0);
-                return { current: null, queue: [] };
+                return { current: null, queue: [], interrupted: null };
             }
 
             // Animate out current toast, then clear
@@ -156,12 +201,13 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
                 useNativeDriver: Platform.OS !== 'web',
             }).start();
 
-            return { current: null, queue: [] };
+            return { current: null, queue: [], interrupted: null };
         });
     }, [fadeAnim]);
 
     const showToast = useCallback((config: Omit<ToastConfig, 'id'>): string => {
         const id = generateId();
+        const isHighPriority = config.priority === 'high';
 
         // Create the toast config
         const toastConfig: ToastConfig = {
@@ -175,7 +221,8 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
             if (preventDuplicates) {
                 const isDuplicate =
                     prev.current?.message === config.message ||
-                    prev.queue.some((t) => t.message === config.message);
+                    prev.queue.some((t) => t.message === config.message) ||
+                    prev.interrupted?.message === config.message;
                 if (isDuplicate) {
                     return prev; // Skip duplicate
                 }
@@ -189,6 +236,7 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
                 }
 
                 // Animate in
+                toastStartTimeRef.current = Date.now();
                 fadeAnim.setValue(0);
                 Animated.spring(fadeAnim, {
                     toValue: 1,
@@ -214,7 +262,65 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
                 return { ...prev, current: toastConfig };
             }
 
-            // Otherwise, add to queue (respecting max size)
+            // HIGH PRIORITY: Interrupt current toast and show immediately
+            if (isHighPriority) {
+                // Calculate remaining duration for current toast
+                const currentDuration = prev.current.duration ?? DEFAULT_DURATION;
+                const elapsed = toastStartTimeRef.current ? Date.now() - toastStartTimeRef.current : 0;
+                const remainingDuration = Math.max(1000, currentDuration - elapsed); // Minimum 1 second
+
+                // Clear current timer
+                if (dismissTimerRef.current) {
+                    clearTimeout(dismissTimerRef.current);
+                    dismissTimerRef.current = null;
+                }
+
+                // Store interrupted toast (only if it was a normal priority toast)
+                // Don't store if current is already high priority (high priority toasts queue among themselves)
+                const interruptedToast = prev.current.priority !== 'high' ? {
+                    ...prev.current,
+                    remainingDuration,
+                } : null;
+
+                // If current was high priority, add it back to front of high-priority queue section
+                const newQueue = prev.current.priority === 'high'
+                    ? [{ ...prev.current, duration: remainingDuration }, ...prev.queue]
+                    : prev.queue;
+
+                // Animate transition
+                setTimeout(() => {
+                    toastStartTimeRef.current = Date.now();
+                    fadeAnim.setValue(0);
+                    Animated.spring(fadeAnim, {
+                        toValue: 1,
+                        useNativeDriver: Platform.OS !== 'web',
+                        damping: 15,
+                        stiffness: 150,
+                    }).start();
+
+                    // Haptic feedback
+                    if (Platform.OS !== 'web') {
+                        hapticsLight();
+                    }
+
+                    // Accessibility announcement
+                    AccessibilityInfo.announceForAccessibility(config.message);
+
+                    // Set auto-dismiss timer
+                    const duration = toastConfig.duration ?? DEFAULT_DURATION;
+                    dismissTimerRef.current = setTimeout(() => {
+                        hideToast(id);
+                    }, duration);
+                }, 0);
+
+                return {
+                    current: toastConfig,
+                    queue: newQueue,
+                    interrupted: interruptedToast ?? prev.interrupted,
+                };
+            }
+
+            // NORMAL PRIORITY: Add to queue (respecting max size)
             if (prev.queue.length >= maxQueueSize) {
                 // Queue is full, drop the oldest queued toast to make room
                 const newQueue = [...prev.queue.slice(1), toastConfig];

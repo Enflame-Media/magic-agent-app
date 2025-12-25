@@ -22,6 +22,12 @@ export interface ToastConfig {
     action?: ToastAction;
     /** Type affects styling - 'default' | 'success' | 'error' */
     type?: 'default' | 'success' | 'error';
+    /**
+     * Priority level for queue ordering
+     * - 'normal' (default): Added to end of queue
+     * - 'high': Interrupts current toast and shows immediately
+     */
+    priority?: 'normal' | 'high';
 }
 
 export interface ToastQueueConfig {
@@ -34,8 +40,14 @@ export interface ToastQueueConfig {
 export interface ToastState {
     /** Currently displayed toast */
     current: ToastConfig | null;
-    /** Queue of pending toasts (FIFO) */
+    /** Queue of pending toasts (FIFO for normal, priority-aware ordering) */
     queue: ToastConfig[];
+    /**
+     * Toast that was interrupted by a high-priority toast.
+     * When the high-priority toast dismisses, this will resume.
+     * Stores remaining duration so the interrupted toast can continue where it left off.
+     */
+    interrupted: (ToastConfig & { remainingDuration: number }) | null;
 }
 
 export interface ToastContextValue {

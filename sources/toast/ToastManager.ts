@@ -38,8 +38,12 @@ class ToastManagerClass {
     /**
      * Show a toast message
      *
-     * @param message - The message to display
-     * @param options - Optional configuration
+     * @param options - Toast configuration
+     * @param options.message - The message to display
+     * @param options.duration - Duration in ms before auto-dismiss (default: 5000)
+     * @param options.action - Optional action button (e.g., Undo)
+     * @param options.type - Toast type for styling ('default' | 'success' | 'error')
+     * @param options.priority - Priority level ('normal' | 'high'). High priority interrupts current toast.
      * @returns The toast ID (can be used to dismiss early)
      */
     show(options: {
@@ -47,6 +51,7 @@ class ToastManagerClass {
         duration?: number;
         action?: ToastAction;
         type?: 'default' | 'success' | 'error';
+        priority?: 'normal' | 'high';
     }): string {
         if (!this.showToastFn) {
             console.error('ToastManager not initialized. Make sure ToastProvider is mounted.');
@@ -58,6 +63,7 @@ class ToastManagerClass {
             duration: options.duration,
             action: options.action,
             type: options.type,
+            priority: options.priority,
         });
     }
 
