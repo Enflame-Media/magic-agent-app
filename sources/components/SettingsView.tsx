@@ -22,6 +22,7 @@ import { layout } from '@/components/layout';
 import { useHappyAction } from '@/hooks/useHappyAction';
 import { getGitHubOAuthParams, disconnectGitHub } from '@/sync/apiGithub';
 import { disconnectService } from '@/sync/apiServices';
+import { clearClaudeTokens } from '@/hooks/useClaudeAuth';
 import { useProfile } from '@/sync/storage';
 import { getDisplayName, getAvatarUrl, getBio } from '@/sync/profile';
 import { Avatar } from '@/components/Avatar';
@@ -173,6 +174,7 @@ export const SettingsView = React.memo(function SettingsView() {
         );
         if (confirmed) {
             await disconnectService(auth.credentials!, 'anthropic');
+            await clearClaudeTokens(); // Clear local SecureStore tokens
             await sync.refreshProfile();
         }
     });

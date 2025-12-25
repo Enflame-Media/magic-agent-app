@@ -84,6 +84,25 @@ const secureStorage = {
 };
 
 /**
+ * Clear stored Claude OAuth tokens from secure storage.
+ *
+ * This is a standalone utility function that can be called without the hook,
+ * useful for cleanup during disconnect flows.
+ *
+ * @example
+ * ```typescript
+ * import { clearClaudeTokens } from '@/hooks/useClaudeAuth';
+ *
+ * // In disconnect handler
+ * await disconnectService(credentials, 'anthropic');
+ * await clearClaudeTokens();
+ * ```
+ */
+export async function clearClaudeTokens(): Promise<void> {
+    await secureStorage.remove(CLAUDE_TOKEN_KEY);
+}
+
+/**
  * Hook for managing Claude OAuth token lifecycle.
  *
  * Implements a token management strategy with:
