@@ -394,7 +394,18 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
                     ]}
                     pointerEvents="box-none"
                 >
-                    <View style={styles.toast}>
+                    <View
+                        style={[
+                            styles.toast,
+                            state.current.priority === 'high' && styles.toastHighPriority,
+                        ]}
+                        accessibilityLabel={
+                            state.current.priority === 'high'
+                                ? `${state.current.message} (urgent)`
+                                : state.current.message
+                        }
+                        accessibilityRole="alert"
+                    >
                         <Text style={styles.message} numberOfLines={2}>
                             {state.current.message}
                         </Text>
@@ -443,6 +454,10 @@ const stylesheet = StyleSheet.create((theme) => ({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
+    },
+    toastHighPriority: {
+        borderLeftWidth: 4,
+        borderLeftColor: theme.dark ? '#FF453A' : '#FF3B30',
     },
     message: {
         flex: 1,
