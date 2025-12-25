@@ -11,6 +11,7 @@ import { useUnistyles, StyleSheet } from 'react-native-unistyles';
 import { layout } from '@/components/layout';
 import { t } from '@/text';
 import { FileIcon } from '@/components/FileIcon';
+import { AppError, ErrorCodes, getSmartErrorMessage } from '@/utils/errors';
 
 interface FileContent {
     content: string;
@@ -86,7 +87,7 @@ function FileScreen() {
     const [diffContent, setDiffContent] = React.useState<string | null>(null);
     const [displayMode, setDisplayMode] = React.useState<'file' | 'diff'>('diff');
     const [isLoading, setIsLoading] = React.useState(true);
-    const [error, setError] = React.useState<string | null>(null);
+    const [error, setError] = React.useState<AppError | Error | null>(null);
 
     // Determine file language from extension
     const getFileLanguage = React.useCallback((path: string): string | null => {
@@ -240,13 +241,29 @@ function FileScreen() {
                             isBinary
                         });
                     } else {
-                        setError(response.error || 'Failed to read file');
+                        // HAP-539: Wrap API error in AppError for smart error messaging
+                        setError(new AppError(
+                            ErrorCodes.API_ERROR,
+                            response.error || 'Failed to read file',
+                            { context: { filePath, sessionId } }
+                        ));
                     }
                 }
-            } catch (error) {
-                console.error('Failed to load file:', error);
+            } catch (err) {
+                console.error('Failed to load file:', err);
                 if (!isCancelled) {
-                    setError('Failed to load file');
+                    // HAP-539: Preserve error instance for smart error messaging
+                    if (AppError.isAppError(err)) {
+                        setError(err);
+                    } else if (err instanceof Error) {
+                        setError(err);
+                    } else {
+                        setError(new AppError(
+                            ErrorCodes.INTERNAL_ERROR,
+                            'Failed to load file',
+                            { context: { filePath, sessionId } }
+                        ));
+                    }
                 }
             } finally {
                 if (!isCancelled) {
@@ -263,9 +280,13 @@ function FileScreen() {
     }, [sessionId, filePath, isBinaryFile]);
 
     // Show error modal if there's an error
+    // HAP-539: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
     React.useEffect(() => {
         if (error) {
-            Modal.alert(t('common.error'), error);
+            const message = AppError.isAppError(error)
+                ? getSmartErrorMessage(error)
+                : error.message;
+            Modal.alert(t('common.error'), message);
         }
     }, [error]);
 
@@ -303,16 +324,21 @@ function FileScreen() {
     }
 
     if (error) {
+        // HAP-539: Use getSmartErrorMessage for AppErrors (includes Support ID for server errors)
+        const errorMessage = AppError.isAppError(error)
+            ? getSmartErrorMessage(error)
+            : error.message;
+
         return (
-            <View style={{ 
-                flex: 1, 
+            <View style={{
+                flex: 1,
                 backgroundColor: theme.colors.surface,
-                justifyContent: 'center', 
+                justifyContent: 'center',
                 alignItems: 'center',
                 padding: 20
             }}>
-                <Text style={{ 
-                    fontSize: 18, 
+                <Text style={{
+                    fontSize: 18,
                     fontWeight: 'bold',
                     color: theme.colors.textDestructive,
                     marginBottom: 8,
@@ -320,13 +346,13 @@ function FileScreen() {
                 }}>
                     {t('common.error')}
                 </Text>
-                <Text style={{ 
-                    fontSize: 16, 
+                <Text style={{
+                    fontSize: 16,
                     color: theme.colors.textSecondary,
                     textAlign: 'center',
-                    ...Typography.default() 
+                    ...Typography.default()
                 }}>
-                    {error}
+                    {errorMessage}
                 </Text>
             </View>
         );
