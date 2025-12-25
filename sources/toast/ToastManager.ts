@@ -7,23 +7,28 @@
  * Usage:
  *   Toast.show({ message: 'Session archived', action: { label: 'Undo', onPress: () => restore() } });
  *   Toast.hide(toastId);
+ *   Toast.clearAll();           // Clear all with animation
+ *   Toast.clearAll(true);       // Clear all instantly (e.g., on navigation)
  */
 
 import { ToastConfig, ToastAction } from './types';
 
 type ShowToastFn = (config: Omit<ToastConfig, 'id'>) => string;
 type HideToastFn = (id: string) => void;
+type ClearAllToastsFn = (skipAnimation?: boolean) => void;
 
 class ToastManagerClass {
     private showToastFn: ShowToastFn | null = null;
     private hideToastFn: HideToastFn | null = null;
+    private clearAllToastsFn: ClearAllToastsFn | null = null;
 
     /**
-     * Called by ToastProvider to register the show/hide functions
+     * Called by ToastProvider to register the show/hide/clearAll functions
      */
-    setFunctions(showToast: ShowToastFn, hideToast: HideToastFn) {
+    setFunctions(showToast: ShowToastFn, hideToast: HideToastFn, clearAllToasts: ClearAllToastsFn) {
         this.showToastFn = showToast;
         this.hideToastFn = hideToast;
+        this.clearAllToastsFn = clearAllToasts;
     }
 
     private generateId(): string {
@@ -66,6 +71,20 @@ class ToastManagerClass {
         }
 
         this.hideToastFn(id);
+    }
+
+    /**
+     * Clear all toasts (current and queued)
+     *
+     * @param skipAnimation - If true, clears instantly without animation (default: false)
+     */
+    clearAll(skipAnimation = false): void {
+        if (!this.clearAllToastsFn) {
+            console.error('ToastManager not initialized. Make sure ToastProvider is mounted.');
+            return;
+        }
+
+        this.clearAllToastsFn(skipAnimation);
     }
 }
 

@@ -35,6 +35,7 @@ export function useToast() {
             state: { current: null, queue: [] },
             showToast: () => '',
             hideToast: () => {},
+            clearAllToasts: () => {},
         };
     }
     return context;
@@ -134,6 +135,31 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
     // Keep ref in sync with latest hideToast
     hideToastRef.current = hideToast;
 
+    const clearAllToasts = useCallback((skipAnimation = false) => {
+        // Clear any pending auto-dismiss timer
+        if (dismissTimerRef.current) {
+            clearTimeout(dismissTimerRef.current);
+            dismissTimerRef.current = null;
+        }
+
+        setState((prev) => {
+            if (skipAnimation || !prev.current) {
+                // Instant clear - no animation needed
+                fadeAnim.setValue(0);
+                return { current: null, queue: [] };
+            }
+
+            // Animate out current toast, then clear
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: Platform.OS !== 'web',
+            }).start();
+
+            return { current: null, queue: [] };
+        });
+    }, [fadeAnim]);
+
     const showToast = useCallback((config: Omit<ToastConfig, 'id'>): string => {
         const id = generateId();
 
@@ -203,8 +229,8 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
 
     // Register functions with ToastManager
     useEffect(() => {
-        Toast.setFunctions(showToast, hideToast);
-    }, [showToast, hideToast]);
+        Toast.setFunctions(showToast, hideToast, clearAllToasts);
+    }, [showToast, hideToast, clearAllToasts]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -237,6 +263,7 @@ export function ToastProvider({ children, queueConfig }: ToastProviderProps) {
         state,
         showToast,
         hideToast,
+        clearAllToasts,
     };
 
     const styles = stylesheet;

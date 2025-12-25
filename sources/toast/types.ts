@@ -42,4 +42,6 @@ export interface ToastContextValue {
     state: ToastState;
     showToast: (config: Omit<ToastConfig, 'id'>) => string;
     hideToast: (id: string) => void;
+    /** Clear all toasts (current and queued). Optionally skip animation for instant clear. */
+    clearAllToasts: (skipAnimation?: boolean) => void;
 }
