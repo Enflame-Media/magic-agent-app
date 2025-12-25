@@ -428,6 +428,7 @@ export const zhHans: TranslationStructure = {
         failedToCopyClaudeCodeSessionId: '复制 Claude Code 会话 ID 失败',
         metadataCopied: '元数据已复制到剪贴板',
         failedToCopyMetadata: '复制元数据失败',
+        failedToCopyUpdateCommand: '复制更新命令失败',
         failedToKillSession: '终止会话失败',
         failedToArchiveSession: '归档会话失败',
         connectionStatus: '连接状态',

@@ -426,6 +426,7 @@ export const es: TranslationStructure = {
         failedToCopyClaudeCodeSessionId: 'Falló al copiar ID de sesión de Claude Code',
         metadataCopied: 'Metadatos copiados al portapapeles',
         failedToCopyMetadata: 'Falló al copiar metadatos',
+        failedToCopyUpdateCommand: 'Falló al copiar el comando de actualización',
         failedToKillSession: 'Falló al terminar sesión',
         failedToArchiveSession: 'Falló al archivar sesión',
         connectionStatus: 'Estado de conexión',

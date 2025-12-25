@@ -402,6 +402,7 @@ export const en = {
         failedToCopyClaudeCodeSessionId: 'Failed to copy Claude Code Session ID',
         metadataCopied: 'Metadata copied to clipboard',
         failedToCopyMetadata: 'Failed to copy metadata',
+        failedToCopyUpdateCommand: 'Failed to copy update command',
         failedToKillSession: 'Failed to kill session',
         failedToArchiveSession: 'Failed to archive session',
         connectionStatus: 'Connection Status',

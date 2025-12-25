@@ -437,6 +437,7 @@ export const pl: TranslationStructure = {
         failedToCopyClaudeCodeSessionId: 'Nie udało się skopiować ID sesji Claude Code',
         metadataCopied: 'Metadane skopiowane do schowka',
         failedToCopyMetadata: 'Nie udało się skopiować metadanych',
+        failedToCopyUpdateCommand: 'Nie udało się skopiować polecenia aktualizacji',
         failedToKillSession: 'Nie udało się zakończyć sesji',
         failedToArchiveSession: 'Nie udało się zarchiwizować sesji',
         connectionStatus: 'Status połączenia',

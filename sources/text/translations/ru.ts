@@ -386,6 +386,7 @@ export const ru: TranslationStructure = {
         failedToCopyClaudeCodeSessionId: 'Не удалось скопировать ID сессии Claude Code',
         metadataCopied: 'Метаданные скопированы в буфер обмена',
         failedToCopyMetadata: 'Не удалось скопировать метаданные',
+        failedToCopyUpdateCommand: 'Не удалось скопировать команду обновления',
         failedToKillSession: 'Не удалось завершить сессию',
         failedToArchiveSession: 'Не удалось архивировать сессию',
         connectionStatus: 'Статус подключения',

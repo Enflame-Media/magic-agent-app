@@ -292,7 +292,7 @@ function SessionInfoContent({ session }: { session: Session }) {
             await Clipboard.setStringAsync(updateCommand);
             Modal.alert(t('common.success'), updateCommand);
         } catch {
-            Modal.alert(t('common.error'), t('common.error'));
+            Modal.alert(t('common.error'), t('sessionInfo.failedToCopyUpdateCommand'));
         }
     }, []);
 
