@@ -386,6 +386,58 @@ function formatAsGitHubComment(comparison: BundleComparison): string {
 }
 
 // ============================================================================
+// Analytics Engine Reporting (HAP-564)
+// ============================================================================
+
+/**
+ * Report bundle metrics to Analytics Engine via happy-server-workers
+ *
+ * This function is called from CI/CD to persist bundle size data for trend analysis.
+ * It gracefully handles missing configuration - if secrets aren't set, it just logs and continues.
+ */
+async function reportToAnalyticsEngine(stats: BundleStats): Promise<void> {
+  const apiUrl = process.env.HAPPY_API_URL;
+  const apiKey = process.env.CI_METRICS_API_KEY;
+
+  if (!apiUrl || !apiKey) {
+    console.log('📊 Analytics Engine reporting skipped (HAPPY_API_URL or CI_METRICS_API_KEY not configured)');
+    return;
+  }
+
+  const payload = {
+    platform: 'web' as const,
+    branch: stats.branch ?? process.env.GITHUB_REF_NAME ?? 'unknown',
+    commitHash: stats.commitHash ?? process.env.GITHUB_SHA?.substring(0, 7) ?? 'unknown',
+    jsBundleSize: stats.jsBundle.total,
+    assetsSize: stats.assets.total,
+    totalSize: stats.totalSize,
+    prNumber: process.env.GITHUB_PR_NUMBER ? parseInt(process.env.GITHUB_PR_NUMBER, 10) : null,
+    buildId: `${process.env.GITHUB_RUN_ID ?? 'local'}-${process.env.GITHUB_RUN_ATTEMPT ?? '1'}`,
+  };
+
+  try {
+    const response = await fetch(`${apiUrl}/v1/ci/metrics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CI-API-Key': apiKey,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      console.log('📊 Bundle metrics sent to Analytics Engine');
+    } else {
+      const text = await response.text();
+      console.warn(`⚠️ Failed to send metrics to Analytics Engine: ${response.status} ${text}`);
+    }
+  } catch (error) {
+    // Don't fail the build if metrics reporting fails
+    console.warn(`⚠️ Failed to send metrics to Analytics Engine: ${error}`);
+  }
+}
+
+// ============================================================================
 // CLI
 // ============================================================================
 
@@ -520,6 +572,10 @@ async function main() {
       console.log(`   ${alert}`);
     }
   }
+
+  // Report metrics to Analytics Engine (HAP-564)
+  // This is fire-and-forget - failures don't block the build
+  await reportToAnalyticsEngine(current);
 
   // Exit with error if regression detected and flag is set
   if (options.failOnRegression && comparison.regressions.length > 0) {
