@@ -40,6 +40,8 @@ interface MultiTextInputProps {
     onStateChange?: (state: TextInputState) => void;
     /** Whether the input is editable. Defaults to true. */
     editable?: boolean;
+    /** Accessibility label for screen readers */
+    accessibilityLabel?: string;
 }
 
 export const MultiTextInput = React.forwardRef<MultiTextInputHandle, MultiTextInputProps>((props, ref) => {
@@ -51,7 +53,8 @@ export const MultiTextInput = React.forwardRef<MultiTextInputHandle, MultiTextIn
         onKeyPress,
         onSelectionChange,
         onStateChange,
-        editable = true
+        editable = true,
+        accessibilityLabel
     } = props;
 
     const { theme } = useUnistyles();
@@ -211,6 +214,7 @@ export const MultiTextInput = React.forwardRef<MultiTextInputHandle, MultiTextIn
                 textContentType="none"
                 submitBehavior="newline"
                 editable={editable}
+                accessibilityLabel={accessibilityLabel ?? placeholder}
             />
         </View>
     );
