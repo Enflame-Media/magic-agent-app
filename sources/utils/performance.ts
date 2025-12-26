@@ -743,8 +743,9 @@ export function useResourceMonitoring(): void {
         startResourceMonitoring();
 
         return () => {
-            // Report final health before stopping
+            // Report final health before stopping (HAP-483: added API health)
             reportResourceHealth();
+            reportApiHealth();
             stopResourceMonitoring();
         };
     }, []);

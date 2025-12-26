@@ -131,6 +131,7 @@ const DEFAULT_DURATION = 5000;
 const DEFAULT_MAX_QUEUE_SIZE = 5;
 const DEFAULT_MAX_HIGH_PRIORITY_QUEUE_SIZE = 3;
 const DEFAULT_HIGH_PRIORITY_OVERFLOW: 'drop-oldest' | 'drop-newest' | 'downgrade' = 'drop-newest';
+const DEFAULT_AUTO_HIGH_PRIORITY_ERRORS = true;
 
 /**
  * Test helper: Full showToast options including high-priority handling
@@ -143,6 +144,8 @@ interface ShowToastOptions {
     generateId?: () => string;
     /** Elapsed time in ms since current toast started (for remaining duration calculation) */
     elapsedTime?: number;
+    /** Auto-promote error toasts to high priority when priority is undefined (default: true) */
+    autoHighPriorityErrors?: boolean;
 }
 
 /**
@@ -165,14 +168,24 @@ function simulateShowToast(
         highPriorityOverflow = DEFAULT_HIGH_PRIORITY_OVERFLOW,
         generateId = () => `toast-${Date.now()}-${Math.random()}`,
         elapsedTime = 0,
+        autoHighPriorityErrors = DEFAULT_AUTO_HIGH_PRIORITY_ERRORS,
     } = options;
 
     const id = generateId();
-    const isHighPriority = config.priority === 'high';
+
+    // Auto-promote error toasts to high priority (unless explicitly set to normal)
+    // This matches the logic in ToastProvider.tsx
+    const effectivePriority =
+        config.type === 'error' && config.priority === undefined && autoHighPriorityErrors
+            ? 'high'
+            : config.priority;
+
+    const isHighPriority = effectivePriority === 'high';
     const toastConfig: ToastConfig = {
         ...config,
         id,
         duration: config.duration ?? DEFAULT_DURATION,
+        priority: effectivePriority,
     };
 
     // Check for duplicate messages if prevention is enabled
@@ -711,10 +724,11 @@ describe('ToastProvider Queue System', () => {
             });
             expect(successState.queue[0].type).toBe('success');
 
+            // Disable autoHighPriorityErrors so error toast queues normally
             const { newState: errorState } = simulateShowToast(successState, {
                 message: 'Error',
                 type: 'error',
-            });
+            }, { autoHighPriorityErrors: false });
             expect(errorState.queue[1].type).toBe('error');
         });
 
@@ -1406,6 +1420,140 @@ describe('ToastProvider Queue System', () => {
 
                 expect(result.wasDropped).toBe(true);
             });
+        });
+    });
+
+    // =========================================================================
+    // AUTO-PROMOTE ERROR TOASTS TESTS (HAP-543)
+    // =========================================================================
+
+    describe('Auto-promote error toasts (HAP-543)', () => {
+        it('error toasts are auto-promoted to high priority by default', () => {
+            const normalToast = createToastConfig({
+                id: 'normal-1',
+                message: 'Normal toast',
+                priority: 'normal',
+            });
+            const state = createMockState({ current: normalToast });
+
+            // Error toast without explicit priority
+            const { newState } = simulateShowToast(
+                state,
+                { message: 'Error occurred!', type: 'error' },
+                { generateId: () => 'error-1', elapsedTime: 1000 }
+            );
+
+            // Error should be promoted to high priority and interrupt
+            expect(newState.current?.id).toBe('error-1');
+            expect(newState.current?.priority).toBe('high');
+            expect(newState.current?.type).toBe('error');
+            // Normal toast should be interrupted
+            expect(newState.interrupted?.id).toBe('normal-1');
+        });
+
+        it('error toasts NOT auto-promoted when autoHighPriorityErrors is false', () => {
+            const normalToast = createToastConfig({
+                id: 'normal-1',
+                message: 'Normal toast',
+                priority: 'normal',
+            });
+            const state = createMockState({ current: normalToast });
+
+            // Error toast with autoHighPriorityErrors disabled
+            const { newState } = simulateShowToast(
+                state,
+                { message: 'Error occurred!', type: 'error' },
+                { generateId: () => 'error-1', autoHighPriorityErrors: false }
+            );
+
+            // Error should be queued as normal priority (no interruption)
+            expect(newState.current?.id).toBe('normal-1');
+            expect(newState.queue).toHaveLength(1);
+            expect(newState.queue[0].id).toBe('error-1');
+            expect(newState.queue[0].priority).toBeUndefined();
+        });
+
+        it('error toasts with explicit priority: "normal" are not promoted', () => {
+            const normalToast = createToastConfig({
+                id: 'normal-1',
+                message: 'Normal toast',
+                priority: 'normal',
+            });
+            const state = createMockState({ current: normalToast });
+
+            // Error toast with explicit normal priority
+            const { newState } = simulateShowToast(
+                state,
+                { message: 'Error occurred!', type: 'error', priority: 'normal' },
+                { generateId: () => 'error-1' }
+            );
+
+            // Error should stay as normal priority (no interruption)
+            expect(newState.current?.id).toBe('normal-1');
+            expect(newState.queue).toHaveLength(1);
+            expect(newState.queue[0].id).toBe('error-1');
+            expect(newState.queue[0].priority).toBe('normal');
+        });
+
+        it('error toasts with explicit priority: "high" remain high priority', () => {
+            const normalToast = createToastConfig({
+                id: 'normal-1',
+                message: 'Normal toast',
+                priority: 'normal',
+            });
+            const state = createMockState({ current: normalToast });
+
+            // Error toast with explicit high priority
+            const { newState } = simulateShowToast(
+                state,
+                { message: 'Critical error!', type: 'error', priority: 'high' },
+                { generateId: () => 'error-1', elapsedTime: 1000 }
+            );
+
+            // Should interrupt as expected
+            expect(newState.current?.id).toBe('error-1');
+            expect(newState.current?.priority).toBe('high');
+        });
+
+        it('non-error toasts are not affected by autoHighPriorityErrors', () => {
+            const normalToast = createToastConfig({
+                id: 'normal-1',
+                message: 'Normal toast',
+                priority: 'normal',
+            });
+            const state = createMockState({ current: normalToast });
+
+            // Success toast without explicit priority
+            const { newState } = simulateShowToast(
+                state,
+                { message: 'Success!', type: 'success' },
+                { generateId: () => 'success-1' }
+            );
+
+            // Success toast should be queued as normal (no promotion)
+            expect(newState.current?.id).toBe('normal-1');
+            expect(newState.queue).toHaveLength(1);
+            expect(newState.queue[0].id).toBe('success-1');
+            expect(newState.queue[0].priority).toBeUndefined();
+        });
+
+        it('auto-promoted error toasts respect high-priority overflow limits', () => {
+            // Fill high-priority capacity
+            const highCurrent = createToastConfig({
+                id: 'high-1',
+                message: 'High 1',
+                priority: 'high',
+            });
+            const state = createMockState({ current: highCurrent });
+
+            // Error toast should be promoted but then dropped due to overflow
+            const { wasDropped } = simulateShowToast(
+                state,
+                { message: 'Error occurred!', type: 'error' },
+                { generateId: () => 'error-1', maxHighPriorityQueueSize: 1 }
+            );
+
+            expect(wasDropped).toBe(true);
         });
     });
 });
