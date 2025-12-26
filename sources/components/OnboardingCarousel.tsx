@@ -146,7 +146,12 @@ export const OnboardingCarousel = React.memo(({ onComplete }: OnboardingCarousel
         <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
             {/* Skip button */}
             <View style={styles.header}>
-                <Pressable onPress={onComplete} style={styles.skipButton}>
+                <Pressable
+                    onPress={onComplete}
+                    style={styles.skipButton}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('onboarding.skip')}
+                >
                     <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
                 </Pressable>
             </View>
@@ -180,6 +185,8 @@ export const OnboardingCarousel = React.memo(({ onComplete }: OnboardingCarousel
                 <Pressable
                     onPress={handleNext}
                     style={[styles.button, { backgroundColor: theme.colors.button.primary.background }]}
+                    accessibilityRole="button"
+                    accessibilityLabel={isLastSlide ? t('onboarding.getStarted') : t('onboarding.next')}
                 >
                     <Text style={[styles.buttonText, { color: theme.colors.button.primary.tint }]}>
                         {isLastSlide ? t('onboarding.getStarted') : t('onboarding.next')}

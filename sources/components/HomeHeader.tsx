@@ -166,6 +166,8 @@ function HeaderRight() {
                 onPress={() => router.push('/inbox')}
                 hitSlop={15}
                 style={styles.headerButton}
+                accessibilityRole="button"
+                accessibilityLabel={inboxBadgeCount > 0 ? t('tabs.inbox') + `, ${inboxBadgeCount}` : t('tabs.inbox')}
             >
                 <View style={styles.badgeContainer}>
                     <Ionicons name="notifications-outline" size={24} color={theme.colors.header.tint} />
@@ -186,6 +188,8 @@ function HeaderRight() {
                 onPress={() => router.push('/new')}
                 hitSlop={15}
                 style={styles.headerButton}
+                accessibilityRole="button"
+                accessibilityLabel={t('newSession.title')}
             >
                 <Ionicons name="add-outline" size={28} color={theme.colors.header.tint} />
             </Pressable>
@@ -204,6 +208,8 @@ function HeaderRightNotAuth() {
             onPress={() => router.push('/server')}
             hitSlop={15}
             style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('server.serverConfiguration')}
         >
             <Ionicons name="server-outline" size={24} color={theme.colors.header.tint} />
         </Pressable>

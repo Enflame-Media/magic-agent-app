@@ -148,6 +148,8 @@ function HeaderRight() {
             onPress={() => router.push('/server')}
             hitSlop={15}
             style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('server.serverConfiguration')}
         >
             <Ionicons name="server-outline" size={24} color={theme.colors.header.tint} />
         </Pressable>

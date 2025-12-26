@@ -5,6 +5,7 @@ import { UserProfile, getDisplayName } from '@/sync/friendTypes';
 import { Item } from '@/components/Item';
 import { Avatar } from '@/components/Avatar';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { t } from '@/text';
 
 interface UserCardProps {
     user: UserProfile;
@@ -54,6 +55,8 @@ export function UserCard({
                                 pressed && styles.actionButtonPressed,
                             ]}
                             hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('friends.reject')}
                         >
                             <Ionicons name="close" size={22} color={theme.colors.textDestructive} />
                         </Pressable>
@@ -67,6 +70,8 @@ export function UserCard({
                                 pressed && styles.actionButtonPressed,
                             ]}
                             hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('friends.accept')}
                         >
                             <Ionicons name="checkmark" size={22} color="#34C759" />
                         </Pressable>

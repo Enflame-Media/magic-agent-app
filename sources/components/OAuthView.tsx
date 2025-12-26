@@ -304,6 +304,8 @@ export const OAuthViewRender = React.memo((props: {
                 <TouchableOpacity
                     style={styles.retryButton}
                     onPress={props.onRetry}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.retry')}
                 >
                     <Text style={[styles.retryButtonText, { color: props.foregroundColor }]}>{t('common.retry')}</Text>
                 </TouchableOpacity>

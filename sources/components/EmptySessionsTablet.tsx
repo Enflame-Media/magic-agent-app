@@ -162,6 +162,8 @@ export function EmptySessionsTablet() {
                     <Pressable
                         style={styles.button}
                         onPress={handleStartNewSession}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('components.emptySessionsTablet.startNewSession')}
                     >
                         <Ionicons
                             name="add"

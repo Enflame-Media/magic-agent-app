@@ -45,7 +45,13 @@ export const CodeView = React.memo<CodeViewProps>(({
         <View style={styles.codeBlock}>
             <Text style={styles.codeText}>{displayCode}</Text>
             {needsTruncation && (
-                <Pressable onPress={handleToggle} style={styles.showMoreContainer}>
+                <Pressable
+                    onPress={handleToggle}
+                    style={styles.showMoreContainer}
+                    accessibilityRole="button"
+                    accessibilityLabel={expanded ? t('message.showLess') : t('message.showMore', { lines: hiddenLines })}
+                    accessibilityState={{ expanded }}
+                >
                     <Text style={styles.showMoreText}>
                         {expanded
                             ? t('message.showLess')

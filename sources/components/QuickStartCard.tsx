@@ -78,6 +78,8 @@ export const QuickStartCard = React.memo(function QuickStartCard() {
                         styles.card,
                         p.pressed && styles.cardPressed
                     ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('sessions.quickStart')}, ${quickStartData.displayPath} ${t('common.on')} ${quickStartData.machineName}`}
                 >
                     <View style={styles.iconContainer}>
                         <Ionicons

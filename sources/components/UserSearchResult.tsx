@@ -42,9 +42,11 @@ export function UserSearchResult({
     const isDisabled = isProcessing || user.status === 'friend' || user.status === 'pending' || user.status === 'requested';
 
     return (
-        <Pressable 
+        <Pressable
             style={styles.container}
             onPress={() => router.push(`/user/${user.id}`)}
+            accessibilityRole="button"
+            accessibilityLabel={`${displayName}, @${user.username}`}
         >
             <View style={styles.content}>
                 <Avatar
@@ -61,11 +63,14 @@ export function UserSearchResult({
 
                 <TouchableOpacity
                     style={[
-                        styles.button, 
+                        styles.button,
                         isDisabled && styles.buttonDisabled
                     ]}
                     onPress={onAddFriend}
                     disabled={isDisabled}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('friends.addFriend')}
+                    accessibilityState={{ disabled: isDisabled }}
                 >
                     {getButtonContent()}
                 </TouchableOpacity>

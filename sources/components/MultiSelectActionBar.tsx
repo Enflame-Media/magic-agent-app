@@ -143,6 +143,8 @@ export const MultiSelectActionBar = React.memo(function MultiSelectActionBar({
                 <Pressable
                     style={styles.selectAllButton}
                     onPress={handleSelectAll}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bulkRestore.selectAll')}
                 >
                     <Text style={[styles.selectAllText, Typography.default('semiBold')]}>
                         {t('bulkRestore.selectAll')}
@@ -157,6 +159,9 @@ export const MultiSelectActionBar = React.memo(function MultiSelectActionBar({
                     ]}
                     onPress={handleRestore}
                     disabled={isDisabled}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bulkRestore.restoreSelected', { count: selectedCount })}
+                    accessibilityState={{ disabled: isDisabled }}
                 >
                     <Ionicons name="refresh-circle" size={18} color="white" />
                     <Text style={[styles.restoreButtonText, Typography.default('semiBold')]}>

@@ -329,6 +329,9 @@ const CompactSessionRow = React.memo(({ session, selected, showBorder }: { sessi
             }}
             onLongPress={showContextMenu}
             delayLongPress={500}
+            accessibilityRole="button"
+            accessibilityLabel={`${sessionName}, ${sessionStatus.statusText}`}
+            accessibilityState={{ selected }}
         >
             <View style={styles.sessionContent}>
                 {/* Title line with status */}

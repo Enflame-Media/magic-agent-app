@@ -294,6 +294,8 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
                         <Pressable
                             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
                             onPress={onClose}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.ok')}
                         >
                             <Text style={[styles.buttonText, Typography.default('semiBold')]}>
                                 {t('common.ok')}
@@ -304,6 +306,9 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
                             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
                             onPress={onCancel}
                             disabled={progress.cancelled}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('common.cancel')}
+                            accessibilityState={{ disabled: progress.cancelled }}
                         >
                             <Text style={[styles.buttonText, styles.cancelText, Typography.default('semiBold')]}>
                                 {progress.cancelled ? t('bulkRestore.cancelling') : t('common.cancel')}

@@ -177,6 +177,8 @@ function HeaderRight() {
                 alignItems: 'center',
                 justifyContent: 'center',
             }}
+            accessibilityRole="button"
+            accessibilityLabel={t('friends.addFriend')}
         >
             <Ionicons name="person-add-outline" size={24} color={theme.colors.header.tint} />
         </Pressable>

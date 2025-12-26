@@ -156,6 +156,9 @@ export const VoiceAssistantStatusBar = React.memo(({ variant = 'floating', style
                         pressed && styles.floatingPillPressed,
                     ]}
                     hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={statusInfo.text}
+                    accessibilityState={{ expanded: isExpanded }}
                 >
                     <StatusDot
                         color={statusInfo.color}
@@ -182,6 +185,8 @@ export const VoiceAssistantStatusBar = React.memo(({ variant = 'floating', style
                             onPress={handleStopVoice}
                             style={styles.floatingCloseButton}
                             hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('voiceStatus.tapToEnd')}
                         >
                             <Ionicons
                                 name="close-circle"
@@ -215,6 +220,8 @@ export const VoiceAssistantStatusBar = React.memo(({ variant = 'floating', style
                         alignItems: 'center',
                     }}
                     hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={statusInfo.text + ', ' + t('voiceStatus.tapToEnd')}
                 >
                     <View style={styles.content}>
                         <View style={styles.leftSection}>
@@ -265,6 +272,8 @@ export const VoiceAssistantStatusBar = React.memo(({ variant = 'floating', style
                 onPress={handleStopVoice}
                 style={styles.pressable}
                 hitSlop={5}
+                accessibilityRole="button"
+                accessibilityLabel={statusInfo.text}
             >
                 <View style={styles.content}>
                     <View style={styles.leftSection}>

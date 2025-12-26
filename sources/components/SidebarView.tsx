@@ -195,6 +195,8 @@ export const SidebarView = React.memo(() => {
                             <Pressable
                                 onPress={() => router.push('/(app)/zen')}
                                 hitSlop={15}
+                                accessibilityRole="button"
+                                accessibilityLabel="Zen Mode"
                             >
                                 <Image
                                     source={require('@/assets/images/brutalist/Brutalism 3.png')}
@@ -208,6 +210,8 @@ export const SidebarView = React.memo(() => {
                             onPress={() => router.push('/(app)/inbox')}
                             hitSlop={15}
                             style={styles.notificationButton}
+                            accessibilityRole="button"
+                            accessibilityLabel={friendRequests.length > 0 ? t('tabs.inbox') + `, ${friendRequests.length}` : t('tabs.inbox')}
                         >
                             <Image
                                 source={require('@/assets/images/brutalist/Brutalism 27.png')}
@@ -229,6 +233,8 @@ export const SidebarView = React.memo(() => {
                         <Pressable
                             onPress={() => router.push('/settings')}
                             hitSlop={15}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('tabs.settings')}
                         >
                             <Image
                                 source={require('@/assets/images/brutalist/Brutalism 9.png')}

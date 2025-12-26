@@ -183,7 +183,13 @@ export const CommandView = React.memo<CommandViewProps>(({
 
             {/* Show more/less button */}
             {needsTruncation && (
-                <Pressable onPress={handleToggle} style={styles.showMoreContainer}>
+                <Pressable
+                    onPress={handleToggle}
+                    style={styles.showMoreContainer}
+                    accessibilityRole="button"
+                    accessibilityLabel={expanded ? t('message.showLess') : t('message.showMore', { lines: totalHiddenLines })}
+                    accessibilityState={{ expanded }}
+                >
                     <Text style={styles.showMoreText}>
                         {expanded
                             ? t('message.showLess')

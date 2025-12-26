@@ -394,6 +394,9 @@ const CompactSessionRow = React.memo(({ session, selected, showBorder }: { sessi
             }}
             onLongPress={showContextMenu}
             delayLongPress={500}
+            accessibilityRole="button"
+            accessibilityLabel={`${sessionName}, ${sessionStatus.statusText}`}
+            accessibilityState={{ selected }}
         >
             <View style={styles.avatarContainer}>
                 <Avatar id={avatarId} size={48} monochrome={!sessionStatus.isConnected} flavor={session.metadata?.flavor} />

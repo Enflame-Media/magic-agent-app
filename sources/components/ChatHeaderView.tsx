@@ -2,6 +2,7 @@ import * as React from 'react';
 import { View, Text, StyleSheet, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { t } from '@/text';
 import { useNavigation } from '@react-navigation/native';
 import { Avatar } from '@/components/Avatar';
 import { Typography } from '@/constants/Typography';
@@ -47,7 +48,13 @@ export const ChatHeaderView: React.FC<ChatHeaderViewProps> = ({
         <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.colors.header.background }]}>
             <View style={styles.contentWrapper}>
                 <View style={[styles.content, { height: headerHeight }]}>
-                <Pressable onPress={handleBackPress} style={styles.backButton} hitSlop={15}>
+                <Pressable
+                    onPress={handleBackPress}
+                    style={styles.backButton}
+                    hitSlop={15}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.back')}
+                >
                     <Ionicons
                         name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
                         size={Platform.select({ ios: 28, default: 24 })}
@@ -92,6 +99,8 @@ export const ChatHeaderView: React.FC<ChatHeaderViewProps> = ({
                         onPress={onAvatarPress}
                         hitSlop={15}
                         style={styles.avatarButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.files')}
                     >
                         <Avatar
                             id={avatarId}
