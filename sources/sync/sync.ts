@@ -36,6 +36,7 @@ import { voiceHooks } from '@/realtime/hooks/voiceHooks';
 import { Message } from './typesMessage';
 import { systemPrompt } from './prompt/systemPrompt';
 import { fetchArtifact, fetchArtifacts, createArtifact, updateArtifact } from './apiArtifacts';
+import { reportSyncMetric, setAnalyticsCredentials } from './apiAnalytics';
 import { DecryptedArtifact, ArtifactCreateRequest, ArtifactUpdateRequest } from './artifactTypes';
 import { ArtifactEncryption } from './encryption/artifactEncryption';
 import { getFriendsList, getUserProfile } from './apiFriends';
@@ -88,9 +89,14 @@ interface SyncMetrics {
 /**
  * HAP-497: Log sync metrics in a structured format for analysis.
  * Uses 📊 emoji prefix for easy filtering in logs.
+ *
+ * HAP-547: Also reports metrics to the server for analytics.
+ * Reporting is fire-and-forget and does not block sync operations.
  */
 function logSyncMetrics(metrics: SyncMetrics): void {
     log.log(`📊 Sync metrics: ${JSON.stringify(metrics)}`);
+    // HAP-547: Report to server (fire-and-forget, won't block)
+    reportSyncMetric(metrics);
 }
 
 /**
@@ -289,6 +295,8 @@ class Sync {
         this.encryption = encryption;
         this.anonID = encryption.anonID;
         this.serverID = parseToken(credentials.token);
+        // HAP-547: Enable analytics reporting with current credentials
+        setAnalyticsCredentials(credentials);
         await this.#init();
 
         // Await initial syncs with timeout to prevent login from hanging forever
@@ -327,6 +335,8 @@ class Sync {
         this.encryption = encryption;
         this.anonID = encryption.anonID;
         this.serverID = parseToken(credentials.token);
+        // HAP-547: Enable analytics reporting with current credentials
+        setAnalyticsCredentials(credentials);
         await this.#init();
     }
 
@@ -340,6 +350,8 @@ class Sync {
         this.socketCleanups.forEach((cleanup) => cleanup());
         // HAP-496: Cancel any pending sync state persistence and flush immediately
         this.syncStatePersistence.flush();
+        // HAP-547: Disable analytics reporting on logout
+        setAnalyticsCredentials(null);
     }
 
     async #init() {
