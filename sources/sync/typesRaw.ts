@@ -66,21 +66,34 @@ const rawAgentContentSchema = z.discriminatedUnion('type', [
 ]);
 export type RawAgentContent = z.infer<typeof rawAgentContentSchema>;
 
+// Strict schema for known output data types - provides full type narrowing
+const rawOutputDataSchema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal('system') }),
+    z.object({ type: z.literal('result') }),
+    z.object({ type: z.literal('summary'), summary: z.string() }),
+    z.object({ type: z.literal('assistant'), message: z.object({ role: z.literal('assistant'), model: z.string(), content: z.array(rawAgentContentSchema), usage: usageDataSchema.optional() }), parent_tool_use_id: z.string().nullable().optional() }),
+    z.object({ type: z.literal('user'), message: z.object({ role: z.literal('user'), content: z.union([z.string(), z.array(rawAgentContentSchema)]) }), parent_tool_use_id: z.string().nullable().optional(), toolUseResult: z.any().nullable().optional() }),
+]);
+
+// Common fields for all output data types
+const outputCommonFieldsSchema = z.object({
+    isSidechain: z.boolean().nullish(),
+    isCompactSummary: z.boolean().nullish(),
+    isMeta: z.boolean().nullish(),
+    uuid: z.string().nullish(),
+    parentUuid: z.string().nullish(),
+});
+
+// Loose schema that accepts any output data type (for initial validation)
+// This prevents console.error spam when CLI sends new message types
+const rawOutputDataLooseSchema = z.object({
+    type: z.string(), // Accept any string type
+}).passthrough().and(outputCommonFieldsSchema);
+
 const rawAgentRecordSchema = z.discriminatedUnion('type', [z.object({
     type: z.literal('output'),
-    data: z.intersection(z.discriminatedUnion('type', [
-        z.object({ type: z.literal('system') }),
-        z.object({ type: z.literal('result') }),
-        z.object({ type: z.literal('summary'), summary: z.string() }),
-        z.object({ type: z.literal('assistant'), message: z.object({ role: z.literal('assistant'), model: z.string(), content: z.array(rawAgentContentSchema), usage: usageDataSchema.optional() }), parent_tool_use_id: z.string().nullable().optional() }),
-        z.object({ type: z.literal('user'), message: z.object({ role: z.literal('user'), content: z.union([z.string(), z.array(rawAgentContentSchema)]) }), parent_tool_use_id: z.string().nullable().optional(), toolUseResult: z.any().nullable().optional() }),
-    ]), z.object({
-        isSidechain: z.boolean().nullish(),
-        isCompactSummary: z.boolean().nullish(),
-        isMeta: z.boolean().nullish(),
-        uuid: z.string().nullish(),
-        parentUuid: z.string().nullish(),
-    })),
+    // Use loose schema for validation to accept unknown types gracefully
+    data: rawOutputDataLooseSchema,
 }), z.object({
     type: z.literal('event'),
     id: z.string(),
@@ -190,12 +203,27 @@ export type NormalizedMessage = ({
     usage?: UsageData,
 };
 
+// Known output data type literals for type checking
+const KNOWN_OUTPUT_TYPES = ['system', 'result', 'summary', 'assistant', 'user'] as const;
+type KnownOutputType = typeof KNOWN_OUTPUT_TYPES[number];
+
+function isKnownOutputType(type: string): type is KnownOutputType {
+    return KNOWN_OUTPUT_TYPES.includes(type as KnownOutputType);
+}
+
 export function normalizeRawMessage(id: string, localId: string | null, createdAt: number, raw: RawRecord): NormalizedMessage | null {
+    // First pass: loose validation to accept messages without console spam
     let parsed = rawRecordSchema.safeParse(raw);
     if (!parsed.success) {
-        console.error('Invalid raw record:');
-        console.error(parsed.error.issues);
-        console.error(raw);
+        // Only log validation errors in development mode to avoid console spam in production
+        // These failures are expected when CLI sends new message types not yet in the schema
+        if (__DEV__) {
+            console.debug('[typesRaw] Schema validation failed for raw record:', {
+                issues: parsed.error.issues,
+                rawType: (raw as { role?: string; content?: { type?: string; data?: { type?: string } } })?.content?.type,
+                rawDataType: (raw as { content?: { data?: { type?: string } } })?.content?.data?.type,
+            });
+        }
         return null;
     }
     raw = parsed.data;
@@ -223,15 +251,43 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                 return null;
             }
 
+            // Check if this is a known output type before processing
+            if (!isKnownOutputType(raw.content.data.type)) {
+                // Unknown output data type - gracefully drop with debug logging
+                // This handles new message types from Claude SDK that aren't yet in the schema
+                if (__DEV__) {
+                    console.debug('[typesRaw] Unknown output data type, dropping message:', {
+                        type: raw.content.data.type,
+                        hasUuid: !!raw.content.data.uuid,
+                        isSidechain: raw.content.data.isSidechain,
+                    });
+                }
+                return null;
+            }
+
+            // Second pass: strict validation for known types to get proper type narrowing
+            const strictParsed = rawOutputDataSchema.and(outputCommonFieldsSchema).safeParse(raw.content.data);
+            if (!strictParsed.success) {
+                // This shouldn't happen for known types, but log it just in case
+                if (__DEV__) {
+                    console.debug('[typesRaw] Strict validation failed for known output type:', {
+                        type: raw.content.data.type,
+                        issues: strictParsed.error.issues,
+                    });
+                }
+                return null;
+            }
+            const data = strictParsed.data;
+
             // Handle Assistant messages (including sidechains)
-            if (raw.content.data.type === 'assistant') {
-                if (!raw.content.data.uuid) {
+            if (data.type === 'assistant') {
+                if (!data.uuid) {
                     return null;
                 }
                 let content: NormalizedAgentContent[] = [];
-                for (let c of raw.content.data.message.content) {
+                for (let c of data.message.content) {
                     if (c.type === 'text') {
-                        content.push({ type: 'text', text: c.text, uuid: raw.content.data.uuid, parentUUID: raw.content.data.parentUuid ?? null });
+                        content.push({ type: 'text', text: c.text, uuid: data.uuid, parentUUID: data.parentUuid ?? null });
                     } else if (c.type === 'tool_use') {
                         let description: string | null = null;
                         if (typeof c.input === 'object' && c.input !== null && 'description' in c.input && typeof c.input.description === 'string') {
@@ -242,8 +298,8 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                             id: c.id,
                             name: c.name,
                             input: c.input,
-                            description, uuid: raw.content.data.uuid,
-                            parentUUID: raw.content.data.parentUuid ?? null
+                            description, uuid: data.uuid,
+                            parentUUID: data.parentUuid ?? null
                         });
                     }
                 }
@@ -252,18 +308,18 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                     localId,
                     createdAt,
                     role: 'agent',
-                    isSidechain: raw.content.data.isSidechain ?? false,
+                    isSidechain: data.isSidechain ?? false,
                     content,
                     meta: raw.meta,
-                    usage: raw.content.data.message.usage
+                    usage: data.message.usage
                 };
-            } else if (raw.content.data.type === 'user') {
-                if (!raw.content.data.uuid) {
+            } else if (data.type === 'user') {
+                if (!data.uuid) {
                     return null;
                 }
 
                 // Handle sidechain user messages
-                if (raw.content.data.isSidechain && raw.content.data.message && typeof raw.content.data.message.content === 'string') {
+                if (data.isSidechain && data.message && typeof data.message.content === 'string') {
                     // Return as a special agent message with sidechain content
                     return {
                         id,
@@ -273,14 +329,14 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                         isSidechain: true,
                         content: [{
                             type: 'sidechain',
-                            uuid: raw.content.data.uuid,
-                            prompt: raw.content.data.message.content
+                            uuid: data.uuid,
+                            prompt: data.message.content
                         }]
                     };
                 }
 
                 // Handle regular user messages
-                if (raw.content.data.message && typeof raw.content.data.message.content === 'string') {
+                if (data.message && typeof data.message.content === 'string') {
                     return {
                         id,
                         localId,
@@ -289,30 +345,30 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                         isSidechain: false,
                         content: {
                             type: 'text',
-                            text: raw.content.data.message.content
+                            text: data.message.content
                         }
                     };
                 }
 
                 // Handle tool results
                 let content: NormalizedAgentContent[] = [];
-                if (typeof raw.content.data.message.content === 'string') {
+                if (typeof data.message.content === 'string') {
                     content.push({
                         type: 'text',
-                        text: raw.content.data.message.content,
-                        uuid: raw.content.data.uuid,
-                        parentUUID: raw.content.data.parentUuid ?? null
+                        text: data.message.content,
+                        uuid: data.uuid,
+                        parentUUID: data.parentUuid ?? null
                     });
                 } else {
-                    for (let c of raw.content.data.message.content) {
+                    for (let c of data.message.content) {
                         if (c.type === 'tool_result') {
                             content.push({
                                 type: 'tool-result',
                                 tool_use_id: c.tool_use_id,
-                                content: raw.content.data.toolUseResult ? raw.content.data.toolUseResult : (typeof c.content === 'string' ? c.content : c.content[0].text),
+                                content: data.toolUseResult ? data.toolUseResult : (typeof c.content === 'string' ? c.content : c.content[0].text),
                                 is_error: c.is_error || false,
-                                uuid: raw.content.data.uuid,
-                                parentUUID: raw.content.data.parentUuid ?? null,
+                                uuid: data.uuid,
+                                parentUUID: data.parentUuid ?? null,
                                 permissions: c.permissions ? {
                                     date: c.permissions.date,
                                     result: c.permissions.result,
@@ -329,7 +385,7 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                     localId,
                     createdAt,
                     role: 'agent',
-                    isSidechain: raw.content.data.isSidechain ?? false,
+                    isSidechain: data.isSidechain ?? false,
                     content,
                     meta: raw.meta
                 };
