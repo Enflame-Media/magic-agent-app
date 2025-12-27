@@ -439,6 +439,10 @@ function NewSessionScreen() {
             const updatedPaths = updateRecentMachinePaths(recentMachinePaths, selectedMachineId, selectedPath);
             sync.applySettings({ recentMachinePaths: updatedPaths });
 
+            // HAP-580: Record spawn time BEFORE calling machineSpawnNewSession
+            // This allows us to poll for sessions created after this time if the RPC times out
+            const spawnStartTime = Date.now();
+
             const result = await machineSpawnNewSession({
                 machineId: selectedMachineId,
                 directory: actualPath,
@@ -447,9 +451,11 @@ function NewSessionScreen() {
                 agent: agentType
             });
 
+            let sessionId: string | null = null;
+
             // Use sessionId to check for success for backwards compatibility
             if ('sessionId' in result && result.sessionId) {
-                let sessionId = result.sessionId;
+                sessionId = result.sessionId;
 
                 // Check if this is a temporary PID-based session ID
                 // (returned when daemon's webhook timeout exceeded but process was spawned)
@@ -457,10 +463,8 @@ function NewSessionScreen() {
                 if (isTemporaryPidSessionId(result.sessionId)) {
                     setPendingSessionStatus(t('newSession.sessionPolling'));
 
-                    // Record spawn time for session matching
-                    const spawnStartTime = Date.now();
-
                     // Poll for the real session ID (5s intervals, up to 2 minutes)
+                    // HAP-580: Use the spawnStartTime captured before RPC call
                     const realSessionId = await pollForRealSession(
                         selectedMachineId,
                         spawnStartTime,
@@ -490,43 +494,75 @@ function NewSessionScreen() {
                     sessionId = realSessionId;
                     setPendingSessionStatus(null);
                 }
-
-                // Store worktree metadata if applicable
-                if (sessionType === 'worktree') {
-                    // The metadata will be stored by the session itself once created
-                }
-
-                // Link task to session if task ID is provided
-                if (tempSessionData?.taskId && tempSessionData?.taskTitle) {
-                    const promptDisplayTitle = tempSessionData.prompt?.startsWith('Work on this task:')
-                        ? `Work on: ${tempSessionData.taskTitle}`
-                        : `Clarify: ${tempSessionData.taskTitle}`;
-                    await linkTaskToSession(
-                        tempSessionData.taskId,
-                        sessionId,
-                        tempSessionData.taskTitle,
-                        promptDisplayTitle
-                    );
-                }
-
-                // Load sessions
-                await sync.refreshSessions();
-
-                // Set permission and model modes on the session
-                storage.getState().updateSessionPermissionMode(sessionId, permissionMode);
-                storage.getState().updateSessionModelMode(sessionId, modelMode);
-
-                // Send message
-                await sync.sendMessage(sessionId, input);
-                // Navigate to session
-                router.replace(`/session/${sessionId}`, {
-                    dangerouslySingular() {
-                        return 'session'
-                    },
-                });
             } else {
+                // HAP-580: Optimistic polling fallback
+                // The RPC may have timed out even though the session was created successfully.
+                // Poll for new sessions before giving up, similar to the PID-polling pattern.
+                setPendingSessionStatus(t('newSession.sessionPolling'));
+
+                const polledSessionId = await pollForRealSession(
+                    selectedMachineId,
+                    spawnStartTime,
+                    {
+                        interval: 3000,  // Check every 3 seconds
+                        maxAttempts: 10, // Up to 30 seconds of polling
+                        onPoll: (attempt, maxAttempts) => {
+                            setPendingSessionStatus(
+                                t('newSession.sessionPollingProgress', { attempt, maxAttempts })
+                            );
+                        }
+                    }
+                );
+
+                setPendingSessionStatus(null);
+
+                if (polledSessionId) {
+                    // Found the session via polling - use it
+                    sessionId = polledSessionId;
+                } else {
+                    // Polling also failed - now we can give up
+                    throw new AppError(ErrorCodes.INTERNAL_ERROR, 'Session spawning failed - no session ID returned.');
+                }
+            }
+
+            // At this point sessionId is guaranteed to be set (either from RPC or polling)
+            if (!sessionId) {
                 throw new AppError(ErrorCodes.INTERNAL_ERROR, 'Session spawning failed - no session ID returned.');
             }
+
+            // Store worktree metadata if applicable
+            if (sessionType === 'worktree') {
+                // The metadata will be stored by the session itself once created
+            }
+
+            // Link task to session if task ID is provided
+            if (tempSessionData?.taskId && tempSessionData?.taskTitle) {
+                const promptDisplayTitle = tempSessionData.prompt?.startsWith('Work on this task:')
+                    ? `Work on: ${tempSessionData.taskTitle}`
+                    : `Clarify: ${tempSessionData.taskTitle}`;
+                await linkTaskToSession(
+                    tempSessionData.taskId,
+                    sessionId,
+                    tempSessionData.taskTitle,
+                    promptDisplayTitle
+                );
+            }
+
+            // Load sessions
+            await sync.refreshSessions();
+
+            // Set permission and model modes on the session
+            storage.getState().updateSessionPermissionMode(sessionId, permissionMode);
+            storage.getState().updateSessionModelMode(sessionId, modelMode);
+
+            // Send message
+            await sync.sendMessage(sessionId, input);
+            // Navigate to session
+            router.replace(`/session/${sessionId}`, {
+                dangerouslySingular() {
+                    return 'session'
+                },
+            });
         } catch (error) {
             console.error('Failed to start session', error);
 
