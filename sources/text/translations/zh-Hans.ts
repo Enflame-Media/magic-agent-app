@@ -141,6 +141,8 @@ export const zhHans: TranslationStructure = {
         exchangingTokens: '正在交换令牌...',
         usage: '使用情况',
         usageSubtitle: '查看 API 使用情况和费用',
+        mcp: 'MCP 服务器',
+        mcpSubtitle: '查看已连接的 MCP 服务器',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `已连接 ${service} 账户`,
@@ -773,6 +775,31 @@ export const zhHans: TranslationStructure = {
         needsRestart: '语言已更改',
         needsRestartMessage: '应用需要重启以应用新的语言设置。',
         restartNow: '立即重启',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'MCP 服务器',
+        viewingFromCli: '查看来自已连接 CLI 的配置',
+
+        // Server card
+        enabled: '已启用',
+        disabled: '已禁用',
+        toolCount: ({ count }: { count: number }) => `${count} 个工具`,
+        toolCountUnknown: '工具数量未知',
+        lastValidated: ({ date }: { date: string }) => `已验证 ${date}`,
+
+        // Empty states
+        noMachines: '没有已连接的机器',
+        noMachinesDescription: '连接到 CLI 机器以查看 MCP 服务器配置。',
+        noOnlineMachines: '机器离线',
+        noOnlineMachinesDescription: '您已连接的机器当前离线。当它们上线时，MCP 配置将会显示。',
+        noServers: '没有 MCP 服务器',
+        noServersDescription: '已连接的 CLI 上没有配置 MCP 服务器。',
+        addServerHint: '在您的 CLI 上运行此命令以添加服务器',
+
+        // Footer
+        readOnlyNote: 'MCP 配置为只读。请使用 CLI 添加、删除或修改服务器。',
     },
 
     connectButton: {

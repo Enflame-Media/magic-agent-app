@@ -150,6 +150,8 @@ export const pl: TranslationStructure = {
         exchangingTokens: 'Wymiana tokenów...',
         usage: 'Użycie',
         usageSubtitle: 'Zobacz użycie API i koszty',
+        mcp: 'Serwery MCP',
+        mcpSubtitle: 'Zobacz połączone serwery MCP',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Konto ${service} połączone`,
@@ -781,6 +783,35 @@ export const pl: TranslationStructure = {
         needsRestart: 'Język zmieniony',
         needsRestartMessage: 'Aplikacja musi zostać uruchomiona ponownie, aby zastosować nowe ustawienia języka.',
         restartNow: 'Uruchom ponownie',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'Serwery MCP',
+        viewingFromCli: 'Wyświetlanie konfiguracji z połączonego CLI',
+
+        // Server card
+        enabled: 'Włączony',
+        disabled: 'Wyłączony',
+        toolCount: ({ count }: { count: number }) => {
+            if (count === 1) return '1 narzędzie';
+            if (count >= 2 && count <= 4) return `${count} narzędzia`;
+            return `${count} narzędzi`;
+        },
+        toolCountUnknown: 'Narzędzia nieznane',
+        lastValidated: ({ date }: { date: string }) => `Zwalidowany ${date}`,
+
+        // Empty states
+        noMachines: 'Brak połączonych maszyn',
+        noMachinesDescription: 'Połącz się z maszyną CLI, aby zobaczyć konfigurację serwerów MCP.',
+        noOnlineMachines: 'Maszyny offline',
+        noOnlineMachinesDescription: 'Twoje połączone maszyny są obecnie offline. Konfiguracja MCP pojawi się, gdy będą online.',
+        noServers: 'Brak serwerów MCP',
+        noServersDescription: 'Brak skonfigurowanych serwerów MCP na połączonym CLI.',
+        addServerHint: 'Uruchom to polecenie w CLI, aby dodać serwer',
+
+        // Footer
+        readOnlyNote: 'Konfiguracja MCP jest tylko do odczytu. Użyj CLI, aby dodać, usunąć lub zmodyfikować serwery.',
     },
 
     connectButton: {

@@ -122,6 +122,8 @@ export const ru: TranslationStructure = {
         exchangingTokens: 'Обмен токенов...',
         usage: 'Использование',
         usageSubtitle: 'Просмотр использования API и затрат',
+        mcp: 'Серверы MCP',
+        mcpSubtitle: 'Просмотр подключённых серверов MCP',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Аккаунт ${service} подключен`,
@@ -934,6 +936,38 @@ export const ru: TranslationStructure = {
         needsRestart: 'Язык изменён',
         needsRestartMessage: 'Приложение нужно перезапустить для применения новых языковых настроек.',
         restartNow: 'Перезапустить',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'Серверы MCP',
+        viewingFromCli: 'Просмотр конфигурации с подключённого CLI',
+
+        // Server card
+        enabled: 'Включён',
+        disabled: 'Отключён',
+        toolCount: ({ count }: { count: number }) => {
+            const lastTwo = count % 100;
+            const lastOne = count % 10;
+            if (lastTwo >= 11 && lastTwo <= 19) return `${count} инструментов`;
+            if (lastOne === 1) return `${count} инструмент`;
+            if (lastOne >= 2 && lastOne <= 4) return `${count} инструмента`;
+            return `${count} инструментов`;
+        },
+        toolCountUnknown: 'Инструменты неизвестны',
+        lastValidated: ({ date }: { date: string }) => `Проверено ${date}`,
+
+        // Empty states
+        noMachines: 'Нет подключённых машин',
+        noMachinesDescription: 'Подключитесь к машине CLI для просмотра конфигурации серверов MCP.',
+        noOnlineMachines: 'Машины офлайн',
+        noOnlineMachinesDescription: 'Ваши подключённые машины сейчас офлайн. Конфигурация MCP появится, когда они будут онлайн.',
+        noServers: 'Нет серверов MCP',
+        noServersDescription: 'На подключённом CLI не настроено серверов MCP.',
+        addServerHint: 'Выполните эту команду в CLI для добавления сервера',
+
+        // Footer
+        readOnlyNote: 'Конфигурация MCP доступна только для чтения. Используйте CLI для добавления, удаления или изменения серверов.',
     },
 
     textSelection: {

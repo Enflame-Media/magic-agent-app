@@ -139,6 +139,8 @@ export const en = {
         exchangingTokens: 'Exchanging tokens...',
         usage: 'Usage',
         usageSubtitle: 'View your API usage and costs',
+        mcp: 'MCP Servers',
+        mcpSubtitle: 'View connected MCP servers',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `${service} account connected`,
@@ -772,6 +774,31 @@ export const en = {
         needsRestart: 'Language Changed',
         needsRestartMessage: 'The app needs to restart to apply the new language setting.',
         restartNow: 'Restart Now',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'MCP Servers',
+        viewingFromCli: 'Viewing configuration from connected CLI',
+
+        // Server card
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+        toolCount: ({ count }: { count: number }) => `${count} tool${count !== 1 ? 's' : ''}`,
+        toolCountUnknown: 'Tools unknown',
+        lastValidated: ({ date }: { date: string }) => `Validated ${date}`,
+
+        // Empty states
+        noMachines: 'No Machines Connected',
+        noMachinesDescription: 'Connect to a CLI machine to view MCP server configuration.',
+        noOnlineMachines: 'Machines Offline',
+        noOnlineMachinesDescription: 'Your connected machines are currently offline. MCP configuration will appear when they come online.',
+        noServers: 'No MCP Servers',
+        noServersDescription: 'No MCP servers are configured on the connected CLI.',
+        addServerHint: 'Run this command on your CLI to add a server',
+
+        // Footer
+        readOnlyNote: 'MCP configuration is read-only. Use the CLI to add, remove, or modify servers.',
     },
 
     connectButton: {

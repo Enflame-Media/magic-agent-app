@@ -139,6 +139,8 @@ export const es: TranslationStructure = {
         exchangingTokens: 'Intercambiando tokens...',
         usage: 'Uso',
         usageSubtitle: 'Ver tu uso de API y costos',
+        mcp: 'Servidores MCP',
+        mcpSubtitle: 'Ver servidores MCP conectados',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Cuenta de ${service} conectada`,
@@ -771,6 +773,31 @@ export const es: TranslationStructure = {
         needsRestart: 'Idioma cambiado',
         needsRestartMessage: 'La aplicación necesita reiniciarse para aplicar la nueva configuración de idioma.',
         restartNow: 'Reiniciar ahora',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'Servidores MCP',
+        viewingFromCli: 'Viendo configuración desde CLI conectado',
+
+        // Server card
+        enabled: 'Habilitado',
+        disabled: 'Deshabilitado',
+        toolCount: ({ count }: { count: number }) => `${count} herramienta${count !== 1 ? 's' : ''}`,
+        toolCountUnknown: 'Herramientas desconocidas',
+        lastValidated: ({ date }: { date: string }) => `Validado ${date}`,
+
+        // Empty states
+        noMachines: 'Sin máquinas conectadas',
+        noMachinesDescription: 'Conecta a una máquina CLI para ver la configuración de servidores MCP.',
+        noOnlineMachines: 'Máquinas desconectadas',
+        noOnlineMachinesDescription: 'Tus máquinas conectadas están actualmente desconectadas. La configuración MCP aparecerá cuando estén en línea.',
+        noServers: 'Sin servidores MCP',
+        noServersDescription: 'No hay servidores MCP configurados en el CLI conectado.',
+        addServerHint: 'Ejecuta este comando en tu CLI para agregar un servidor',
+
+        // Footer
+        readOnlyNote: 'La configuración MCP es de solo lectura. Usa el CLI para agregar, eliminar o modificar servidores.',
     },
 
     connectButton: {

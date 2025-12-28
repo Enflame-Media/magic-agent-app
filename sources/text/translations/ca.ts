@@ -139,6 +139,8 @@ export const ca: TranslationStructure = {
         exchangingTokens: 'Intercanviant tokens...',
         usage: 'Ús',
         usageSubtitle: "Veure l'ús de l'API i costos",
+        mcp: 'Servidors MCP',
+        mcpSubtitle: 'Veure servidors MCP connectats',
 
         // Dynamic settings messages
         accountConnected: ({ service }: { service: string }) => `Compte de ${service} connectat`,
@@ -771,6 +773,31 @@ export const ca: TranslationStructure = {
         needsRestart: 'Idioma canviat',
         needsRestartMessage: 'L\'aplicació necessita reiniciar-se per aplicar la nova configuració d\'idioma.',
         restartNow: 'Reinicia ara',
+    },
+
+    settingsMcp: {
+        // MCP Settings screen (HAP-603)
+        title: 'Servidors MCP',
+        viewingFromCli: 'Veient configuració del CLI connectat',
+
+        // Server card
+        enabled: 'Activat',
+        disabled: 'Desactivat',
+        toolCount: ({ count }: { count: number }) => `${count} eina${count !== 1 ? 'es' : ''}`,
+        toolCountUnknown: 'Eines desconegudes',
+        lastValidated: ({ date }: { date: string }) => `Validat ${date}`,
+
+        // Empty states
+        noMachines: 'Sense màquines connectades',
+        noMachinesDescription: 'Connecta a una màquina CLI per veure la configuració de servidors MCP.',
+        noOnlineMachines: 'Màquines fora de línia',
+        noOnlineMachinesDescription: 'Les teves màquines connectades estan fora de línia. La configuració MCP apareixerà quan estiguin en línia.',
+        noServers: 'Sense servidors MCP',
+        noServersDescription: 'No hi ha servidors MCP configurats al CLI connectat.',
+        addServerHint: 'Executa aquesta comanda al teu CLI per afegir un servidor',
+
+        // Footer
+        readOnlyNote: 'La configuració MCP és de només lectura. Utilitza el CLI per afegir, eliminar o modificar servidors.',
     },
 
     connectButton: {
