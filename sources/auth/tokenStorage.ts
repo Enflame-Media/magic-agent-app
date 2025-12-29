@@ -1,16 +1,52 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { AppError, ErrorCodes } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 
 const AUTH_KEY = 'auth_credentials';
 const ENCRYPTION_KEY = 'auth_enc_key';
 const AES_GCM_IV_LENGTH = 12;
 
-// Web Crypto API utilities for secure localStorage storage
+// Web Crypto API utilities for secure sessionStorage
 // These functions are only used on web platform
-// Note: This encryption provides protection against casual inspection but not against
-// active XSS attacks, as the key must be stored client-side. For maximum security,
-// use the native mobile apps which utilize hardware-backed secure storage.
+//
+// SECURITY NOTICE: Web browser storage has inherent limitations compared to native apps.
+// On native platforms (iOS/Android), we use hardware-backed secure storage (Keychain/Keystore).
+// On web, we use sessionStorage with AES-256-GCM encryption. While this protects against
+// casual inspection, it cannot fully protect against active XSS attacks since the encryption
+// key must be stored client-side and is accessible to JavaScript.
+//
+// Mitigations applied:
+// 1. sessionStorage instead of localStorage - tokens cleared on browser close
+// 2. AES-256-GCM encryption - protects at-rest data from casual inspection
+// 3. Strict CSP headers - reduces XSS attack surface
+//
+// For maximum security of credentials, use the iOS or Android native apps.
+
+let webStorageWarningLogged = false;
+
+/**
+ * Logs a one-time security warning when web storage is first accessed.
+ * This helps users understand the security limitations of browser storage.
+ */
+function logWebStorageSecurityWarning(): void {
+    if (webStorageWarningLogged) return;
+    webStorageWarningLogged = true;
+
+    logger.warn(
+        '[Security] Web browser storage is inherently less secure than native apps. ' +
+        'For maximum security of your credentials, use the iOS or Android app. ' +
+        'Web tokens are stored in sessionStorage and will be cleared when you close the browser.'
+    );
+}
+
+/**
+ * Gets the appropriate web storage for the platform.
+ * Uses sessionStorage on web for improved security (tokens cleared on browser close).
+ */
+function getWebStorage(): Storage {
+    return sessionStorage;
+}
 
 function isSecureContext(): boolean {
     return typeof window !== 'undefined' && window.isSecureContext;
@@ -44,7 +80,8 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
-    const stored = localStorage.getItem(ENCRYPTION_KEY);
+    const storage = getWebStorage();
+    const stored = storage.getItem(ENCRYPTION_KEY);
     if (stored) {
         const keyData = base64ToArrayBuffer(stored);
         return crypto.subtle.importKey('raw', keyData, 'AES-GCM', true, ['encrypt', 'decrypt']);
@@ -55,7 +92,7 @@ async function getOrCreateEncryptionKey(): Promise<CryptoKey> {
         ['encrypt', 'decrypt']
     );
     const exported = await crypto.subtle.exportKey('raw', key);
-    localStorage.setItem(ENCRYPTION_KEY, arrayBufferToBase64(exported));
+    storage.setItem(ENCRYPTION_KEY, arrayBufferToBase64(exported));
     return key;
 }
 
@@ -104,7 +141,25 @@ export interface AuthCredentials {
 export const TokenStorage = {
     async getCredentials(): Promise<AuthCredentials | null> {
         if (Platform.OS === 'web') {
-            const stored = localStorage.getItem(AUTH_KEY);
+            logWebStorageSecurityWarning();
+            const storage = getWebStorage();
+
+            // Migration: check if there are credentials in localStorage (old storage)
+            // and migrate them to sessionStorage (new storage)
+            const oldStored = localStorage.getItem(AUTH_KEY);
+            if (oldStored) {
+                logger.info('[TokenStorage] Migrating credentials from localStorage to sessionStorage');
+                storage.setItem(AUTH_KEY, oldStored);
+                // Also migrate the encryption key if present
+                const oldKey = localStorage.getItem(ENCRYPTION_KEY);
+                if (oldKey) {
+                    storage.setItem(ENCRYPTION_KEY, oldKey);
+                    localStorage.removeItem(ENCRYPTION_KEY);
+                }
+                localStorage.removeItem(AUTH_KEY);
+            }
+
+            const stored = storage.getItem(AUTH_KEY);
             if (!stored) return null;
             try {
                 // Try to decrypt (new encrypted format)
@@ -123,12 +178,12 @@ export const TokenStorage = {
                     }
                     // Re-encrypt and save in new format
                     const encrypted = await encryptForWeb(JSON.stringify(parsed));
-                    localStorage.setItem(AUTH_KEY, encrypted);
+                    storage.setItem(AUTH_KEY, encrypted);
                     return parsed;
                 } catch {
                     // Corrupted data, clear it
-                    localStorage.removeItem(AUTH_KEY);
-                    localStorage.removeItem(ENCRYPTION_KEY);
+                    storage.removeItem(AUTH_KEY);
+                    storage.removeItem(ENCRYPTION_KEY);
                     return null;
                 }
             }
@@ -139,20 +194,22 @@ export const TokenStorage = {
             _credentialsCache = stored; // Update cache
             return JSON.parse(stored) as AuthCredentials;
         } catch (error) {
-            console.error('[TokenStorage] Failed to retrieve credentials:', error);
+            logger.error('[TokenStorage] Failed to retrieve credentials:', error);
             return null;
         }
     },
 
     async setCredentials(credentials: AuthCredentials): Promise<boolean> {
         if (Platform.OS === 'web') {
+            logWebStorageSecurityWarning();
             try {
+                const storage = getWebStorage();
                 const json = JSON.stringify(credentials);
                 const encrypted = await encryptForWeb(json);
-                localStorage.setItem(AUTH_KEY, encrypted);
+                storage.setItem(AUTH_KEY, encrypted);
                 return true;
             } catch (error) {
-                console.error('[TokenStorage] Failed to encrypt credentials:', error);
+                logger.error('[TokenStorage] Failed to encrypt credentials:', error);
                 return false;
             }
         }
@@ -162,13 +219,17 @@ export const TokenStorage = {
             _credentialsCache = json; // Update cache
             return true;
         } catch (error) {
-            console.error('[TokenStorage] Failed to store credentials:', error);
+            logger.error('[TokenStorage] Failed to store credentials:', error);
             return false;
         }
     },
 
     async removeCredentials(): Promise<boolean> {
         if (Platform.OS === 'web') {
+            const storage = getWebStorage();
+            storage.removeItem(AUTH_KEY);
+            storage.removeItem(ENCRYPTION_KEY);
+            // Also clean up any legacy localStorage entries
             localStorage.removeItem(AUTH_KEY);
             localStorage.removeItem(ENCRYPTION_KEY);
             return true;
@@ -178,7 +239,7 @@ export const TokenStorage = {
             _credentialsCache = null; // Clear cache
             return true;
         } catch (error) {
-            console.error('Error removing credentials:', error);
+            logger.error('[TokenStorage] Failed to remove credentials:', error);
             return false;
         }
     },

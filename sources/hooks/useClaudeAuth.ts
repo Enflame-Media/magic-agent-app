@@ -30,6 +30,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { useProfile } from '@/sync/storage';
 import { refreshClaudeToken, ClaudeAuthTokens } from '@/utils/oauth';
 import { fetchClaudeToken } from '@/sync/apiServices';
+import { logger } from '@/utils/logger';
 
 /** Secure storage key for Claude OAuth tokens */
 const CLAUDE_TOKEN_KEY = 'claude_auth_token';
@@ -135,7 +136,7 @@ export function useClaudeAuth(): UseClaudeAuthReturn {
                 setTokens(parsed);
             }
         } catch (e) {
-            console.error('[useClaudeAuth] Failed to load stored tokens:', e);
+            logger.error('[useClaudeAuth] Failed to load stored tokens:', e);
         }
     }, []);
 
@@ -163,7 +164,7 @@ export function useClaudeAuth(): UseClaudeAuthReturn {
      */
     const fetchTokensFromServer = React.useCallback(async (): Promise<ClaudeAuthTokens | null> => {
         if (!auth.credentials) {
-            console.log('[useClaudeAuth] No auth credentials available');
+            logger.debug('[useClaudeAuth] No auth credentials available');
             return null;
         }
 
@@ -175,7 +176,7 @@ export function useClaudeAuth(): UseClaudeAuthReturn {
             }
             return null;
         } catch (e) {
-            console.error('[useClaudeAuth] Failed to fetch tokens from server:', e);
+            logger.error('[useClaudeAuth] Failed to fetch tokens from server:', e);
             return null;
         }
     }, [auth.credentials, saveTokens]);
@@ -206,12 +207,12 @@ export function useClaudeAuth(): UseClaudeAuthReturn {
         if (needsRefresh && tokens.raw.refresh_token) {
             setIsRefreshing(true);
             try {
-                console.log('[useClaudeAuth] Token expiring soon, refreshing...');
+                logger.debug('[useClaudeAuth] Token expiring soon, refreshing...');
                 const refreshed = await refreshClaudeToken(tokens.raw.refresh_token);
                 await saveTokens(refreshed);
                 return refreshed.token;
             } catch (e) {
-                console.error('[useClaudeAuth] Token refresh failed:', e);
+                logger.error('[useClaudeAuth] Token refresh failed:', e);
                 // Token expired and refresh failed - user needs to re-auth
                 // Clear local tokens so next call will try server
                 await secureStorage.remove(CLAUDE_TOKEN_KEY);
