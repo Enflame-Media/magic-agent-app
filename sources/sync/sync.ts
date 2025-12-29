@@ -28,6 +28,7 @@ import { RevenueCat, LogLevel, PaywallResult } from './revenueCat';
 import { trackPaywallPresented, trackPaywallPurchased, trackPaywallCancelled, trackPaywallRestored, trackPaywallError } from '@/track';
 import { getServerUrl } from './serverConfig';
 import { config } from '@/config';
+import { logger } from '@/utils/logger';
 import { log } from '@/log';
 import { gitStatusSync } from './gitStatusSync';
 import { projectManager } from './projectManager';
@@ -1183,7 +1184,7 @@ class Sync {
     private fetchMachines = async () => {
         if (!this.credentials) return;
 
-        console.log('📊 Sync: Fetching machines...');
+        logger.debug('📊 Sync: Fetching machines...');
         const API_ENDPOINT = getServerUrl();
         const response = await authenticatedFetch(
             `${API_ENDPOINT}/v1/machines`,
@@ -1211,7 +1212,7 @@ class Sync {
             updatedAt: number;
         }> };
         const machines = data.machines ?? [];
-        console.log(`📊 Sync: Fetched ${machines.length} machines from server`);
+        logger.debug(`📊 Sync: Fetched ${machines.length} machines from server`);
 
         // First, collect and decrypt encryption keys for all machines
         const machineKeysMap = new Map<string, Uint8Array | null>();
@@ -1534,7 +1535,7 @@ class Sync {
                     }
 
                     // Log
-                    console.log('settings', JSON.stringify({
+                    logger.debug('settings', JSON.stringify({
                         settings: parsedSettings,
                         version: data.currentVersion
                     }));
@@ -1588,7 +1589,7 @@ class Sync {
         }
 
         // Log
-        console.log('settings', JSON.stringify({
+        logger.debug('settings', JSON.stringify({
             settings: parsedSettings,
             version: data.settingsVersion
         }));
@@ -1666,7 +1667,7 @@ class Sync {
         const parsedProfile = profileParse(data);
 
         // Log profile data for debugging
-        console.log('profile', JSON.stringify({
+        logger.debug('profile', JSON.stringify({
             id: parsedProfile.id,
             timestamp: parsedProfile.timestamp,
             firstName: parsedProfile.firstName,
@@ -1724,12 +1725,12 @@ class Sync {
             });
 
             if (!response.ok) {
-                console.log(`[fetchNativeUpdate] Request failed: ${response.status}`);
+                logger.debug(`[fetchNativeUpdate] Request failed: ${response.status}`);
                 return;
             }
 
             const data = await response.json();
-            console.log('[fetchNativeUpdate] Data:', data);
+            logger.debug('[fetchNativeUpdate] Data:', data);
 
             // Apply update status to storage
             if (data.update_required && data.update_url) {
@@ -1743,7 +1744,7 @@ class Sync {
                 });
             }
         } catch (error) {
-            console.log('[fetchNativeUpdate] Error:', error);
+            logger.debug('[fetchNativeUpdate] Error:', error);
             storage.getState().applyNativeUpdateStatus(null);
         }
     }
@@ -1764,7 +1765,7 @@ class Sync {
                 }
 
                 if (!apiKey) {
-                    console.log(`RevenueCat: No API key found for platform ${Platform.OS}`);
+                    logger.debug(`RevenueCat: No API key found for platform ${Platform.OS}`);
                     return;
                 }
 
@@ -1781,7 +1782,7 @@ class Sync {
                 });
 
                 this.revenueCatInitialized = true;
-                console.log('RevenueCat initialized successfully');
+                logger.info('RevenueCat initialized successfully');
             }
 
             // Sync purchases
@@ -1904,8 +1905,8 @@ class Sync {
         this.sessionLastSeq.set(sessionId, maxSeq);
         this.scheduleSyncStatePersist();
 
-        console.log('Batch decrypted and normalized messages in', Date.now() - start, 'ms');
-        console.log('normalizedMessages', JSON.stringify(normalizedMessages));
+        logger.debug('Batch decrypted and normalized messages in', Date.now() - start, 'ms');
+        logger.debug('normalizedMessages', JSON.stringify(normalizedMessages));
 
         // Apply to storage
         this.applyMessages(sessionId, normalizedMessages);
@@ -1947,7 +1948,7 @@ class Sync {
         log.log('finalStatus: ' + JSON.stringify(finalStatus));
 
         if (finalStatus !== 'granted') {
-            console.log('Failed to get push token for push notification!');
+            logger.info('Failed to get push token for push notification!');
             return;
         }
 
@@ -2224,12 +2225,12 @@ class Sync {
 
             log.log(`🗑️ Session ${sessionId} deleted from local storage`);
         } else if (updateData.body.t === 'update-session') {
-            const session = storage.getState().sessions[updateData.body.id];
+            const session = storage.getState().sessions[updateData.body.sid];
             if (session) {
                 // Get session encryption
-                const sessionEncryption = this.encryption.getSessionEncryption(updateData.body.id);
+                const sessionEncryption = this.encryption.getSessionEncryption(updateData.body.sid);
                 if (!sessionEncryption) {
-                    console.error(`Session encryption not found for ${updateData.body.id} - this should never happen`);
+                    console.error(`Session encryption not found for ${updateData.body.sid} - this should never happen`);
                     return;
                 }
 
@@ -2256,14 +2257,14 @@ class Sync {
 
                 // Invalidate git status when agent state changes (files may have been modified)
                 if (updateData.body.agentState) {
-                    gitStatusSync.invalidate(updateData.body.id);
+                    gitStatusSync.invalidate(updateData.body.sid);
 
                     // Check for new permission requests and notify voice assistant
                     if (agentState?.requests && Object.keys(agentState.requests).length > 0) {
                         const requestIds = Object.keys(agentState.requests);
                         const firstRequest = agentState.requests[requestIds[0]];
                         const toolName = firstRequest?.tool;
-                        voiceHooks.onPermissionRequested(updateData.body.id, requestIds[0], toolName, firstRequest?.arguments);
+                        voiceHooks.onPermissionRequested(updateData.body.sid, requestIds[0], toolName, firstRequest?.arguments);
                     }
 
                     // Re-fetch messages when control returns to mobile (local -> remote mode switch)
@@ -2273,8 +2274,8 @@ class Sync {
                     const wasControlledByUser = Boolean(session.agentState?.controlledByUser);
                     const isNowControlledByUser = Boolean(agentState?.controlledByUser);
                     if (wasControlledByUser === false && isNowControlledByUser === true) {
-                        log.log(`🔄 Control returned to mobile for session ${updateData.body.id}, re-fetching messages`);
-                        this.onSessionVisible(updateData.body.id);
+                        log.log(`🔄 Control returned to mobile for session ${updateData.body.sid}, re-fetching messages`);
+                        this.onSessionVisible(updateData.body.sid);
                     }
                 }
             }
@@ -2643,11 +2644,9 @@ class Sync {
     private handleEphemeralUpdate = (update: unknown) => {
         const validatedUpdate = ApiEphemeralUpdateSchema.safeParse(update);
         if (!validatedUpdate.success) {
-            console.log('Invalid ephemeral update received:', validatedUpdate.error);
+            logger.debug('Invalid ephemeral update received:', validatedUpdate.error);
             console.error('Invalid ephemeral update received:', update);
             return;
-        } else {
-            // console.log('Ephemeral update received:', update);
         }
         const updateData = validatedUpdate.data;
 
@@ -2660,7 +2659,7 @@ class Sync {
         // Handle machine activity updates
         if (updateData.type === 'machine-activity') {
             // Update machine's active status and lastActiveAt
-            const machine = storage.getState().machines[updateData.id];
+            const machine = storage.getState().machines[updateData.machineId];
             if (machine) {
                 const updatedMachine: Machine = {
                     ...machine,
@@ -2849,10 +2848,10 @@ export async function syncCreate(credentials: AuthCredentials) {
         return;
     }
     isInitialized = true;
-    console.log('[syncCreate] Starting sync initialization...');
+    logger.info('[syncCreate] Starting sync initialization...');
     try {
         await syncInit(credentials, false);
-        console.log('[syncCreate] Sync initialization completed successfully');
+        logger.info('[syncCreate] Sync initialization completed successfully');
     } catch (error) {
         console.error('[syncCreate] Sync initialization failed:', error);
         // Reset isInitialized so user can retry
@@ -2867,10 +2866,10 @@ export async function syncRestore(credentials: AuthCredentials) {
         return;
     }
     isInitialized = true;
-    console.log('[syncRestore] Starting sync restore...');
+    logger.info('[syncRestore] Starting sync restore...');
     try {
         await syncInit(credentials, true);
-        console.log('[syncRestore] Sync restore completed successfully');
+        logger.info('[syncRestore] Sync restore completed successfully');
     } catch (error) {
         console.error('[syncRestore] Sync restore failed:', error);
         // Reset isInitialized so user can retry
@@ -2880,27 +2879,27 @@ export async function syncRestore(credentials: AuthCredentials) {
 }
 
 async function syncInit(credentials: AuthCredentials, restore: boolean) {
-    console.log('[syncInit] Starting...', { restore });
+    logger.debug('[syncInit] Starting...', { restore });
 
     // Initialize sync engine
-    console.log('[syncInit] Decoding secret key...');
+    logger.debug('[syncInit] Decoding secret key...');
     const secretKey = decodeBase64(credentials.secret, 'base64url');
     if (secretKey.length !== 32) {
         throw new AppError(ErrorCodes.VALIDATION_FAILED, `Invalid secret key length: ${secretKey.length}, expected 32`);
     }
-    console.log('[syncInit] Secret key decoded, length:', secretKey.length);
+    logger.debug('[syncInit] Secret key decoded, length:', secretKey.length);
 
-    console.log('[syncInit] Creating encryption...');
+    logger.debug('[syncInit] Creating encryption...');
     const encryption = await Encryption.create(secretKey);
-    console.log('[syncInit] Encryption created, anonID:', encryption.anonID);
+    logger.debug('[syncInit] Encryption created, anonID:', encryption.anonID);
 
     // Initialize tracking
-    console.log('[syncInit] Initializing tracking...');
+    logger.debug('[syncInit] Initializing tracking...');
     initializeTracking(encryption.anonID);
 
     // Initialize socket connection
     const API_ENDPOINT = getServerUrl();
-    console.log('[syncInit] Initializing socket to:', API_ENDPOINT);
+    logger.debug('[syncInit] Initializing socket to:', API_ENDPOINT);
     apiSocket.initialize({ endpoint: API_ENDPOINT, token: credentials.token }, encryption);
 
     // Clean up previous status change handler if exists (prevents accumulation on hot reload)
@@ -2912,11 +2911,11 @@ async function syncInit(credentials: AuthCredentials, restore: boolean) {
     });
 
     // Initialize sessions engine
-    console.log('[syncInit] Initializing sync engine...');
+    logger.debug('[syncInit] Initializing sync engine...');
     if (restore) {
         await sync.restore(credentials, encryption);
     } else {
         await sync.create(credentials, encryption);
     }
-    console.log('[syncInit] Sync engine initialized');
+    logger.info('[syncInit] Sync engine initialized');
 }

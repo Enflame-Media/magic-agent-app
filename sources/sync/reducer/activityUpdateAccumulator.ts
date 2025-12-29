@@ -11,7 +11,7 @@ export class ActivityUpdateAccumulator {
     ) {}
 
     addUpdate(update: ApiEphemeralActivityUpdate): void {
-        const sessionId = update.id;
+        const sessionId = update.sid; // HAP-654: Standardized to `sid`
         const lastState = this.lastEmittedStates.get(sessionId);
 
         // Check if this is a critical timestamp update (more than half of disconnect timeout old)

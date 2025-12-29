@@ -21,7 +21,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should emit immediately when thinking state changes from false to true', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -29,7 +29,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: true
@@ -51,7 +51,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should emit immediately when thinking state changes from true to false', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: true
@@ -59,7 +59,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -77,7 +77,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should emit immediately when active state changes', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -85,7 +85,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: false,
                 activeAt: 1100,
                 thinking: false
@@ -103,7 +103,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should emit immediately for first update to new session', () => {
             const update: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -122,7 +122,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should debounce when only activeAt timestamp changes', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -130,7 +130,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -138,7 +138,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update3: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1200,
                 thinking: false
@@ -164,7 +164,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should accumulate multiple sessions with timestamp changes', () => {
             const session1Update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -172,7 +172,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const session2Update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session2',
+                sid: 'session2',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -180,7 +180,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const session1Update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -188,7 +188,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const session2Update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session2',
+                sid: 'session2',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -219,7 +219,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
             // This test verifies the fix for the timer reset bug
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -227,7 +227,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 2000, // +1 second
                 thinking: false
@@ -235,7 +235,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update3: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 3000, // +1 second
                 thinking: false
@@ -266,7 +266,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should flush pending updates when significant change occurs', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -274,7 +274,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -282,7 +282,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update3: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1200,
                 thinking: true // Significant change
@@ -310,7 +310,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
             // Set up initial states for two sessions
             const session1Initial: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -318,7 +318,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const session2Initial: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session2',
+                sid: 'session2',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -332,7 +332,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
             // Add debounced updates for both sessions
             const session1Debounced: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -340,7 +340,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const session2Debounced: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session2',
+                sid: 'session2',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -353,7 +353,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
             // Add a significant change for session1
             const session1Significant: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1200,
                 thinking: true // Significant change
@@ -371,11 +371,11 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
         it('should handle rapid state toggles correctly', () => {
             const updates: ApiEphemeralActivityUpdate[] = [
-                { type: 'activity', id: 'session1', active: true, activeAt: 1000, thinking: false },
-                { type: 'activity', id: 'session1', active: true, activeAt: 1100, thinking: true },
-                { type: 'activity', id: 'session1', active: true, activeAt: 1200, thinking: false },
-                { type: 'activity', id: 'session1', active: true, activeAt: 1300, thinking: true },
-                { type: 'activity', id: 'session1', active: true, activeAt: 1400, thinking: false },
+                { type: 'activity', sid: 'session1', active: true, activeAt: 1000, thinking: false },
+                { type: 'activity', sid: 'session1', active: true, activeAt: 1100, thinking: true },
+                { type: 'activity', sid: 'session1', active: true, activeAt: 1200, thinking: false },
+                { type: 'activity', sid: 'session1', active: true, activeAt: 1300, thinking: true },
+                { type: 'activity', sid: 'session1', active: true, activeAt: 1400, thinking: false },
             ];
 
             updates.forEach(update => accumulator.addUpdate(update));
@@ -396,7 +396,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should cancel pending updates', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -404,7 +404,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -425,7 +425,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should flush pending updates immediately', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -433,7 +433,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -456,7 +456,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
         it('should reset all state', () => {
             const update1: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1000,
                 thinking: false
@@ -464,7 +464,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
 
             const update2: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1100,
                 thinking: false
@@ -478,7 +478,7 @@ describe('ActivityUpdateAccumulator Smart Debounce', () => {
             // After reset, next update should be treated as new session (immediate)
             const update3: ApiEphemeralActivityUpdate = {
                 type: 'activity',
-                id: 'session1',
+                sid: 'session1',
                 active: true,
                 activeAt: 1200,
                 thinking: false
