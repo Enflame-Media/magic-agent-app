@@ -1,11 +1,12 @@
 import { RoundButton } from "@/components/RoundButton";
 import { useAuth } from "@/auth/AuthContext";
 import { Text, View, Image, Platform } from "react-native";
+import { logger } from "@/utils/logger";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as React from 'react';
 import { encodeBase64 } from "@/encryption/base64";
 import { authGetToken } from "@/auth/authGetToken";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { getRandomBytesAsync } from "expo-crypto";
 import { useIsLandscape } from "@/utils/responsive";
@@ -15,6 +16,7 @@ import { HomeHeaderNotAuth } from "@/components/HomeHeader";
 import { MainView } from "@/components/MainView";
 import { t } from '@/text';
 import { useLocalSetting } from "@/sync/storage";
+import { sync } from "@/sync/sync";
 
 function Home() {
     const auth = useAuth();
@@ -29,6 +31,17 @@ function Home() {
 function Authenticated() {
     const router = useRouter();
     const hasSeenOnboarding = useLocalSetting('hasSeenOnboarding');
+    const searchParams = useLocalSearchParams<{ github?: string }>();
+
+    // Handle GitHub OAuth callback - refresh profile when redirected back from GitHub
+    React.useEffect(() => {
+        if (searchParams.github === 'connected') {
+            // Refresh profile to get updated GitHub connection data
+            sync.refreshProfile();
+            // Clear URL params to avoid re-triggering on navigation
+            router.setParams({ github: undefined });
+        }
+    }, [searchParams.github, router]);
 
     // Redirect to onboarding on first launch
     useFocusEffect(
@@ -55,21 +68,21 @@ function NotAuthenticated() {
     const insets = useSafeAreaInsets();
 
     const createAccount = async () => {
-        console.log('[createAccount] Starting...');
+        logger.debug('[createAccount] Starting...');
         try {
-            console.log('[createAccount] Generating random secret...');
+            logger.debug('[createAccount] Generating random secret...');
             const secret = await getRandomBytesAsync(32);
-            console.log('[createAccount] Secret generated, getting token...');
+            logger.debug('[createAccount] Secret generated, getting token...');
             const token = await authGetToken(secret);
-            console.log('[createAccount] Token received:', token ? 'yes' : 'no');
+            logger.debug('[createAccount] Token received:', token ? 'yes' : 'no');
             if (token && secret) {
-                console.log('[createAccount] Calling auth.login...');
+                logger.debug('[createAccount] Calling auth.login...');
                 await auth.login(token, encodeBase64(secret, 'base64url'));
-                console.log('[createAccount] auth.login completed, tracking...');
+                logger.debug('[createAccount] auth.login completed, tracking...');
                 trackAccountCreated();
-                console.log('[createAccount] Done!');
+                logger.debug('[createAccount] Done!');
             } else {
-                console.log('[createAccount] Missing token or secret, not logging in');
+                logger.debug('[createAccount] Missing token or secret, not logging in');
             }
         } catch (error) {
             console.error('[createAccount] Error:', error);

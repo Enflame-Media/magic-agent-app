@@ -4,6 +4,7 @@ import { sessionAllow, sessionDeny } from '@/sync/ops';
 import { storage } from '@/sync/storage';
 import { trackPermissionResponse } from '@/track';
 import { getCurrentRealtimeSessionId } from './RealtimeSession';
+import { logger } from '@/utils/logger';
 
 /**
  * Static client tools for the realtime voice interface.
@@ -33,8 +34,8 @@ export const realtimeClientTools = {
             return "error (no active session)";
         }
         
-        console.log('🔍 messageClaudeCode called with:', message);
-        console.log('📤 Sending message to session:', sessionId);
+        logger.debug('messageClaudeCode called with:', message);
+        logger.debug('Sending message to session:', sessionId);
         sync.sendMessage(sessionId, message);
         return "sent [DO NOT say anything else, simply say 'sent']";
     },
@@ -61,7 +62,7 @@ export const realtimeClientTools = {
             return "error (no active session)";
         }
         
-        console.log('🔍 processPermissionRequest called with:', decision);
+        logger.debug('processPermissionRequest called with:', decision);
         
         // Get the current session to check for permission requests
         const session = storage.getState().sessions[sessionId];

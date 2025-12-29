@@ -29,6 +29,7 @@ import { Avatar } from '@/components/Avatar';
 import { t } from '@/text';
 import { useTrackMountTime } from '@/hooks/usePerformanceMonitor';
 import { openExternalUrl } from '@/components/ExternalLink';
+import { logger } from '@/utils/logger';
 
 // Manual Auth Modal Component for Android
 function ManualAuthModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (url: string) => void }) {
@@ -125,7 +126,7 @@ export const SettingsView = React.memo(function SettingsView() {
         if (!result.success) {
             console.error('Failed to present paywall:', result.error);
         } else if (result.purchased) {
-            console.log('Purchase successful!');
+            logger.info('Purchase successful!');
         }
     };
 

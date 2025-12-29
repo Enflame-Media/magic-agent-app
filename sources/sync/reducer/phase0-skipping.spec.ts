@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import { describe, it, expect } from 'vitest';
 import { createReducer, reducer } from './reducer';
 import { NormalizedMessage } from '../typesRaw';

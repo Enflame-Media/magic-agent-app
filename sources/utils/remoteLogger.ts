@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 /**
  * Simple remote logger for React Native
  * Patches console to send logs to remote server

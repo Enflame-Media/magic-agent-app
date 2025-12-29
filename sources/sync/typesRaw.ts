@@ -1,6 +1,7 @@
 import * as z from 'zod';
 import { MessageMetaSchema, MessageMeta } from './typesMessageMeta';
 import { reportValidationMetrics } from './apiAnalytics';
+import { logger } from '@/utils/logger';
 
 //
 // Validation Metrics
@@ -405,7 +406,7 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
         // Only log validation errors in development mode to avoid console spam in production
         // These failures are expected when CLI sends new message types not yet in the schema
         if (__DEV__) {
-            console.debug('[typesRaw] Schema validation failed for raw record:', {
+            logger.debug('[typesRaw] Schema validation failed for raw record:', {
                 issues: parsed.error.issues,
                 rawType: (raw as { role?: string; content?: { type?: string; data?: { type?: string } } })?.content?.type,
                 rawDataType: (raw as { content?: { data?: { type?: string } } })?.content?.data?.type,
@@ -446,7 +447,7 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
                 // Unknown output data type - gracefully drop with debug logging
                 // This handles new message types from Claude SDK that aren't yet in the schema
                 if (__DEV__) {
-                    console.debug('[typesRaw] Unknown output data type, dropping message:', {
+                    logger.debug('[typesRaw] Unknown output data type, dropping message:', {
                         type: raw.content.data.type,
                         hasUuid: !!raw.content.data.uuid,
                         isSidechain: raw.content.data.isSidechain,
@@ -463,7 +464,7 @@ export function normalizeRawMessage(id: string, localId: string | null, createdA
 
                 // This shouldn't happen for known types, but log it just in case
                 if (__DEV__) {
-                    console.debug('[typesRaw] Strict validation failed for known output type:', {
+                    logger.debug('[typesRaw] Strict validation failed for known output type:', {
                         type: raw.content.data.type,
                         issues: strictParsed.error.issues,
                     });

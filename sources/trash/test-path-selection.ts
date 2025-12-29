@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 // Test script to verify path selection logic
 import { storage } from '../sync/storage';
 

@@ -16,6 +16,7 @@ import { PermissionFooter } from './PermissionFooter';
 import { parseToolUseError } from '@/utils/toolErrorParser';
 import { formatMCPTitle } from './views/MCPToolView';
 import { t } from '@/text';
+import { logger } from '@/utils/logger';
 
 interface ToolViewProps {
     metadata: Metadata | null;
@@ -116,7 +117,7 @@ export const ToolView = React.memo<ToolViewProps>((props) => {
     let isToolUseError = false;
     if (tool.state === 'error' && tool.result && parseToolUseError(tool.result).isToolUseError) {
         isToolUseError = true;
-        console.log('isToolUseError', tool.result);
+        logger.debug('isToolUseError', tool.result);
     }
 
     // Check permission status first for denied/canceled states

@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* oxlint-disable no-console */
 /**
  * Bundle Size Analyzer for Happy App
  *

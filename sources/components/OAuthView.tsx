@@ -1,6 +1,7 @@
 import { parseCallbackUrl, generatePKCE, generateState, PKCECodes, ClaudeAuthTokens } from '@/utils/oauth';
 import * as React from 'react';
 import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { logger } from '@/utils/logger';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import Animated, {
     useSharedValue,
@@ -209,7 +210,7 @@ export const OAuthViewRender = React.memo((props: {
     }, [webViewLoadingOpacity]);
 
     const handleNavigationStateChange = React.useCallback(async (navState: any) => {
-        console.log('handleNavigationStateChange', navState.url);
+        logger.debug('handleNavigationStateChange', navState.url);
         // Prevent processing the same URL multiple times
         if (isProcessingRef.current) {
             return;
@@ -283,7 +284,7 @@ export const OAuthViewRender = React.memo((props: {
     }, [props.parameters, props.config]);
 
     const handleWebViewError = React.useCallback((syntheticEvent: any) => {
-        console.log('handleWebViewError', syntheticEvent);
+        logger.debug('handleWebViewError', syntheticEvent);
         const { nativeEvent } = syntheticEvent;
         console.error('WebView error:', nativeEvent);
 

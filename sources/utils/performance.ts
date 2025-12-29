@@ -16,6 +16,7 @@ import * as React from 'react';
 import { Platform, InteractionManager } from 'react-native';
 import type { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { tracking } from '@/track/tracking';
+import { logger } from '@/utils/logger';
 
 // Performance thresholds (ms)
 const SLOW_RENDER_THRESHOLD = 16; // 60fps = ~16ms per frame
@@ -81,7 +82,7 @@ function trackStartupTime(): void {
 
         // Also log for debugging
         const status = startupDuration > STARTUP_THRESHOLD_WARN ? 'SLOW' : 'OK';
-        console.log(`[Performance] Startup: ${Math.round(startupDuration)}ms (${status})`);
+        logger.debug(`[Performance] Startup: ${Math.round(startupDuration)}ms (${status})`);
     });
 }
 
@@ -132,7 +133,7 @@ function reportSlowRender(screen: string, duration: number): void {
             platform: Platform.OS,
         });
 
-        console.warn(`[Performance] Slow render on ${screen}: ${Math.round(duration)}ms (${severity})`);
+        logger.warn(`[Performance] Slow render on ${screen}: ${Math.round(duration)}ms (${severity})`);
     });
 }
 
@@ -181,10 +182,10 @@ export function getAllScreenBaselines(): Map<string, ReturnType<typeof getScreen
 export function logBaselines(): void {
     const baselines = getAllScreenBaselines();
 
-    console.log('[Performance] Screen Baselines:');
+    logger.debug('[Performance] Screen Baselines:');
     baselines.forEach((baseline, screen) => {
         if (baseline) {
-            console.log(`  ${screen}: avg=${baseline.avgDuration}ms, max=${baseline.maxDuration}ms (n=${baseline.sampleCount})`);
+            logger.debug(`  ${screen}: avg=${baseline.avgDuration}ms, max=${baseline.maxDuration}ms (n=${baseline.sampleCount})`);
         }
     });
 }
@@ -201,7 +202,7 @@ export function createTimer(label: string): {
     return {
         stop: () => {
             const duration = performance.now() - start;
-            console.log(`[Performance] ${label}: ${Math.round(duration)}ms`);
+            logger.debug(`[Performance] ${label}: ${Math.round(duration)}ms`);
             return duration;
         },
         elapsed: () => performance.now() - start,
@@ -252,7 +253,7 @@ export function reportBaselines(): void {
             platform: Platform.OS,
         });
 
-        console.log('[Performance] Baselines reported to analytics');
+        logger.debug('[Performance] Baselines reported to analytics');
     });
 }
 
@@ -404,7 +405,7 @@ function reportScrollMetrics(metrics: ScrollMetrics, isFinal: boolean): void {
 
         // Log jank for debugging
         if (metrics.jankEvents > 0 || droppedFrameRate > 0.1) {
-            console.warn(
+            logger.warn(
                 `[Performance] Scroll jank on ${metrics.listId}: ` +
                 `${metrics.jankEvents} jank events, ` +
                 `${Math.round(droppedFrameRate * 100)}% frames dropped, ` +
@@ -610,7 +611,7 @@ function runBlockingDetectionCycle(): void {
                         platform: Platform.OS,
                     });
 
-                    console.warn(
+                    logger.warn(
                         `[Performance] JS thread blocked for ${event.duration}ms (${severity})`
                     );
                 });
@@ -646,11 +647,11 @@ function runBlockingDetectionCycle(): void {
  */
 export function startResourceMonitoring(): void {
     if (resourceMonitorInterval !== null) {
-        console.log('[Performance] Resource monitoring already running');
+        logger.debug('[Performance] Resource monitoring already running');
         return;
     }
 
-    console.log('[Performance] Starting resource monitoring');
+    logger.debug('[Performance] Starting resource monitoring');
 
     // Start periodic resource sampling
     resourceMonitorInterval = setInterval(sampleResourceUsage, RESOURCE_SAMPLE_INTERVAL);
@@ -668,7 +669,7 @@ export function startResourceMonitoring(): void {
  * Call on app shutdown or when monitoring is no longer needed.
  */
 export function stopResourceMonitoring(): void {
-    console.log('[Performance] Stopping resource monitoring');
+    logger.debug('[Performance] Stopping resource monitoring');
 
     if (resourceMonitorInterval !== null) {
         clearInterval(resourceMonitorInterval);
@@ -722,7 +723,7 @@ export function reportResourceHealth(): void {
             platform: Platform.OS,
         });
 
-        console.log(
+        logger.debug(
             `[Performance] Resource Health: ${blockingCount} blocking events ` +
             `(${criticalCount} critical), ` +
             `Memory: ${memory ? `${memory.usedMB}/${memory.totalMB} MB` : 'N/A (native)'}`
@@ -852,7 +853,7 @@ export function trackApiLatency(
             });
 
             if (isVerySlow) {
-                console.warn(
+                logger.warn(
                     `[Performance] Very slow API call: ${method.toUpperCase()} ${endpoint} - ${Math.round(duration)}ms (status: ${status})`
                 );
             }
@@ -966,7 +967,7 @@ export function reportApiHealth(): void {
             platform: Platform.OS,
         });
 
-        console.log(
+        logger.debug(
             `[Performance] API Health: avg=${metrics.avgDuration}ms, ` +
             `max=${metrics.maxDuration}ms, errors=${Math.round(metrics.errorRate * 100)}%`
         );

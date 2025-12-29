@@ -7,6 +7,7 @@ import { TokenStorage } from '@/auth/tokenStorage';
 import { t } from '@/text';
 import { config } from '@/config';
 import { requestMicrophonePermission, showMicrophonePermissionDeniedAlert } from '@/utils/microphonePermissions';
+import { logger } from '@/utils/logger';
 
 let voiceSession: VoiceSession | null = null;
 let voiceSessionStarted: boolean = false;
@@ -55,12 +56,12 @@ export async function startRealtimeSession(sessionId: string, initialContext?: s
         }
         
         const response = await fetchVoiceToken(credentials, sessionId);
-        console.log('[Voice] fetchVoiceToken response:', response);
+        logger.debug('[Voice] fetchVoiceToken response:', response);
 
         if (!response.allowed) {
-            console.log('[Voice] Not allowed, presenting paywall...');
+            logger.debug('[Voice] Not allowed, presenting paywall...');
             const result = await sync.presentPaywall();
-            console.log('[Voice] Paywall result:', result);
+            logger.debug('[Voice] Paywall result:', result);
             if (result.purchased) {
                 await startRealtimeSession(sessionId, initialContext);
             }

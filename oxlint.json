@@ -7,7 +7,7 @@
     "es2024": true
   },
   "rules": {
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": ["error", { "allow": ["warn", "error"] }]
   },
   "ignorePatterns": ["node_modules", "dist", "build", "coverage", "*.d.ts", "ios", "android", ".expo"]
 }

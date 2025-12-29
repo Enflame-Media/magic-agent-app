@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import * as React from 'react';
 import { View, TextInput, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';

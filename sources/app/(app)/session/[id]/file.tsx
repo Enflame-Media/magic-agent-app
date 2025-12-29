@@ -12,6 +12,7 @@ import { t } from '@/text';
 import { FileIcon } from '@/components/FileIcon';
 import { AppError, ErrorCodes, getSmartErrorMessage } from '@/utils/errors';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { logger } from '@/utils/logger';
 
 interface FileContent {
     content: string;
@@ -205,7 +206,7 @@ function FileScreen() {
                             setDiffContent(diffResponse.stdout);
                         }
                     } catch (diffError) {
-                        console.log('Could not fetch git diff:', diffError);
+                        logger.debug('Could not fetch git diff:', diffError);
                         // Continue with file loading even if diff fails
                     }
                 }

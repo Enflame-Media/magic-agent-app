@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import { describe, it, expect } from '@/dev/testRunner';
 import { decryptAESGCM, decryptAESGCMString, encryptAESGCM, encryptAESGCMString } from './aes';
 import { getRandomBytes } from 'expo-crypto';

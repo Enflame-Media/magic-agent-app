@@ -17,6 +17,7 @@ import {
     PaywallOptions
 } from './types';
 import { AppError, ErrorCodes } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 
 class RevenueCatWeb implements RevenueCatInterface {
     private purchases: Purchases | null = null;
@@ -116,7 +117,7 @@ class RevenueCatWeb implements RevenueCatInterface {
     setLogLevel(level: LogLevel): void {
         // Web SDK doesn't support log levels
         // This is a no-op on web
-        console.log(`RevenueCat log level set to ${LogLevel[level]} (not supported on web)`);
+        logger.debug(`RevenueCat log level set to ${LogLevel[level]} (not supported on web)`);
     }
 
     async presentPaywall(options?: PaywallOptions): Promise<PaywallResult> {

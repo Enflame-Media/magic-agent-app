@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 /**
  * Test script to debug the auth flow on happy-server-workers
  * Run with: npx tsx sources/trash/test-auth-flow.ts

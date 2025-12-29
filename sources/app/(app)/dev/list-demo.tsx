@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import * as React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Item } from '@/components/Item';

@@ -9,6 +9,7 @@ import { layout } from '../layout';
 import { useLocalSetting } from '@/sync/storage';
 import { StyleSheet } from 'react-native-unistyles';
 import { t } from '@/text';
+import { logger } from '@/utils/logger';
 
 interface ToolFullViewProps {
     tool: ToolCall;
@@ -21,7 +22,7 @@ export function ToolFullView({ tool, metadata, messages = [] }: ToolFullViewProp
     const SpecializedFullView = getToolFullViewComponent(tool.name);
     const screenWidth = useWindowDimensions().width;
     const devModeEnabled = (useLocalSetting('devModeEnabled') || __DEV__);
-    console.log('ToolFullView', devModeEnabled);
+    logger.debug('ToolFullView', devModeEnabled);
 
     return (
         <ScrollView style={[styles.container, { paddingHorizontal: screenWidth > 700 ? 16 : 0 }]}>

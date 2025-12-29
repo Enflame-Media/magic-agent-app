@@ -12,6 +12,7 @@ import { ItemList } from '@/components/ItemList';
 import { ItemGroup } from '@/components/ItemGroup';
 import { useSearch } from '@/hooks/useSearch';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { logger } from '@/utils/logger';
 
 function SearchFriendsScreen() {
     const { credentials } = useAuth();
@@ -39,7 +40,7 @@ function SearchFriendsScreen() {
 
             if (updatedProfile) {
                 trackFriendsConnect();
-                console.log(t('friends.requestSent'));
+                logger.info(t('friends.requestSent'));
             } else {
                 await Modal.alert(t('friends.bothMustHaveGithub'));
             }

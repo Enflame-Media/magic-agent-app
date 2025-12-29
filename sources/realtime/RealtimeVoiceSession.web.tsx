@@ -5,6 +5,7 @@ import { storage } from '@/sync/storage';
 import { realtimeClientTools } from './realtimeClientTools';
 import { getElevenLabsCodeFromPreference } from '@/constants/Languages';
 import type { VoiceSession, VoiceSessionConfig } from './types';
+import { logger } from '@/utils/logger';
 
 // Static reference to the conversation hook instance
 let conversationInstance: ReturnType<typeof useConversation> | null = null;
@@ -51,7 +52,7 @@ class RealtimeVoiceSessionImpl implements VoiceSession {
                 }
             });
 
-            console.log('Started conversation with ID:', conversationId);
+            logger.debug('Started conversation with ID:', conversationId);
         } catch (error) {
             console.error('Failed to start realtime session:', error);
             storage.getState().setRealtimeStatus('error');

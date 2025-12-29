@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+/* oxlint-disable no-console */
 
 import * as fs from 'fs';
 import * as path from 'path';

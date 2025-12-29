@@ -1,3 +1,4 @@
+/* oxlint-disable no-console */
 import * as React from 'react';
 import { ActivityIndicator, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';

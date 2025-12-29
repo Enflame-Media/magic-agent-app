@@ -4,6 +4,7 @@ import * as React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Fonts from 'expo-font';
 import { markAppStart, markFirstRender, useResourceMonitoring } from '@/utils/performance';
+import { logger } from '@/utils/logger';
 
 // Mark app start as early as possible in module load
 markAppStart();
@@ -130,7 +131,7 @@ async function loadFonts() {
             });
         } else {
             // For Tauri, skip Font Face Observer as fonts are loaded via CSS
-            console.log('Do not wait for fonts to load');
+            logger.debug('[_layout] Do not wait for fonts to load');
             (async () => {
                 try {
                     await Fonts.loadAsync({
@@ -193,22 +194,22 @@ export default function RootLayout() {
             (window as any).__HAPPY_DEBUG__.push('Init started: ' + new Date().toISOString());
         }
         (async () => {
-            console.log('[_layout] Init sequence starting...');
+            logger.debug('[_layout] Init sequence starting...');
             setDebugInfo('Init starting...');
             try {
-                console.log('[_layout] Loading fonts...');
+                logger.debug('[_layout] Loading fonts...');
                 setDebugInfo('Loading fonts...');
                 await loadFonts();
-                console.log('[_layout] Fonts loaded, waiting for sodium...');
+                logger.debug('[_layout] Fonts loaded, waiting for sodium...');
                 setDebugInfo('Fonts loaded, waiting for sodium...');
                 await sodium.ready;
-                console.log('[_layout] Sodium ready, getting credentials...');
+                logger.debug('[_layout] Sodium ready, getting credentials...');
                 setDebugInfo('Sodium ready, getting credentials...');
                 const credentials = await TokenStorage.getCredentials();
-                console.log('[_layout] Credentials:', credentials ? 'found' : 'not found');
+                logger.debug('[_layout] Credentials:', credentials ? 'found' : 'not found');
                 setDebugInfo('Credentials: ' + (credentials ? 'found' : 'not found'));
                 if (credentials) {
-                    console.log('[_layout] Calling syncRestore...');
+                    logger.debug('[_layout] Calling syncRestore...');
                     setDebugInfo('Calling syncRestore...');
                     // Add timeout to prevent infinite hang - sync will continue in background
                     const INIT_TIMEOUT_MS = 15000;
@@ -219,7 +220,7 @@ export default function RootLayout() {
                                 setTimeout(() => reject(new Error('syncRestore timed out')), INIT_TIMEOUT_MS)
                             ),
                         ]);
-                        console.log('[_layout] syncRestore completed');
+                        logger.debug('[_layout] syncRestore completed');
                         setDebugInfo('syncRestore completed');
                     } catch (syncError) {
                         console.warn('[_layout] syncRestore failed/timed out:', syncError);
@@ -245,16 +246,16 @@ export default function RootLayout() {
                     startValidationMetricsReporting();
                 }
 
-                console.log('[_layout] Setting init state...');
+                logger.debug('[_layout] Setting init state...');
                 setDebugInfo('Setting init state...');
                 setInitState({ credentials });
-                console.log('[_layout] Init complete!');
+                logger.debug('[_layout] Init complete!');
                 setDebugInfo('Init complete!');
             } catch (error) {
-                console.error('[_layout] Error initializing:', error);
+                logger.error('[_layout] Error initializing:', error);
                 setDebugInfo('ERROR: ' + String(error));
                 // Still try to show the app even if init fails
-                console.log('[_layout] Attempting to show app despite error...');
+                logger.debug('[_layout] Attempting to show app despite error...');
                 setInitState({ credentials: null });
             }
         })();
