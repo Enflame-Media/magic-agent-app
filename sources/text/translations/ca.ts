@@ -519,6 +519,10 @@ export const ca: TranslationStructure = {
         sessionSuperseded: 'Sessió substituïda',
         sessionSupersededMessage: 'Aquesta sessió s\'ha continuat en una nova sessió.',
         viewNewSession: 'Veure nova sessió',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: 'Sessió represa',
+        sessionResumedMessage: 'Aquesta sessió s\'ha restaurat a partir d\'una sessió arxivada.',
+        viewPreviousMessages: 'Veure missatges anteriors',
 
     },
 
@@ -1113,6 +1117,8 @@ export const ca: TranslationStructure = {
         results: 'Resultats',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} de ${total}`,
         cancelledByUser: 'Cancel·lat per l\'usuari',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: 'Ha esgotat el temps d\'espera — la sessió pot haver estat restaurada. Prova d\'actualitzar.',
     },
 
     allowedCommands: {

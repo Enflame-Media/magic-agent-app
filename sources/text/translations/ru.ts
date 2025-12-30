@@ -474,6 +474,10 @@ export const ru: TranslationStructure = {
         sessionSuperseded: 'Сессия заменена',
         sessionSupersededMessage: 'Эта сессия была продолжена в новой сессии.',
         viewNewSession: 'Перейти к новой сессии',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: 'Сессия возобновлена',
+        sessionResumedMessage: 'Эта сессия была восстановлена из архивной сессии.',
+        viewPreviousMessages: 'Посмотреть предыдущие сообщения',
     },
 
     components: {
@@ -1157,6 +1161,8 @@ export const ru: TranslationStructure = {
         results: 'Результаты',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} из ${total}`,
         cancelledByUser: 'Отменено пользователем',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: 'Время ожидания истекло — сессия могла быть восстановлена. Попробуйте обновить.',
     },
 
     allowedCommands: {

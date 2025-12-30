@@ -521,6 +521,10 @@ export const zhHans: TranslationStructure = {
         sessionSuperseded: '会话已替换',
         sessionSupersededMessage: '此会话已在新会话中继续。',
         viewNewSession: '查看新会话',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: '会话已恢复',
+        sessionResumedMessage: '此会话是从已归档的会话恢复的。',
+        viewPreviousMessages: '查看之前的消息',
 
     },
 
@@ -1115,6 +1119,8 @@ export const zhHans: TranslationStructure = {
         results: '结果',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} / ${total}`,
         cancelledByUser: '用户已取消',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: '超时 — 会话可能已恢复。请尝试刷新。',
     },
 
     allowedCommands: {

@@ -352,6 +352,9 @@ export const en = {
         machineOffline: 'Machine offline',
         noMessagesYet: 'No messages yet',
         createdTime: ({ time }: { time: string }) => `Created ${time}`,
+        // HAP-648: Message lazy loading states
+        loadingOlderMessages: 'Loading...',
+        noMoreMessages: 'Beginning of conversation',
         // Expandable header metadata section (HAP-326)
         expandableHeader: {
             model: 'Model',
@@ -496,6 +499,10 @@ export const en = {
         sessionSuperseded: 'Session Superseded',
         sessionSupersededMessage: 'This session has been continued in a new session.',
         viewNewSession: 'View New Session',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: 'Resumed Session',
+        sessionResumedMessage: 'This session was restored from an archived session.',
+        viewPreviousMessages: 'View Previous Messages',
 
     },
 
@@ -1115,6 +1122,8 @@ export const en = {
         results: 'Results',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} of ${total}`,
         cancelledByUser: 'Cancelled by user',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: 'Timed out — session may have been restored. Try refreshing.',
     },
 
     allowedCommands: {

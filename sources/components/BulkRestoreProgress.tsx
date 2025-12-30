@@ -45,6 +45,8 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
 
     const isDone = !isRestoring && progress.completed === progress.total;
     const hasFailures = progress.failed > 0;
+    // HAP-659: Track if there are any timed out results
+    const hasTimeouts = progress.timedOut > 0;
 
     const styles = StyleSheet.create({
         container: {
@@ -81,7 +83,8 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
         },
         progressFill: {
             height: '100%',
-            backgroundColor: hasFailures && isDone ? '#FF9500' : '#34C759',
+            // HAP-659: Orange for failures/timeouts, green for success
+            backgroundColor: (hasFailures || hasTimeouts) && isDone ? '#FF9500' : '#34C759',
             borderRadius: 4,
         },
         progressText: {
@@ -184,14 +187,26 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
         },
     });
 
+    // HAP-659: Helper to get icon and color for a result
+    const getResultIcon = (result: typeof progress.results[0]) => {
+        if (result.success) {
+            return { name: 'checkmark-circle' as const, color: '#34C759' };
+        }
+        if (result.timedOut) {
+            return { name: 'time-outline' as const, color: '#FF9500' };
+        }
+        return { name: 'close-circle' as const, color: '#FF3B30' };
+    };
+
     // Render results list when done
     const renderResults = () => {
         if (!isDone || progress.results.length === 0) return null;
 
-        // Show failures first, then successes
+        // HAP-659: Show failures first, then timed out, then successes
         const sortedResults = [...progress.results].sort((a, b) => {
-            if (a.success === b.success) return 0;
-            return a.success ? 1 : -1;
+            // Priority: failures (0) > timed out (1) > success (2)
+            const getPriority = (r: typeof a) => r.success ? 2 : (r.timedOut ? 1 : 0);
+            return getPriority(a) - getPriority(b);
         });
 
         return (
@@ -200,32 +215,35 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
                     {t('bulkRestore.results')}
                 </Text>
                 <ScrollView style={styles.resultsContainer}>
-                    {sortedResults.map((result, index) => (
-                        <View
-                            key={result.sessionId}
-                            style={[
-                                styles.resultItem,
-                                index === sortedResults.length - 1 && styles.resultItemLast,
-                            ]}
-                        >
-                            <Ionicons
-                                name={result.success ? 'checkmark-circle' : 'close-circle'}
-                                size={18}
-                                color={result.success ? '#34C759' : '#FF3B30'}
-                                style={styles.resultIcon}
-                            />
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.resultText} numberOfLines={1}>
-                                    {result.sessionName}
-                                </Text>
-                                {result.error && (
-                                    <Text style={styles.resultError} numberOfLines={1}>
-                                        {result.error}
+                    {sortedResults.map((result, index) => {
+                        const icon = getResultIcon(result);
+                        return (
+                            <View
+                                key={result.sessionId}
+                                style={[
+                                    styles.resultItem,
+                                    index === sortedResults.length - 1 && styles.resultItemLast,
+                                ]}
+                            >
+                                <Ionicons
+                                    name={icon.name}
+                                    size={18}
+                                    color={icon.color}
+                                    style={styles.resultIcon}
+                                />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.resultText} numberOfLines={1}>
+                                        {result.sessionName}
                                     </Text>
-                                )}
+                                    {result.error && (
+                                        <Text style={styles.resultError} numberOfLines={2}>
+                                            {result.error}
+                                        </Text>
+                                    )}
+                                </View>
                             </View>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </ScrollView>
             </View>
         );
@@ -270,6 +288,15 @@ export const BulkRestoreProgress = React.memo(function BulkRestoreProgress({
                                 {progress.failed}
                             </Text>
                         </View>
+                        {/* HAP-659: Show timed out count when there are any */}
+                        {progress.timedOut > 0 && (
+                            <View style={styles.statusItem}>
+                                <Ionicons name="time-outline" size={16} color="#FF9500" />
+                                <Text style={[styles.statusText, { color: '#FF9500' }, Typography.default()]}>
+                                    {progress.timedOut}
+                                </Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* Current session or loading */}

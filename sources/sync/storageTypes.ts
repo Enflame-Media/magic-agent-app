@@ -135,6 +135,9 @@ export interface Session {
     // HAP-649: When a session is resumed/forked, this points to the new session that replaced it
     // This allows the UI to redirect users to the new session and explain the fork
     supersededBy?: string | null;
+    // HAP-659: The inverse of supersededBy - this session was created by resuming another session
+    // This allows showing a "View previous messages" link in the new session
+    supersedes?: string | null;
 }
 
 export interface DecryptedMessage {

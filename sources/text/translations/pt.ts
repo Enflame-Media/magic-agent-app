@@ -519,6 +519,10 @@ export const pt: TranslationStructure = {
         sessionSuperseded: 'Sessão substituída',
         sessionSupersededMessage: 'Esta sessão foi continuada em uma nova sessão.',
         viewNewSession: 'Ver nova sessão',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: 'Sessão retomada',
+        sessionResumedMessage: 'Esta sessão foi restaurada de uma sessão arquivada.',
+        viewPreviousMessages: 'Ver mensagens anteriores',
 
     },
 
@@ -1113,6 +1117,8 @@ export const pt: TranslationStructure = {
         results: 'Resultados',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} de ${total}`,
         cancelledByUser: 'Cancelado pelo usuário',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: 'Tempo esgotado — a sessão pode ter sido restaurada. Tente atualizar.',
     },
 
     allowedCommands: {

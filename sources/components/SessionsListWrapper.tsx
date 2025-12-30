@@ -326,6 +326,9 @@ export const SessionsListWrapper = React.memo(() => {
     // Bulk restore hook
     const { restore, progress, isRestoring, cancel, reset } = useBulkSessionRestore();
 
+    // HAP-659: Track which session IDs are currently being restored for visual feedback
+    const [restoringIds, setRestoringIds] = React.useState<Set<string>>(new Set());
+
     // Get eligible sessions for bulk restore
     const eligibleSessions = React.useMemo(() => {
         return getEligibleSessions(allSessions, machines);
@@ -339,19 +342,38 @@ export const SessionsListWrapper = React.memo(() => {
         selectAll(eligibleIds);
     }, [eligibleSessions, selectAll]);
 
-    // Handle restore action
+    // Handle restore action - HAP-659: Track restoring session IDs for visual feedback
     const handleRestore = React.useCallback(async () => {
-        const sessionsToRestore = eligibleSessions.filter(s => selectedIds.has(s.id));
+        // HAP-659: Filter out sessions that are already being restored to prevent double-restore
+        const sessionsToRestore = eligibleSessions.filter(s =>
+            selectedIds.has(s.id) && !restoringIds.has(s.id)
+        );
         if (sessionsToRestore.length === 0) return;
 
-        await restore(sessionsToRestore);
-    }, [eligibleSessions, selectedIds, restore]);
+        // Set all selected sessions as "restoring" for immediate visual feedback
+        const restoreIds = new Set(sessionsToRestore.map(s => s.id));
+        setRestoringIds(prev => new Set([...prev, ...restoreIds]));
+
+        try {
+            await restore(sessionsToRestore);
+        } finally {
+            // Clear restoring state when done (success or failure)
+            setRestoringIds(prev => {
+                const next = new Set(prev);
+                restoreIds.forEach(id => next.delete(id));
+                return next;
+            });
+        }
+    }, [eligibleSessions, selectedIds, restore, restoringIds]);
 
     // Handle progress modal close
     const handleProgressClose = React.useCallback(() => {
         reset();
         exitSelectMode();
     }, [reset, exitSelectMode]);
+
+    // HAP-659: Helper to check if a session is being restored
+    const isRestoringSession = React.useCallback((id: string) => restoringIds.has(id), [restoringIds]);
 
     // Create context value for multi-select
     const multiSelectContextValue = React.useMemo(() => ({
@@ -364,7 +386,9 @@ export const SessionsListWrapper = React.memo(() => {
         selectAll: (sessions: Session[]) => selectAll(sessions.map(s => s.id)),
         deselectAll,
         selectedCount,
-    }), [isSelectMode, selectedIds, toggleItem, isSelected, enterSelectMode, exitSelectMode, selectAll, deselectAll, selectedCount]);
+        restoringIds,
+        isRestoring: isRestoringSession,
+    }), [isSelectMode, selectedIds, toggleItem, isSelected, enterSelectMode, exitSelectMode, selectAll, deselectAll, selectedCount, restoringIds, isRestoringSession]);
 
     return (
         <MultiSelectProvider value={multiSelectContextValue}>

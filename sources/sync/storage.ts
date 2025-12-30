@@ -1000,18 +1000,32 @@ export const storage = create<StorageState>()((set, get) => {
             };
         }),
         // HAP-649: Mark a session as superseded when it's been resumed/forked into a new session
+        // HAP-659: Also set the inverse relationship (supersedes) on the new session
         markSessionAsSuperseded: (sessionId: string, supersededBy: string) => set((state) => {
-            const session = state.sessions[sessionId];
-            if (!session) return state;
+            const oldSession = state.sessions[sessionId];
+            if (!oldSession) return state;
 
-            // Update the session with the supersededBy reference
-            const updatedSessions = {
+            // Update the old session with the supersededBy reference
+            let updatedSessions = {
                 ...state.sessions,
                 [sessionId]: {
-                    ...session,
+                    ...oldSession,
                     supersededBy
                 }
             };
+
+            // HAP-659: Also set the 'supersedes' property on the new session
+            // This allows the new session's UI to link back to view previous messages
+            const newSession = state.sessions[supersededBy];
+            if (newSession) {
+                updatedSessions = {
+                    ...updatedSessions,
+                    [supersededBy]: {
+                        ...newSession,
+                        supersedes: sessionId
+                    }
+                };
+            }
 
             // Rebuild sessionListViewData to update the UI
             const sessionListViewData = buildSessionListViewData(

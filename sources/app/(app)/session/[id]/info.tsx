@@ -289,8 +289,13 @@ function SessionInfoContent({ session }: { session: Session }) {
         // HAP-649: Mark the old session as superseded by the new session
         // This allows the UI to show a message directing users to the new session
         // and prevents RPC calls to the old session ID
+        // Wrapped in try/catch to ensure restore flow continues even if marking fails
         if (result.resumedFrom) {
-            storage.getState().markSessionAsSuperseded(result.resumedFrom, sessionId);
+            try {
+                storage.getState().markSessionAsSuperseded(result.resumedFrom, sessionId);
+            } catch (e) {
+                console.error('Failed to mark session as superseded:', e);
+            }
         }
 
         // Success - navigate to the new session
@@ -363,6 +368,23 @@ function SessionInfoContent({ session }: { session: Session }) {
                             rightElement={
                                 <Text style={{ color: theme.colors.textLink, fontWeight: '600', ...Typography.default() }}>
                                     {t('sessionInfo.viewNewSession')}
+                                </Text>
+                            }
+                        />
+                    </ItemGroup>
+                )}
+
+                {/* HAP-659: Resumed Session - Link to previous messages */}
+                {session.supersedes && (
+                    <ItemGroup>
+                        <Item
+                            title={t('sessionInfo.sessionResumed')}
+                            subtitle={t('sessionInfo.sessionResumedMessage')}
+                            icon={<Ionicons name="time-outline" size={29} color="#007AFF" />}
+                            onPress={() => router.push(`/session/${session.supersedes}`)}
+                            rightElement={
+                                <Text style={{ color: theme.colors.textLink, fontWeight: '600', ...Typography.default() }}>
+                                    {t('sessionInfo.viewPreviousMessages')}
                                 </Text>
                             }
                         />

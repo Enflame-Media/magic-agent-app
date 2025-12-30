@@ -352,6 +352,9 @@ export const es: TranslationStructure = {
         machineOffline: 'Máquina sin conexión',
         noMessagesYet: 'Aún no hay mensajes',
         createdTime: ({ time }: { time: string }) => `Creado ${time}`,
+        // HAP-648: Message lazy loading states
+        loadingOlderMessages: 'Cargando...',
+        noMoreMessages: 'Inicio de la conversación',
         // Expandable header metadata section (HAP-326)
         expandableHeader: {
             model: 'Modelo',
@@ -519,6 +522,10 @@ export const es: TranslationStructure = {
         sessionSuperseded: 'Sesión reemplazada',
         sessionSupersededMessage: 'Esta sesión ha continuado en una nueva sesión.',
         viewNewSession: 'Ver nueva sesión',
+        // HAP-659: Resumed session (inverse of superseded)
+        sessionResumed: 'Sesión reanudada',
+        sessionResumedMessage: 'Esta sesión fue restaurada desde una sesión archivada.',
+        viewPreviousMessages: 'Ver mensajes anteriores',
 
     },
 
@@ -1114,6 +1121,8 @@ export const es: TranslationStructure = {
         results: 'Resultados',
         progressText: ({ completed, total }: { completed: number; total: number }) => `${completed} de ${total}`,
         cancelledByUser: 'Cancelado por el usuario',
+        // HAP-659: Improved timeout handling
+        timeoutWarning: 'Tiempo agotado — la sesión puede haber sido restaurada. Intenta actualizar.',
     },
 
     allowedCommands: {

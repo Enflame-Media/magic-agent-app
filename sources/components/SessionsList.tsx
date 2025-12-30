@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable, FlatList, Platform } from 'react-native';
+import { View, Pressable, FlatList, Platform, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/StyledText';
 import { usePathname } from 'expo-router';
 import { SessionListViewItem } from '@/sync/storage';
@@ -234,6 +234,31 @@ const stylesheet = StyleSheet.create((theme) => ({
     },
     checkboxContainer: {
         marginLeft: 8,
+    },
+    // HAP-659: Restoring state visual feedback
+    restoringOverlay: {
+        ...Platform.select({
+            ios: {
+                backgroundColor: 'rgba(52, 199, 89, 0.08)',
+            },
+            default: {
+                backgroundColor: 'rgba(52, 199, 89, 0.06)',
+            },
+        }),
+    },
+    restoringIndicator: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        borderRadius: 12,
+    },
+    restoringIndicatorDark: {
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
 }));
 
@@ -495,7 +520,10 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle, 
     const isTablet = useIsTablet();
     // Use optimized preview-only selector instead of full message subscription
     const messagePreview = useLastMessagePreview(session.id);
-    const { isSelectMode, isSelected, toggleItem, enterSelectMode } = useMultiSelectContext();
+    const { isSelectMode, isSelected, toggleItem, enterSelectMode, isRestoring } = useMultiSelectContext();
+
+    // HAP-659: Check if this session is currently being restored
+    const isSessionRestoring = isRestoring(session.id);
 
     // Callback for "Select" option in context menu - enters multi-select mode and pre-selects this session
     const handleSelectFromContextMenu = React.useCallback(() => {
@@ -523,7 +551,9 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle, 
     }, [session]);
 
     // Determine background tinting for active states
-    const activeStateStyle = sessionStatus.state === 'thinking' ? styles.sessionItemThinking
+    // HAP-659: Restoring state takes priority for visual feedback
+    const activeStateStyle = isSessionRestoring ? styles.restoringOverlay
+        : sessionStatus.state === 'thinking' ? styles.sessionItemThinking
         : sessionStatus.state === 'permission_required' ? styles.sessionItemPermission
         : undefined;
 
@@ -648,11 +678,13 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle, 
                     onPress={handlePress}
                     onLongPress={handleLongPress}
                     delayLongPress={500}
+                    disabled={isSessionRestoring}
                     accessibilityRole="button"
-                    accessibilityLabel={`${sessionName}, ${sessionStatus.statusText}`}
-                    accessibilityHint={isSelectMode ? (isEligibleForSelect ? 'Double tap to select' : 'Not available for selection') : 'Double tap to open session'}
+                    accessibilityLabel={`${sessionName}, ${isSessionRestoring ? 'Restoring' : sessionStatus.statusText}`}
+                    accessibilityHint={isSessionRestoring ? 'Session is being restored' : isSelectMode ? (isEligibleForSelect ? 'Double tap to select' : 'Not available for selection') : 'Double tap to open session'}
                     accessibilityState={{
                         selected: selected || isSessionSelected,
+                        busy: isSessionRestoring,
                     }}
                 >
                     <View style={styles.avatarContainer}>
@@ -736,6 +768,13 @@ const SessionItem = React.memo(({ session, selected, isFirst, isLast, isSingle, 
                         </View>
                     </View>
                 </Pressable>
+
+                {/* HAP-659: Show loading spinner overlay when session is being restored */}
+                {isSessionRestoring && (
+                    <View style={styles.restoringIndicator}>
+                        <ActivityIndicator size="small" color="#34C759" />
+                    </View>
+                )}
             </Animated.View>
         </View>
     );

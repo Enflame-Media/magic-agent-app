@@ -26,6 +26,10 @@ interface MultiSelectContextValue {
     deselectAll: () => void;
     /** Count of selected items */
     selectedCount: number;
+    /** HAP-659: Set of session IDs currently being restored */
+    restoringIds: Set<string>;
+    /** HAP-659: Check if a session is currently being restored */
+    isRestoring: (id: string) => boolean;
 }
 
 const MultiSelectContext = React.createContext<MultiSelectContextValue | null>(null);
@@ -44,6 +48,8 @@ export function useMultiSelectContext() {
             selectAll: () => {},
             deselectAll: () => {},
             selectedCount: 0,
+            restoringIds: new Set<string>(),
+            isRestoring: () => false,
         };
     }
     return context;

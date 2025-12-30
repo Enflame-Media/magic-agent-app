@@ -24,8 +24,15 @@ import { t } from '@/text';
 /** Maximum concurrent restore operations to avoid overwhelming the server */
 const MAX_CONCURRENT = 3;
 
-/** Timeout for individual restore operation in milliseconds */
-const RESTORE_TIMEOUT = 30000;
+/**
+ * HAP-659: Extended timeout for individual restore operation
+ *
+ * Changed from 30s to 60s because:
+ * - Restore operations can take longer on slow networks
+ * - The CLI needs to spawn a new Claude session with --resume flag
+ * - Timeout errors create confusion when restore actually succeeded
+ */
+const RESTORE_TIMEOUT = 60000;
 
 export interface RestoreResult {
     sessionId: string;
@@ -33,6 +40,11 @@ export interface RestoreResult {
     success: boolean;
     newSessionId?: string;
     error?: string;
+    /**
+     * HAP-659: Indicates the operation timed out but may have succeeded
+     * When true, users should check if the session was restored after refresh
+     */
+    timedOut?: boolean;
 }
 
 export interface BulkRestoreProgress {
@@ -44,6 +56,8 @@ export interface BulkRestoreProgress {
     succeeded: number;
     /** Number of failed restores */
     failed: number;
+    /** HAP-659: Number of timed out restores (may have succeeded) */
+    timedOut: number;
     /** Currently processing session name (for display) */
     currentSession?: string;
     /** Whether the operation was cancelled */
@@ -113,6 +127,7 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
             completed: 0,
             succeeded: 0,
             failed: 0,
+            timedOut: 0,
             currentSession: getSessionDisplayName(sessions[0]),
             cancelled: false,
             results: [],
@@ -263,11 +278,19 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                         };
                     }
                 } catch (error) {
+                    // HAP-659: Check if this was a timeout error
+                    // Timeout errors are special - the restore may have succeeded even though we timed out
+                    const isTimeoutError = error instanceof Error &&
+                        error.message === t('newSession.sessionTimeout');
+
                     return {
                         sessionId: session.id,
                         sessionName,
                         success: false,
-                        error: error instanceof Error ? error.message : t('errors.unknownError'),
+                        error: isTimeoutError
+                            ? t('bulkRestore.timeoutWarning')
+                            : (error instanceof Error ? error.message : t('errors.unknownError')),
+                        timedOut: isTimeoutError,
                     };
                 }
             });
@@ -284,7 +307,9 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                         ...prev,
                         completed: prev.completed + 1,
                         succeeded: prev.succeeded + (result.success ? 1 : 0),
-                        failed: prev.failed + (result.success ? 0 : 1),
+                        // HAP-659: Timed out errors are counted separately, not as failures
+                        failed: prev.failed + (!result.success && !result.timedOut ? 1 : 0),
+                        timedOut: prev.timedOut + (result.timedOut ? 1 : 0),
                         results: [...prev.results, result],
                     };
                 });
