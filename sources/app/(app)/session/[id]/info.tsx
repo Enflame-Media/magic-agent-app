@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { View, Text, Animated, AccessibilityInfo, Platform } from 'react-native';
+import { View, Text, Animated, AccessibilityInfo, Platform, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Typography } from '@/constants/Typography';
@@ -229,7 +229,8 @@ function SessionInfoContent({ session }: { session: Session }) {
     const machineOnline = machine ? isMachineOnline(machine) : false;
     const canRestore = !sessionStatus.isConnected && !session.active && isClaudeSession && session.metadata?.machineId && session.metadata?.path;
 
-    const [_restoringSession, performRestore] = useHappyAction(async () => {
+    // HAP-690: Use loading state to show visual feedback during restore
+    const [restoringSession, performRestore] = useHappyAction(async () => {
         if (!session.metadata?.machineId || !session.metadata?.path) {
             throw new AppError(ErrorCodes.INTERNAL_ERROR, t('sessionInfo.failedToRestoreSession'), { canTryAgain: false });
         }
@@ -304,13 +305,17 @@ function SessionInfoContent({ session }: { session: Session }) {
     });
 
     const handleRestoreSession = useCallback(() => {
+        // HAP-690: Prevent double-taps while restore is in progress
+        if (restoringSession) {
+            return;
+        }
         hapticsLight();
         if (!machineOnline) {
             Toast.show({ message: t('sessionInfo.restoreRequiresMachine') });
             return;
         }
         performRestore();
-    }, [performRestore, machineOnline]);
+    }, [performRestore, machineOnline, restoringSession]);
 
     const formatDate = useCallback((timestamp: number) => {
         return new Date(timestamp).toLocaleString();
@@ -508,14 +513,18 @@ function SessionInfoContent({ session }: { session: Session }) {
                     )}
                     {/* HAP-392: Restore session for archived Claude sessions */}
                     {/* HAP-493: Always wire onPress to provide user feedback */}
+                    {/* HAP-690: Show loading indicator during restore */}
                     {canRestore && (
                         <Item
-                            title={t('sessionInfo.restoreSession')}
+                            title={restoringSession ? t('sessionInfo.restoringSession') : t('sessionInfo.restoreSession')}
                             subtitle={machineOnline ? t('sessionInfo.restoreSessionSubtitle') : t('sessionInfo.restoreRequiresMachine')}
-                            icon={<Ionicons name="refresh-circle-outline" size={29} color={machineOnline ? "#34C759" : "#8E8E93"} />}
+                            icon={restoringSession
+                                ? <ActivityIndicator size="small" color="#34C759" />
+                                : <Ionicons name="refresh-circle-outline" size={29} color={machineOnline ? "#34C759" : "#8E8E93"} />
+                            }
                             onPress={handleRestoreSession}
-                            disabled={!machineOnline}
-                            showChevron={machineOnline}
+                            disabled={restoringSession || !machineOnline}
+                            showChevron={machineOnline && !restoringSession}
                         />
                     )}
                     {!sessionStatus.isConnected && !session.active && (
