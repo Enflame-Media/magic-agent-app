@@ -20,6 +20,7 @@ import { Session } from '@/sync/storageTypes';
 import { useAllMachines, storage } from '@/sync/storage';
 import { isMachineOnline } from '@/utils/machineUtils';
 import { t } from '@/text';
+import { trackSessionRestoreStarted, trackSessionRestoreCompleted } from '@/track';
 
 /** Maximum concurrent restore operations to avoid overwhelming the server */
 const MAX_CONCURRENT = 3;
@@ -193,14 +194,36 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                     };
                 }
 
-                try {
-                    // HAP-584: Capture spawn time BEFORE RPC call for optimistic polling fallback
-                    const spawnStartTime = Date.now();
+                // HAP-584: Capture spawn time BEFORE RPC call for optimistic polling fallback
+                // HAP-688: Also used for telemetry duration tracking
+                const spawnStartTime = Date.now();
+                const machineId = session.metadata.machineId;
 
+                // HAP-688: Track restore started (fire-and-forget, non-blocking)
+                trackSessionRestoreStarted({
+                    sessionId: session.id,
+                    machineId,
+                });
+
+                // HAP-688: Helper to track completion and return result
+                const completeWithTracking = (restoreResult: RestoreResult): RestoreResult => {
+                    const durationMs = Date.now() - spawnStartTime;
+                    trackSessionRestoreCompleted({
+                        sessionId: session.id,
+                        machineId,
+                        success: restoreResult.success,
+                        timedOut: restoreResult.timedOut ?? false,
+                        durationMs,
+                        newSessionId: restoreResult.newSessionId,
+                    });
+                    return restoreResult;
+                };
+
+                try {
                     // Attempt restore with timeout
                     const result = await withTimeout<SpawnSessionResult>(
                         machineSpawnNewSession({
-                            machineId: session.metadata.machineId,
+                            machineId,
                             directory: session.metadata.path,
                             agent: 'claude',
                             sessionId: session.id,
@@ -216,18 +239,18 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                         if (isTemporaryPidSessionId(result.sessionId)) {
                             // HAP-584: Use pre-captured spawnStartTime for polling
                             const realSessionId = await pollForRealSession(
-                                session.metadata.machineId,
+                                machineId,
                                 spawnStartTime,
                                 { interval: 5000, maxAttempts: 24 }
                             );
 
                             if (!realSessionId) {
-                                return {
+                                return completeWithTracking({
                                     sessionId: session.id,
                                     sessionName,
                                     success: false,
                                     error: t('newSession.sessionStartFailed'),
-                                };
+                                });
                             }
 
                             newSessionId = realSessionId;
@@ -235,18 +258,18 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                             // HAP-584: Optimistic polling fallback
                             // The RPC may have timed out even though the session was created successfully.
                             const polledSessionId = await pollForRealSession(
-                                session.metadata.machineId,
+                                machineId,
                                 spawnStartTime,
                                 { interval: 3000, maxAttempts: 10 }
                             );
 
                             if (!polledSessionId) {
-                                return {
+                                return completeWithTracking({
                                     sessionId: session.id,
                                     sessionName,
                                     success: false,
                                     error: t('sessionInfo.failedToRestoreSession'),
-                                };
+                                });
                             }
 
                             newSessionId = polledSessionId;
@@ -255,27 +278,27 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                         // HAP-649: Mark the old session as superseded by the new session
                         storage.getState().markSessionAsSuperseded(session.id, newSessionId);
 
-                        return {
+                        return completeWithTracking({
                             sessionId: session.id,
                             sessionName,
                             success: true,
                             newSessionId,
-                        };
+                        });
                     } else if (result.type === 'error') {
-                        return {
+                        return completeWithTracking({
                             sessionId: session.id,
                             sessionName,
                             success: false,
                             error: result.errorMessage,
-                        };
+                        });
                     } else {
                         // requestToApproveDirectoryCreation - shouldn't happen for restore
-                        return {
+                        return completeWithTracking({
                             sessionId: session.id,
                             sessionName,
                             success: false,
                             error: t('sessionInfo.failedToRestoreSession'),
-                        };
+                        });
                     }
                 } catch (error) {
                     // HAP-659: Check if this was a timeout error
@@ -283,7 +306,7 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                     const isTimeoutError = error instanceof Error &&
                         error.message === t('newSession.sessionTimeout');
 
-                    return {
+                    return completeWithTracking({
                         sessionId: session.id,
                         sessionName,
                         success: false,
@@ -291,7 +314,7 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                             ? t('bulkRestore.timeoutWarning')
                             : (error instanceof Error ? error.message : t('errors.unknownError')),
                         timedOut: isTimeoutError,
-                    };
+                    });
                 }
             });
 
