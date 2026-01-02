@@ -380,6 +380,18 @@ export const pl: TranslationStructure = {
             message: 'Wyświetlanie wiadomości z pamięci podręcznej - synchronizacja nie powiodła się',
             retry: 'Ponów',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Ponowne łączenie z sesją...',
+            revivingDescription: 'Twoja sesja nieoczekiwanie się zatrzymała. Próbuję ją teraz przywrócić.',
+            failed: 'Nie udało się przywrócić sesji',
+            failedDescription: 'Sesja została zatrzymana i nie mogła zostać automatycznie przywrócona.',
+            sessionId: 'ID sesji',
+            copyId: 'Kopiuj ID',
+            idCopied: 'ID sesji skopiowane',
+            archiveSession: 'Archiwizuj sesję',
+            tryAgain: 'Spróbuj ponownie',
+        },
     },
 
     commandPalette: {
@@ -774,7 +786,10 @@ export const pl: TranslationStructure = {
         secretKeyCopied: 'Klucz tajny skopiowany do schowka. Przechowuj go w bezpiecznym miejscu!',
         secretKeyCopyFailed: 'Nie udało się skopiować klucza tajnego',
         privacy: 'Prywatność',
-        privacyDescription: 'Pomóż ulepszyć aplikację, udostępniając anonimowe dane o użytkowaniu. Nie zbieramy żadnych informacji osobistych.',
+        privacyDescription: 'Kontroluj swoją widoczność i preferencje udostępniania danych.',
+        showOnlineStatus: 'Pokaż status online',
+        showOnlineStatusEnabled: 'Znajomi mogą zobaczyć, kiedy jesteś online',
+        showOnlineStatusDisabled: 'Wyświetlasz się jako offline dla wszystkich znajomych',
         analytics: 'Analityka',
         analyticsDisabled: 'Dane nie są udostępniane',
         analyticsEnabled: 'Anonimowe dane o użytkowaniu są udostępniane',

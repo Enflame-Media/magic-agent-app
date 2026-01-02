@@ -369,6 +369,18 @@ export const es: TranslationStructure = {
             message: 'Mostrando mensajes en caché - sincronización fallida',
             retry: 'Reintentar',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Reconectando a la sesión...',
+            revivingDescription: 'Tu sesión se detuvo inesperadamente. Intentando restaurarla ahora.',
+            failed: 'No se pudo restaurar la sesión',
+            failedDescription: 'La sesión se detuvo y no se pudo revivir automáticamente.',
+            sessionId: 'ID de sesión',
+            copyId: 'Copiar ID',
+            idCopied: 'ID de sesión copiado',
+            archiveSession: 'Archivar sesión',
+            tryAgain: 'Intentar de nuevo',
+        },
     },
 
     commandPalette: {
@@ -764,7 +776,10 @@ export const es: TranslationStructure = {
         secretKeyCopied: 'Clave secreta copiada al portapapeles. ¡Guárdala en un lugar seguro!',
         secretKeyCopyFailed: 'Falló al copiar la clave secreta',
         privacy: 'Privacidad',
-        privacyDescription: 'Ayude a mejorar la aplicación compartiendo datos de uso anónimos. No se recopila información personal.',
+        privacyDescription: 'Controla tu visibilidad y preferencias de uso de datos.',
+        showOnlineStatus: 'Mostrar estado en línea',
+        showOnlineStatusEnabled: 'Los amigos pueden ver cuando estás en línea',
+        showOnlineStatusDisabled: 'Apareces sin conexión para todos los amigos',
         analytics: 'Analíticas',
         analyticsDisabled: 'No se comparten datos',
         analyticsEnabled: 'Se comparten datos de uso anónimos',

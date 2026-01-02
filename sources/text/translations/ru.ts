@@ -571,6 +571,18 @@ export const ru: TranslationStructure = {
             message: 'Показаны кешированные сообщения - синхронизация не удалась',
             retry: 'Повторить',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Переподключение к сессии...',
+            revivingDescription: 'Ваша сессия неожиданно остановилась. Пытаемся восстановить её сейчас.',
+            failed: 'Не удалось восстановить сессию',
+            failedDescription: 'Сессия остановилась и не может быть восстановлена автоматически.',
+            sessionId: 'ID сессии',
+            copyId: 'Копировать ID',
+            idCopied: 'ID сессии скопирован',
+            archiveSession: 'Архивировать сессию',
+            tryAgain: 'Попробовать снова',
+        },
     },
 
     commandPalette: {
@@ -774,7 +786,10 @@ export const ru: TranslationStructure = {
         secretKeyCopied: 'Секретный ключ скопирован в буфер обмена. Сохраните его в безопасном месте!',
         secretKeyCopyFailed: 'Не удалось скопировать секретный ключ',
         privacy: 'Конфиденциальность',
-        privacyDescription: 'Помогите улучшить приложение, поделившись анонимными данными об использовании. Никакая личная информация не собирается.',
+        privacyDescription: 'Управление видимостью и настройками обмена данными.',
+        showOnlineStatus: 'Показывать статус онлайн',
+        showOnlineStatusEnabled: 'Друзья видят, когда вы онлайн',
+        showOnlineStatusDisabled: 'Вы отображаетесь как офлайн для всех друзей',
         analytics: 'Аналитика',
         analyticsDisabled: 'Данные не передаются',
         analyticsEnabled: 'Анонимные данные об использовании передаются',

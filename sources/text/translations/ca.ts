@@ -369,6 +369,18 @@ export const ca: TranslationStructure = {
             message: 'Mostrant missatges en memòria cau - sincronització fallida',
             retry: 'Reintenta',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Reconnectant a la sessió...',
+            revivingDescription: 'La teva sessió s\'ha aturat inesperadament. Intentant restaurar-la ara.',
+            failed: 'No s\'ha pogut restaurar la sessió',
+            failedDescription: 'La sessió s\'ha aturat i no s\'ha pogut revifar automàticament.',
+            sessionId: 'ID de sessió',
+            copyId: 'Copia ID',
+            idCopied: 'ID de sessió copiat',
+            archiveSession: 'Arxiva la sessió',
+            tryAgain: 'Torna-ho a provar',
+        },
     },
 
     commandPalette: {
@@ -764,7 +776,10 @@ export const ca: TranslationStructure = {
         secretKeyCopied: 'Clau secreta copiada al porta-retalls. Desa-la en un lloc segur!',
         secretKeyCopyFailed: 'Ha fallat copiar la clau secreta',
         privacy: 'Privadesa',
-        privacyDescription: 'Ajuda a millorar l\'aplicació compartint dades d\'ús anònimes. No es recopila informació personal.',
+        privacyDescription: 'Controla la teva visibilitat i preferències de compartició de dades.',
+        showOnlineStatus: 'Mostra l\'estat en línia',
+        showOnlineStatusEnabled: 'Els amics poden veure quan estàs en línia',
+        showOnlineStatusDisabled: 'Apareixes fora de línia per a tots els amics',
         analytics: 'Analítiques',
         analyticsDisabled: 'No es comparteixen dades',
         analyticsEnabled: 'Es comparteixen dades d\'ús anònimes',

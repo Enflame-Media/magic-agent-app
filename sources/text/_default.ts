@@ -369,6 +369,18 @@ export const en = {
             message: 'Showing cached messages - sync failed',
             retry: 'Retry',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Reconnecting to session...',
+            revivingDescription: 'Your session stopped unexpectedly. Attempting to restore it now.',
+            failed: 'Session Could Not Be Restored',
+            failedDescription: 'The session stopped and could not be revived automatically.',
+            sessionId: 'Session ID',
+            copyId: 'Copy ID',
+            idCopied: 'Session ID copied',
+            archiveSession: 'Archive Session',
+            tryAgain: 'Try Again',
+        },
     },
 
     commandPalette: {

@@ -371,6 +371,18 @@ export const zhHans: TranslationStructure = {
             message: '显示缓存消息 - 同步失败',
             retry: '重试',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: '正在重新连接会话...',
+            revivingDescription: '您的会话意外停止。正在尝试恢复。',
+            failed: '无法恢复会话',
+            failedDescription: '会话已停止，无法自动恢复。',
+            sessionId: '会话 ID',
+            copyId: '复制 ID',
+            idCopied: '会话 ID 已复制',
+            archiveSession: '归档会话',
+            tryAgain: '重试',
+        },
     },
 
     commandPalette: {
@@ -766,7 +778,10 @@ export const zhHans: TranslationStructure = {
         secretKeyCopied: '密钥已复制到剪贴板。请将其保存在安全的地方！',
         secretKeyCopyFailed: '复制密钥失败',
         privacy: '隐私',
-        privacyDescription: '通过分享匿名使用数据来帮助改进应用。不会收集个人信息。',
+        privacyDescription: '控制您的可见性和数据共享偏好。',
+        showOnlineStatus: '显示在线状态',
+        showOnlineStatusEnabled: '好友可以看到您何时在线',
+        showOnlineStatusDisabled: '对所有好友显示为离线',
         analytics: '分析',
         analyticsDisabled: '不分享数据',
         analyticsEnabled: '分享匿名使用数据',

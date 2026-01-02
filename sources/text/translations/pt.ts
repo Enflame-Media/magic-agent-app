@@ -369,6 +369,18 @@ export const pt: TranslationStructure = {
             message: 'Mostrando mensagens em cache - sincronização falhou',
             retry: 'Tentar novamente',
         },
+        // HAP-735: Session revival flow
+        revival: {
+            reviving: 'Reconectando à sessão...',
+            revivingDescription: 'Sua sessão parou inesperadamente. Tentando restaurá-la agora.',
+            failed: 'Não foi possível restaurar a sessão',
+            failedDescription: 'A sessão parou e não pôde ser restaurada automaticamente.',
+            sessionId: 'ID da sessão',
+            copyId: 'Copiar ID',
+            idCopied: 'ID da sessão copiado',
+            archiveSession: 'Arquivar sessão',
+            tryAgain: 'Tentar novamente',
+        },
     },
 
     commandPalette: {
@@ -764,7 +776,10 @@ export const pt: TranslationStructure = {
         secretKeyCopied: 'Chave secreta copiada para a área de transferência. Guarde-a em um local seguro!',
         secretKeyCopyFailed: 'Falha ao copiar chave secreta',
         privacy: 'Privacidade',
-        privacyDescription: 'Ajude a melhorar o aplicativo compartilhando dados de uso anônimos. Nenhuma informação pessoal é coletada.',
+        privacyDescription: 'Controle sua visibilidade e preferências de compartilhamento de dados.',
+        showOnlineStatus: 'Mostrar status online',
+        showOnlineStatusEnabled: 'Amigos podem ver quando você está online',
+        showOnlineStatusDisabled: 'Você aparece offline para todos os amigos',
         analytics: 'Análises',
         analyticsDisabled: 'Nenhum dado é compartilhado',
         analyticsEnabled: 'Dados de uso anônimos são compartilhados',
