@@ -1187,6 +1187,10 @@ export const pl: TranslationStructure = {
         cancelledByUser: 'Anulowane przez użytkownika',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Upłynął limit czasu — sesja mogła zostać przywrócona. Spróbuj odświeżyć.',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 sesja niespodziewanie się zatrzymała. Sprawdź szczegóły, aby uzyskać więcej informacji.'
+                : `${count} sesji niespodziewanie się zatrzymało. Sprawdź szczegóły, aby uzyskać więcej informacji.`,
     },
 
     allowedCommands: {

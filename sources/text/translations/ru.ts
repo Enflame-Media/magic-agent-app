@@ -1195,6 +1195,10 @@ export const ru: TranslationStructure = {
         cancelledByUser: 'Отменено пользователем',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Время ожидания истекло — сессия могла быть восстановлена. Попробуйте обновить.',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 сессия неожиданно остановилась. Проверьте подробности для получения информации.'
+                : `${count} сессий неожиданно остановились. Проверьте подробности для получения информации.`,
     },
 
     allowedCommands: {

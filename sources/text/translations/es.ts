@@ -1152,6 +1152,10 @@ export const es: TranslationStructure = {
         cancelledByUser: 'Cancelado por el usuario',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Tiempo agotado — la sesión puede haber sido restaurada. Intenta actualizar.',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 sesión se detuvo inesperadamente. Revisa los detalles para más información.'
+                : `${count} sesiones se detuvieron inesperadamente. Revisa los detalles para más información.`,
     },
 
     allowedCommands: {

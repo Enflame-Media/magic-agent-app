@@ -1151,6 +1151,10 @@ export const ca: TranslationStructure = {
         cancelledByUser: 'Cancel·lat per l\'usuari',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Ha esgotat el temps d\'espera — la sessió pot haver estat restaurada. Prova d\'actualitzar.',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 sessió s\'ha aturat inesperadament. Consulta els detalls per a més informació.'
+                : `${count} sessions s'han aturat inesperadament. Consulta els detalls per a més informació.`,
     },
 
     allowedCommands: {

@@ -21,6 +21,8 @@ import { useAllMachines, storage } from '@/sync/storage';
 import { isMachineOnline } from '@/utils/machineUtils';
 import { t } from '@/text';
 import { trackSessionRestoreStarted, trackSessionRestoreCompleted } from '@/track';
+import { AppError, ErrorCodes } from '@/utils/errors';
+import { Toast } from '@/toast';
 
 /** Maximum concurrent restore operations to avoid overwhelming the server */
 const MAX_CONCURRENT = 3;
@@ -46,6 +48,11 @@ export interface RestoreResult {
      * When true, users should check if the session was restored after refresh
      */
     timedOut?: boolean;
+    /**
+     * HAP-748: Indicates SESSION_REVIVAL_FAILED error occurred
+     * When true, the session couldn't be revived because it had stopped unexpectedly
+     */
+    revivalFailed?: boolean;
 }
 
 export interface BulkRestoreProgress {
@@ -59,6 +66,8 @@ export interface BulkRestoreProgress {
     failed: number;
     /** HAP-659: Number of timed out restores (may have succeeded) */
     timedOut: number;
+    /** HAP-748: Number of revival failures (session stopped unexpectedly) */
+    revivalFailed: number;
     /** Currently processing session name (for display) */
     currentSession?: string;
     /** Whether the operation was cancelled */
@@ -129,6 +138,7 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
             succeeded: 0,
             failed: 0,
             timedOut: 0,
+            revivalFailed: 0,
             currentSession: getSessionDisplayName(sessions[0]),
             cancelled: false,
             results: [],
@@ -306,6 +316,11 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                     const isTimeoutError = error instanceof Error &&
                         error.message === t('newSession.sessionTimeout');
 
+                    // HAP-748: Check for SESSION_REVIVAL_FAILED error
+                    // These errors indicate the session stopped unexpectedly and couldn't be revived
+                    const isRevivalFailed = AppError.isAppError(error) &&
+                        error.code === ErrorCodes.SESSION_REVIVAL_FAILED;
+
                     return completeWithTracking({
                         sessionId: session.id,
                         sessionName,
@@ -314,6 +329,7 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                             ? t('bulkRestore.timeoutWarning')
                             : (error instanceof Error ? error.message : t('errors.unknownError')),
                         timedOut: isTimeoutError,
+                        revivalFailed: isRevivalFailed,
                     });
                 }
             });
@@ -331,8 +347,10 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
                         completed: prev.completed + 1,
                         succeeded: prev.succeeded + (result.success ? 1 : 0),
                         // HAP-659: Timed out errors are counted separately, not as failures
-                        failed: prev.failed + (!result.success && !result.timedOut ? 1 : 0),
+                        // HAP-748: Revival failures also counted separately
+                        failed: prev.failed + (!result.success && !result.timedOut && !result.revivalFailed ? 1 : 0),
                         timedOut: prev.timedOut + (result.timedOut ? 1 : 0),
+                        revivalFailed: prev.revivalFailed + (result.revivalFailed ? 1 : 0),
                         results: [...prev.results, result],
                     };
                 });
@@ -345,6 +363,17 @@ export function useBulkSessionRestore(): UseBulkSessionRestoreReturn {
             currentSession: undefined,
         } : null);
         setIsRestoring(false);
+
+        // HAP-748: Show notification if any sessions had revival failures
+        // We show this after bulk operation completes to avoid interrupting the flow
+        const revivalFailedCount = results.filter(r => r.revivalFailed).length;
+        if (revivalFailedCount > 0) {
+            Toast.show({
+                message: t('bulkRestore.revivalIssues', { count: revivalFailedCount }),
+                type: 'error',
+                duration: 6000, // Slightly longer to ensure user sees it
+            });
+        }
 
         return results;
     }, [machines]);

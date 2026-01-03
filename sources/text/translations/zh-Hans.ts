@@ -1153,6 +1153,10 @@ export const zhHans: TranslationStructure = {
         cancelledByUser: '用户已取消',
         // HAP-659: Improved timeout handling
         timeoutWarning: '超时 — 会话可能已恢复。请尝试刷新。',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 个会话意外停止。请查看详情了解更多信息。'
+                : `${count} 个会话意外停止。请查看详情了解更多信息。`,
     },
 
     allowedCommands: {

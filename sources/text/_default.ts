@@ -1153,6 +1153,11 @@ export const en = {
         cancelledByUser: 'Cancelled by user',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Timed out — session may have been restored. Try refreshing.',
+        // HAP-748: Session revival failures during bulk restore
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 session stopped unexpectedly. Check details for more info.'
+                : `${count} sessions stopped unexpectedly. Check details for more info.`,
     },
 
     allowedCommands: {

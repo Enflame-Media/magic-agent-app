@@ -1151,6 +1151,10 @@ export const pt: TranslationStructure = {
         cancelledByUser: 'Cancelado pelo usuário',
         // HAP-659: Improved timeout handling
         timeoutWarning: 'Tempo esgotado — a sessão pode ter sido restaurada. Tente atualizar.',
+        revivalIssues: ({ count }: { count: number }) =>
+            count === 1
+                ? '1 sessão parou inesperadamente. Verifique os detalhes para mais informações.'
+                : `${count} sessões pararam inesperadamente. Verifique os detalhes para mais informações.`,
     },
 
     allowedCommands: {
