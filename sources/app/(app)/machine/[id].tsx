@@ -9,7 +9,7 @@ import { useSessions, useMachine } from '@/sync/storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Octicons from '@expo/vector-icons/Octicons';
 import { type Session } from '@/sync/storageTypes';
-import { machineStopDaemon, machineUpdateMetadata } from '@/sync/ops';
+import { machineStopDaemon, machineUpdateMetadata, machineDisconnect } from '@/sync/ops';
 import { Modal } from '@/modal';
 import { formatPathRelativeToHome, getSessionName, getSessionSubtitle } from '@/utils/sessionUtils';
 import { isMachineOnline } from '@/utils/machineUtils';
@@ -18,7 +18,6 @@ import { useUnistyles, StyleSheet } from 'react-native-unistyles';
 import { t } from '@/text';
 import { useNavigateToSession } from '@/hooks/useNavigateToSession';
 import { machineSpawnNewSession, isTemporaryPidSessionId, pollForRealSession } from '@/sync/ops';
-import { AppError } from '@/utils/errors';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { resolveAbsolutePath } from '@/utils/pathUtils';
 import { MultiTextInput, type MultiTextInputHandle } from '@/components/MultiTextInput';
@@ -75,6 +74,7 @@ function MachineDetailScreen() {
     const { showError } = useErrorHandler();
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isStoppingDaemon, setIsStoppingDaemon] = useState(false);
+    const [isDisconnecting, setIsDisconnecting] = useState(false);
     const [isRenamingMachine, setIsRenamingMachine] = useState(false);
     const [customPath, setCustomPath] = useState('');
     const [isSpawning, setIsSpawning] = useState(false);
@@ -152,6 +152,40 @@ function MachineDetailScreen() {
                             showError(error, { fallbackMessage: 'Failed to stop daemon. It may not be running.' });
                         } finally {
                             setIsStoppingDaemon(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    // HAP-778: Disconnect/unauthenticate machine from account
+    const handleDisconnect = async () => {
+        Modal.alert(
+            t('machine.disconnectTitle'),
+            t('machine.disconnectMessage'),
+            [
+                {
+                    text: t('common.cancel'),
+                    style: 'cancel'
+                },
+                {
+                    text: t('machine.disconnect'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsDisconnecting(true);
+                        try {
+                            const result = await machineDisconnect(machineId!);
+                            if (result.success) {
+                                // Navigate back to settings after successful disconnect
+                                router.back();
+                            } else {
+                                showError(new Error(result.message || 'Failed to disconnect machine'));
+                            }
+                        } catch (error) {
+                            showError(error, { fallbackMessage: 'Failed to disconnect machine' });
+                        } finally {
+                            setIsDisconnecting(false);
                         }
                     }
                 }
@@ -585,6 +619,29 @@ function MachineDetailScreen() {
                             title={t('machine.metadataVersion')}
                             subtitle={String(machine.metadataVersion)}
                         />
+                </ItemGroup>
+
+                {/* HAP-778: Danger Zone - Disconnect Machine */}
+                <ItemGroup title={t('machine.dangerZone')}>
+                    <Item
+                        title={t('machine.disconnect')}
+                        subtitle={t('machine.disconnectSubtitle')}
+                        subtitleLines={0}
+                        titleStyle={{ color: '#FF3B30' }}
+                        onPress={handleDisconnect}
+                        disabled={isDisconnecting}
+                        rightElement={
+                            isDisconnecting ? (
+                                <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+                            ) : (
+                                <Ionicons
+                                    name="log-out-outline"
+                                    size={20}
+                                    color="#FF3B30"
+                                />
+                            )
+                        }
+                    />
                 </ItemGroup>
             </ItemList>
         </>

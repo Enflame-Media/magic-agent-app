@@ -273,6 +273,43 @@ export async function machineStopDaemon(machineId: string): Promise<{ message: s
 }
 
 /**
+ * HAP-778: Disconnect/unauthenticate a machine from the user's account.
+ * The machine will need to re-authenticate via QR code to reconnect.
+ * This does NOT terminate active sessions - they persist until they expire.
+ */
+export async function machineDisconnect(machineId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+        const { response, shortId } = await apiSocket.requestWithCorrelation(`/v1/machines/${machineId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            logger.info(`🔌 machineDisconnect [${shortId}]: Successfully disconnected machine ${machineId}`);
+
+            // Optimistic update: immediately remove from local storage
+            // This ensures the UI updates even if the socket delete-machine event is delayed
+            const { storage } = await import('./storage');
+            storage.getState().deleteMachine(machineId);
+
+            return { success: true };
+        } else {
+            const error = await response.text();
+            logger.debug(`🔌 machineDisconnect [${shortId}]: Failed to disconnect machine ${machineId}: ${error || 'Unknown error'}`);
+            return {
+                success: false,
+                message: error || 'Failed to disconnect machine'
+            };
+        }
+    } catch (error) {
+        logger.debug(`🔌 machineDisconnect: Failed to disconnect machine ${machineId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}
+
+/**
  * Execute a bash command on a specific machine
  */
 export async function machineBash(

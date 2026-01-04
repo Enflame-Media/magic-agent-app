@@ -126,6 +126,7 @@ interface StorageState {
     updateArtifact: (artifact: DecryptedArtifact) => void;
     deleteArtifact: (artifactId: string) => void;
     deleteSession: (sessionId: string) => void;
+    deleteMachine: (machineId: string) => void;
     // Project management methods
     getProjects: () => import('./projectManager').Project[];
     getProject: (projectId: string) => import('./projectManager').Project | null;
@@ -1162,6 +1163,24 @@ export const storage = create<StorageState>()((set, get) => {
                 sessions: remainingSessions,
                 sessionMessages: remainingSessionMessages,
                 sessionGitStatus: remainingGitStatus,
+                sessionListViewData
+            };
+        }),
+        // HAP-778: Delete a machine from local storage
+        deleteMachine: (machineId: string) => set((state) => {
+            // Remove machine from machines
+            const { [machineId]: _deletedMachine, ...remainingMachines } = state.machines;
+
+            // Rebuild sessionListViewData without the deleted machine
+            const sessionListViewData = buildSessionListViewData(
+                state.sessions,
+                remainingMachines,
+                state.settings.groupSessionsByProject
+            );
+
+            return {
+                ...state,
+                machines: remainingMachines,
                 sessionListViewData
             };
         }),

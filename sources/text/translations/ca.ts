@@ -962,6 +962,12 @@ export const ca: TranslationStructure = {
         metadataVersion: 'Versió de les metadades',
         untitledSession: 'Sessió sense títol',
         back: 'Enrere',
+        // HAP-778: Funcionalitat de desconnexió
+        dangerZone: 'Zona de perill',
+        disconnect: 'Desconnectar màquina',
+        disconnectSubtitle: 'Elimina aquesta màquina del teu compte. Hauràs de tornar a autenticar-te amb el codi QR per reconnectar.',
+        disconnectTitle: 'Desconnectar màquina?',
+        disconnectMessage: 'Això eliminarà la màquina del teu compte. Hauràs d\'escanejar el codi QR de nou per reconnectar. Les sessions actives no es veuran afectades.',
     },
 
     message: {

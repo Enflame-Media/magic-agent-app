@@ -984,6 +984,12 @@ export const pl: TranslationStructure = {
         metadataVersion: 'Wersja metadanych',
         untitledSession: 'Sesja bez nazwy',
         back: 'Wstecz',
+        // HAP-778: Funkcjonalność rozłączania
+        dangerZone: 'Strefa niebezpieczna',
+        disconnect: 'Rozłącz maszynę',
+        disconnectSubtitle: 'Usuń tę maszynę ze swojego konta. Aby ponownie się połączyć, będziesz musiał ponownie uwierzytelnić się kodem QR.',
+        disconnectTitle: 'Rozłączyć maszynę?',
+        disconnectMessage: 'To usunie maszynę z Twojego konta. Aby ponownie się połączyć, będziesz musiał zeskanować kod QR. Aktywne sesje nie zostaną naruszone.',
     },
 
     message: {

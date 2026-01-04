@@ -964,6 +964,12 @@ export const zhHans: TranslationStructure = {
         metadataVersion: '元数据版本',
         untitledSession: '无标题会话',
         back: '返回',
+        // HAP-778: 断开连接功能
+        dangerZone: '危险区域',
+        disconnect: '断开设备连接',
+        disconnectSubtitle: '从您的账户中移除此设备。您需要重新使用 QR 码进行身份验证才能重新连接。',
+        disconnectTitle: '断开设备连接？',
+        disconnectMessage: '这将从您的账户中移除该设备。您需要重新扫描 QR 码才能重新连接。活跃的会话不会受到影响。',
     },
 
     message: {

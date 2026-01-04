@@ -963,6 +963,12 @@ export const en = {
         metadataVersion: 'Metadata Version',
         untitledSession: 'Untitled Session',
         back: 'Back',
+        // HAP-778: Disconnect functionality
+        dangerZone: 'Danger Zone',
+        disconnect: 'Disconnect Machine',
+        disconnectSubtitle: 'Remove this machine from your account. You will need to re-authenticate with QR code to reconnect.',
+        disconnectTitle: 'Disconnect Machine?',
+        disconnectMessage: 'This will remove the machine from your account. You will need to scan the QR code again to reconnect. Active sessions will not be affected.',
     },
 
     message: {

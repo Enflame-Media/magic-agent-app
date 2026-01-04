@@ -2531,6 +2531,16 @@ class Sync {
 
             // Update storage using applyMachines which rebuilds sessionListViewData
             storage.getState().applyMachines([updatedMachine]);
+        } else if (updateData.body.t === 'delete-machine') {
+            // HAP-778: Handle machine deletion/disconnection
+            const machineId = updateData.body.machineId;
+            log.log(`🔌 Received delete-machine update for ${machineId}`);
+
+            // Remove machine from storage
+            storage.getState().deleteMachine(machineId);
+
+            // Remove encryption keys from memory if we have them
+            this.encryption.removeMachineEncryption(machineId);
         } else if (updateData.body.t === 'relationship-updated') {
             log.log('👥 Received relationship-updated update');
             const relationshipUpdate = updateData.body;

@@ -962,6 +962,12 @@ export const pt: TranslationStructure = {
         metadataVersion: 'Versão dos metadados',
         untitledSession: 'Sessão sem título',
         back: 'Voltar',
+        // HAP-778: Funcionalidade de desconexão
+        dangerZone: 'Zona perigosa',
+        disconnect: 'Desconectar máquina',
+        disconnectSubtitle: 'Remove esta máquina da sua conta. Você precisará autenticar novamente com o código QR para reconectar.',
+        disconnectTitle: 'Desconectar máquina?',
+        disconnectMessage: 'Isso removerá a máquina da sua conta. Você precisará escanear o código QR novamente para reconectar. As sessões ativas não serão afetadas.',
     },
 
     message: {
