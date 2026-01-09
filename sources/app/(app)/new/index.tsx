@@ -24,7 +24,7 @@ import { PermissionMode, ModelMode } from '@/components/PermissionModeSelector';
 import { AppError, ErrorCodes } from '@/utils/errors';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { RecentPathsDropdown } from '@/components/RecentPathsDropdown';
-
+import { clearNewSessionDraft, loadNewSessionDraft, saveNewSessionDraft } from '@/sync/persistence';
 
 // Helper function to get the most recent path for a machine from settings or sessions
 const getRecentPathForMachine = (machineId: string | null, recentPaths: Array<{ machineId: string; path: string }>): string => {
@@ -135,14 +135,21 @@ function NewSessionScreen() {
         return null;
     }, [dataId]);
 
+    const persistedDraft = React.useRef(loadNewSessionDraft()).current;
+
     const [input, setInput] = React.useState(() => {
         if (tempSessionData?.prompt) {
             return tempSessionData.prompt;
         }
-        return prompt || '';
+        return prompt || persistedDraft?.input || '';
     });
     const [isSending, setIsSending] = React.useState(false);
-    const [sessionType, setSessionType] = React.useState<'simple' | 'worktree'>('simple');
+    const [sessionType, setSessionType] = React.useState<'simple' | 'worktree'>(() => {
+        if (tempSessionData?.sessionType) {
+            return tempSessionData.sessionType;
+        }
+        return persistedDraft?.sessionType || 'simple';
+    });
     // State for pending session polling (HAP-443)
     const [pendingSessionStatus, setPendingSessionStatus] = React.useState<string | null>(null);
     const ref = React.useRef<MultiTextInputHandle>(null);
@@ -163,6 +170,10 @@ function NewSessionScreen() {
 
     const machines = useAllMachines();
     const [selectedMachineId, setSelectedMachineId] = React.useState<string | null>(() => {
+        const machineIdFromDraft = tempSessionData?.machineId ?? persistedDraft?.selectedMachineId;
+        if (machineIdFromDraft) {
+            return machineIdFromDraft;
+        }
         if (machines.length > 0) {
             // Check if we have a recently used machine that's currently available
             if (recentMachinePaths.length > 0) {
@@ -202,17 +213,24 @@ function NewSessionScreen() {
                 // Machine is already selected, but check if we need to update path
                 // This handles the case where machines load after initial render
                 const currentMachine = machines.find(m => m.id === selectedMachineId);
-                if (currentMachine) {
-                    // Update path based on recent paths (only if path hasn't been manually changed)
-                    const bestPath = getRecentPathForMachine(selectedMachineId, recentMachinePaths);
-                    setSelectedPath(prevPath => {
-                        // Only update if current path is the default /home/
-                        if (prevPath === '/home/' && bestPath !== '/home/') {
-                            return bestPath;
-                        }
-                        return prevPath;
-                    });
+                if (!currentMachine) {
+                    // Selected machine doesn't exist anymore - fall back safely
+                    const fallbackMachineId = machines[0].id;
+                    setSelectedMachineId(fallbackMachineId);
+                    const bestPath = getRecentPathForMachine(fallbackMachineId, recentMachinePaths);
+                    setSelectedPath(bestPath);
+                    return;
                 }
+
+                // Update path based on recent paths (only if path hasn't been manually changed)
+                const bestPath = getRecentPathForMachine(selectedMachineId, recentMachinePaths);
+                setSelectedPath(prevPath => {
+                    // Only update if current path is the default /home/
+                    if (prevPath === '/home/' && bestPath !== '/home/') {
+                        return bestPath;
+                    }
+                    return prevPath;
+                });
             }
         }
     }, [machines, selectedMachineId, recentMachinePaths]);
@@ -230,6 +248,16 @@ function NewSessionScreen() {
         }
     }, [machineIdFromParam, recentMachinePaths]);
 
+    // Handle path selection from URL param (set by path picker on web)
+    React.useEffect(() => {
+        if (pathFromParam) {
+            const decodedPath = decodeURIComponent(pathFromParam);
+            if (decodedPath.trim()) {
+                setSelectedPath(decodedPath);
+            }
+        }
+    }, [pathFromParam]);
+
     const handleMachineClick = React.useCallback(() => {
         router.push('/new/pick/machine');
     }, [router]);
@@ -242,6 +270,13 @@ function NewSessionScreen() {
         // Check if agent type was provided in temp data
         if (tempSessionData?.agentType) {
             return tempSessionData.agentType;
+        }
+        // Use persisted draft if available
+        if (persistedDraft?.agentType) {
+            if (persistedDraft.agentType === 'gemini' && !experimentsEnabled) {
+                return 'claude';
+            }
+            return persistedDraft.agentType;
         }
         // Initialize with last used agent if valid, otherwise default to 'claude'
         if (lastUsedAgent === 'claude' || lastUsedAgent === 'codex') {
@@ -268,11 +303,12 @@ function NewSessionScreen() {
         const validClaudeModes: PermissionMode[] = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
         const validCodexModes: PermissionMode[] = ['default', 'read-only', 'safe-yolo', 'yolo'];
 
-        if (lastUsedPermissionMode) {
-            if (agentType === 'codex' && validCodexModes.includes(lastUsedPermissionMode as PermissionMode)) {
-                return lastUsedPermissionMode as PermissionMode;
-            } else if (agentType === 'claude' && validClaudeModes.includes(lastUsedPermissionMode as PermissionMode)) {
-                return lastUsedPermissionMode as PermissionMode;
+        const permissionModeFromDraft = persistedDraft?.permissionMode ?? lastUsedPermissionMode;
+        if (permissionModeFromDraft) {
+            if (agentType === 'codex' && validCodexModes.includes(permissionModeFromDraft as PermissionMode)) {
+                return permissionModeFromDraft as PermissionMode;
+            } else if ((agentType === 'claude' || agentType === 'gemini') && validClaudeModes.includes(permissionModeFromDraft as PermissionMode)) {
+                return permissionModeFromDraft as PermissionMode;
             }
         }
         return 'default';
@@ -294,7 +330,12 @@ function NewSessionScreen() {
     });
 
     // Reset permission and model modes when agent type changes
+    const hasMountedRef = React.useRef(false);
     React.useEffect(() => {
+        if (!hasMountedRef.current) {
+            hasMountedRef.current = true;
+            return;
+        }
         if (agentType === 'codex') {
             // Switch to codex-compatible modes
             setPermissionMode('default');
@@ -328,6 +369,10 @@ function NewSessionScreen() {
             return decodeURIComponent(pathFromParam);
         }
         // Initialize with the path from the selected machine (which should be the most recent if available)
+        const pathFromDraft = tempSessionData?.path ?? persistedDraft?.selectedPath;
+        if (pathFromDraft) {
+            return pathFromDraft;
+        }
         return getRecentPathForMachine(selectedMachineId, recentMachinePaths);
     });
 
@@ -456,6 +501,7 @@ function NewSessionScreen() {
             // Use sessionId to check for success for backwards compatibility
             if ('sessionId' in result && result.sessionId) {
                 sessionId = result.sessionId;
+                clearNewSessionDraft();
 
                 // Check if this is a temporary PID-based session ID
                 // (returned when daemon's webhook timeout exceeded but process was spawned)
@@ -587,6 +633,30 @@ function NewSessionScreen() {
             setIsSending(false);
         }
     }, [agentType, selectedMachineId, selectedPath, input, recentMachinePaths, sessionType, experimentsEnabled, permissionMode, modelMode, router, tempSessionData?.taskId, tempSessionData?.taskTitle, tempSessionData?.prompt, showError]);
+
+    // Persist the current modal state so it survives remounts and reopen/close
+    const draftSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    React.useEffect(() => {
+        if (draftSaveTimerRef.current) {
+            clearTimeout(draftSaveTimerRef.current);
+        }
+        draftSaveTimerRef.current = setTimeout(() => {
+            saveNewSessionDraft({
+                input,
+                selectedMachineId,
+                selectedPath,
+                agentType,
+                permissionMode,
+                sessionType,
+                updatedAt: Date.now(),
+            });
+        }, 250);
+        return () => {
+            if (draftSaveTimerRef.current) {
+                clearTimeout(draftSaveTimerRef.current);
+            }
+        };
+    }, [input, selectedMachineId, selectedPath, agentType, permissionMode, sessionType]);
 
     return (
         <KeyboardAvoidingView

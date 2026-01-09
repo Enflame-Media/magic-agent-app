@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ItemGroup } from '@/components/ItemGroup';
 import { Item } from '@/components/Item';
 import { Typography } from '@/constants/Typography';
@@ -69,6 +70,7 @@ function MachinePickerScreen() {
     const { theme } = useUnistyles();
     const styles = stylesheet;
     const router = useRouter();
+    const navigation = useNavigation();
     const params = useLocalSearchParams<{ selectedId?: string }>();
     const machines = useAllMachines();
 

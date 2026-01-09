@@ -183,6 +183,9 @@ export const ru: TranslationStructure = {
         experimentalFeaturesDisabled: 'Используются только стабильные функции',
         webFeatures: 'Веб-функции',
         webFeaturesDescription: 'Функции, доступные только в веб-версии приложения.',
+        enterToSend: 'Enter для отправки',
+        enterToSendEnabled: 'Нажмите Enter для отправки (Shift+Enter для новой строки)',
+        enterToSendDisabled: 'Enter вставляет новую строку',
         commandPalette: 'Command Palette',
         commandPaletteEnabled: 'Нажмите ⌘K для открытия',
         commandPaletteDisabled: 'Быстрый доступ к командам отключён',
@@ -704,6 +707,7 @@ export const ru: TranslationStructure = {
             reasoning: 'Рассуждение',
             applyChanges: 'Обновить файл',
             viewDiff: 'Текущие изменения файла',
+            question: 'Вопрос',
         },
         desc: {
             terminalCmd: ({ cmd }: { cmd: string }) => `Терминал(команда: ${cmd})`,
@@ -721,6 +725,10 @@ export const ru: TranslationStructure = {
             modifyingFiles: ({ count }: { count: number }) => `Изменение ${count} ${plural({ count, one: 'файла', few: 'файлов', many: 'файлов' })}`,
             modifyingMultipleFiles: ({ file, count }: { file: string; count: number }) => `${file} и ещё ${count}`,
             showingDiff: 'Показ изменений',
+        },
+        askUserQuestion: {
+            submit: 'Отправить ответ',
+            multipleQuestions: ({ count }: { count: number }) => `${count} ${plural({ count, one: 'вопрос', few: 'вопроса', many: 'вопросов' })}`,
         }
     },
 

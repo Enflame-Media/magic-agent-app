@@ -213,6 +213,9 @@ export const pl: TranslationStructure = {
         experimentalFeaturesDisabled: 'Używane tylko stabilne funkcje',
         webFeatures: 'Funkcje webowe',
         webFeaturesDescription: 'Funkcje dostępne tylko w wersji webowej aplikacji.',
+        enterToSend: 'Enter aby wysłać',
+        enterToSendEnabled: 'Naciśnij Enter, aby wysłać (Shift+Enter dla nowej linii)',
+        enterToSendDisabled: 'Enter wstawia nową linię',
         commandPalette: 'Paleta poleceń',
         commandPaletteEnabled: 'Naciśnij ⌘K, aby otworzyć',
         commandPaletteDisabled: 'Szybki dostęp do poleceń wyłączony',
@@ -704,6 +707,7 @@ export const pl: TranslationStructure = {
             reasoning: 'Rozumowanie',
             applyChanges: 'Zaktualizuj plik',
             viewDiff: 'Bieżące zmiany pliku',
+            question: 'Pytanie',
         },
         desc: {
             terminalCmd: ({ cmd }: { cmd: string }) => `Terminal(cmd: ${cmd})`,
@@ -721,6 +725,10 @@ export const pl: TranslationStructure = {
             modifyingFiles: ({ count }: { count: number }) => `Modyfikowanie ${count} ${plural({ count, one: 'pliku', few: 'plików', many: 'plików' })}`,
             modifyingMultipleFiles: ({ file, count }: { file: string; count: number }) => `${file} i ${count} ${plural({ count, one: 'więcej', few: 'więcej', many: 'więcej' })}`,
             showingDiff: 'Pokazywanie zmian',
+        },
+        askUserQuestion: {
+            submit: 'Wyślij odpowiedź',
+            multipleQuestions: ({ count }: { count: number }) => `${count} ${plural({ count, one: 'pytanie', few: 'pytania', many: 'pytań' })}`,
         }
     },
 

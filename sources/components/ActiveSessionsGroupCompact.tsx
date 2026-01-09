@@ -152,6 +152,20 @@ const stylesheet = StyleSheet.create((theme) => ({
         color: theme.colors.textSecondary,
         ...Typography.default('regular'),
     },
+    swipeAction: {
+        width: 112,
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.status.error,
+    },
+    swipeActionText: {
+        marginTop: 4,
+        fontSize: 12,
+        color: '#FFFFFF',
+        textAlign: 'center',
+        ...Typography.default('semiBold'),
+    },
 }));
 
 interface ActiveSessionsGroupProps {
