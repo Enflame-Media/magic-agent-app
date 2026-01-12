@@ -496,6 +496,13 @@ function SessionInfoContent({ session }: { session: Session }) {
 
                 {/* Quick Actions */}
                 <ItemGroup title={t('sessionInfo.quickActions')}>
+                    {/* HAP-770: Share session with friends or via URL */}
+                    <Item
+                        title={t('sharing.shareSession')}
+                        subtitle={t('sharing.shareSessionSubtitle')}
+                        icon={<Ionicons name="share-social-outline" size={29} color="#5856D6" />}
+                        onPress={() => router.push(`/session/${session.id}/share`)}
+                    />
                     {session.metadata?.machineId && (
                         <Item
                             title={t('sessionInfo.viewMachine')}

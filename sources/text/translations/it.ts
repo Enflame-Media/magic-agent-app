@@ -854,7 +854,40 @@ export const it: TranslationStructure = {
         friendRequestGeneric: 'Nuova richiesta di amicizia',
         friendAccepted: ({ name }: { name: string }) => `Ora sei amico di ${name}`,
         friendAcceptedGeneric: 'Richiesta di amicizia accettata',
-    }
+    },
+
+    sharing: {
+        // Session sharing UI (HAP-770)
+        title: 'Condividi sessione',
+        urlSharing: 'Condivisione link',
+        enableUrlSharing: 'Abilita condivisione link',
+        enableUrlSharingDescription: 'Chiunque abbia il link può accedere a questa sessione',
+        permission: 'Permesso',
+        viewOnly: 'Solo visualizzazione',
+        viewAndChat: 'Visualizza e chatta',
+        password: 'Password',
+        optionalPassword: 'Password opzionale',
+        urlCopied: 'Link copiato negli appunti',
+        shareMessage: 'Dai un\'occhiata a questa sessione di programmazione!',
+        shareTitle: 'Condividi sessione',
+        peopleWithAccess: 'Persone con accesso',
+        noShares: 'Nessun altro ha accesso a questa sessione',
+        addPeople: 'Aggiungi persone',
+        addPeopleDescription: 'Condividi con amici dai tuoi contatti',
+        selectFriend: 'Seleziona un amico',
+        grantPermission: 'Concedi permesso',
+        searchFriends: 'Cerca amici...',
+        noFriendsAvailable: 'Nessun amico disponibile per la condivisione',
+        noMatchingFriends: 'Nessun amico corrispondente trovato',
+        shareAdded: ({ name }: { name: string }) => `Condiviso con ${name}`,
+        shareRemoved: 'Accesso rimosso',
+        removeAccess: 'Rimuovi accesso',
+        removeAccessConfirm: ({ name }: { name: string }) => `Rimuovere l'accesso di ${name} a questa sessione?`,
+        remove: 'Rimuovi',
+        permissionLevel: ({ level }: { level: string }) => `${level}`,
+        shareSession: 'Condividi sessione',
+        shareSessionSubtitle: 'Condividi questa sessione con amici o tramite link',
+    },
 } as const;
 
 export type TranslationsIt = typeof it;
