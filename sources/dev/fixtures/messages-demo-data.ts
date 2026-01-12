@@ -1,5 +1,13 @@
-// HAP-844: Dev-only demo data excluded from production bundles via metro.config.js
-// This contains mock message data for development and testing purposes
+// HAP-797: Dev-only demo data for message rendering demos
+// Location: sources/dev/fixtures/ - organized fixtures for dev pages and testing
+// Excluded from production bundles via metro.config.js blocklist
+//
+// This file contains mock message data demonstrating various message types:
+// - User and agent text messages with markdown (tables, code blocks)
+// - Tool calls in various states (running, completed, error)
+// - Nested tool calls (Task with children)
+//
+// Used by: sources/app/(app)/dev/messages-demo.tsx
 
 import { Message, ToolCall } from '@/sync/typesMessage';
 
@@ -43,7 +51,7 @@ export const debugMessages: Message[] = [
         kind: 'user-text',
         text: 'Can you help me debug my application and make some improvements?'
     },
-    
+
     // Agent message
     {
         id: 'agent-1',
@@ -123,7 +131,7 @@ export async function processUserDataWithValidationAndTransformation(
 This function handles validation, transformation, and normalization in a single pass.`
     },
     createSectionTitle('missing-tool-call-title', 'What happens when a tool call Message has zero tools? If the empty tools array would render anything, it would show up between these two messages\nvvvvvvvvvvvvvvvvvvvv'),
-    
+
     // Note: This message type is no longer valid - a tool-call message must have a tool
     // Keeping for reference but should be removed or converted to agent-text
     createSectionTitle('missing-tool-call-after', '^^^^^^^^^^^^^^^^^^^^'),
@@ -237,7 +245,7 @@ This function handles validation, transformation, and normalization in a single 
     },
 
     // Read tool examples
-    createReadToolCall('read-1', '/src/index.tsx', 1, 20, 
+    createReadToolCall('read-1', '/src/index.tsx', 1, 20,
 `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -256,7 +264,7 @@ root.render(
     createReadToolCall('read-2', '/src/App.tsx', 10, 30,
 `function App() {
   const [count, setCount] = useState(0);
-  
+
   return (
     <div className="App">
       <header className="App-header">

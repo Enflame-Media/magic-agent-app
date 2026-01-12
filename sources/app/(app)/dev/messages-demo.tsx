@@ -4,14 +4,14 @@ import { MessageView } from '@/components/MessageView';
 import { Message } from '@/sync/typesMessage';
 import { useDemoMessages } from '@/hooks/useDemoMessages';
 
-// HAP-844: Demo data is moved to sources/trash which is excluded from production bundles.
+// HAP-797: Demo data is organized in sources/dev/fixtures which is excluded from production bundles.
 // Use dynamic import with __DEV__ guard to prevent production errors.
 let debugMessages: Message[] = [];
 if (__DEV__) {
     // Dynamic require in dev mode - this path is blocked by metro in production
     try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        debugMessages = require('@/trash/messages-demo-data').debugMessages;
+        debugMessages = require('@/dev/fixtures/messages-demo-data').debugMessages;
     } catch {
         // Fallback if the file is not available (shouldn't happen in dev)
         debugMessages = [];
