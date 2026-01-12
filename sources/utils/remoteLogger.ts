@@ -617,11 +617,13 @@ export function monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyIn
         return
       }
 
-      // HAP-838: Redact sensitive data before sending to remote server
-      const redactedArgs = redactArgs(args);
+      // HAP-848: Safe serialize FIRST to handle circular references
+      // This must happen before redactArgs since redactArgs doesn't handle circulars
+      const safeArgs = safeSerializeArgs(args);
 
-      // HAP-848: Use safe serialization to handle circular references
-      const safeRedactedArgs = safeSerializeArgs(redactedArgs);
+      // HAP-838: Redact sensitive data before sending to remote server
+      // Now safe to call redactArgs since safeArgs has no circular references
+      const safeRedactedArgs = redactArgs(safeArgs);
 
       // HAP-840: Add to batch buffer instead of sending immediately
       const remoteEntry: RemoteLogEntry = {

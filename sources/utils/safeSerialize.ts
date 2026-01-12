@@ -57,13 +57,13 @@ interface SafeSerializeOptions {
  */
 function createCircularReplacer(maxDepth: number): (this: unknown, key: string, value: unknown) => unknown {
     const seen = new WeakSet<object>();
-    const stack: unknown[] = [];
+    const ancestors: unknown[] = [];
 
     return function (this: unknown, key: string, value: unknown): unknown {
         // Root object case - key is empty string
         if (key === '' && typeof value === 'object' && value !== null) {
             seen.add(value);
-            stack.push(value);
+            ancestors.push(value);
             return value;
         }
 
@@ -72,24 +72,17 @@ function createCircularReplacer(maxDepth: number): (this: unknown, key: string, 
             return value;
         }
 
-        // Check for max depth by tracking stack depth
-        // The stack represents the path to current object
-        // Pop items that are no longer in our ancestor chain
-        while (stack.length > 0) {
-            const parent = this;
-            // Check if current 'this' is in the stack (indicating we're still in the same branch)
-            if (stack[stack.length - 1] === parent) {
-                break;
-            }
-            // If we've moved to a different branch, pop the stack
-            const popped = stack.pop();
-            if (popped && typeof popped === 'object') {
-                seen.delete(popped);
+        // Pop ancestors that are no longer in our path
+        // The JSON.stringify context 'this' is the parent object
+        while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) {
+            const removed = ancestors.pop();
+            if (removed && typeof removed === 'object') {
+                seen.delete(removed);
             }
         }
 
         // Check depth
-        if (stack.length >= maxDepth) {
+        if (ancestors.length >= maxDepth) {
             return MAX_DEPTH_PLACEHOLDER;
         }
 
@@ -100,7 +93,7 @@ function createCircularReplacer(maxDepth: number): (this: unknown, key: string, 
 
         // Track this object
         seen.add(value);
-        stack.push(value);
+        ancestors.push(value);
 
         return value;
     };
@@ -160,7 +153,7 @@ export function safeStringify(value: unknown, options: SafeSerializeOptions = {}
         // Use circular replacer for objects
         const replacer = createCircularReplacer(maxDepth);
         return JSON.stringify(value, replacer, indent);
-    } catch (e) {
+    } catch {
         // Final fallback - should rarely happen, but ensures we never throw
         try {
             // Try to get some useful info
