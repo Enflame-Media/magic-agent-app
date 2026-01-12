@@ -7,6 +7,11 @@
  * Remote logging can now be toggled on/off at runtime via developer settings,
  * without requiring a rebuild. The toggle is available in the dev settings UI.
  *
+ * HAP-840: Batching support
+ * Log entries are buffered and sent in batches to reduce network overhead.
+ * Batches are sent every BATCH_INTERVAL_MS or when BATCH_SIZE_THRESHOLD entries accumulate.
+ * Buffer is flushed on app background/close to prevent log loss.
+ *
  * PRODUCTION GUARDRAILS (HAP-836):
  * - Remote logging is ONLY allowed in development builds (__DEV__ === true)
  * - Remote logging is ONLY allowed to local/dev server URLs
@@ -68,10 +73,40 @@ const MAX_REMOTE_PAYLOAD_BYTES = 100 * 1024 // 100KB
 const TRUNCATION_MARKER = '... [TRUNCATED]'
 
 // ============================================================================
-// HAP-840: Remote logging batch configuration (reserved for future use)
+// HAP-840: Remote logging batch configuration
 // ============================================================================
-// Note: Batching configuration is defined here for future HAP-840 implementation.
-// The actual batching logic will be added in a separate PR.
+
+/**
+ * Interval in milliseconds between batch sends.
+ * 1 second provides a good balance between real-time visibility and network efficiency.
+ */
+const BATCH_INTERVAL_MS = 1000
+
+/**
+ * Maximum number of log entries before triggering an immediate batch send.
+ * 50 entries is a reasonable threshold to avoid large payloads.
+ */
+const BATCH_SIZE_THRESHOLD = 50
+
+/**
+ * Remote batch buffer - separate from the UI logBuffer
+ */
+interface RemoteLogEntry {
+    timestamp: string
+    level: string
+    message: string
+    messageRawObject: unknown[]
+    source: 'mobile'
+    platform: string
+    appVersion: string | null
+    buildNumber: string | null
+}
+
+let remoteBatchBuffer: RemoteLogEntry[] = []
+let batchTimerId: ReturnType<typeof setInterval> | null = null
+let appStateSubscription: NativeEventSubscription | null = null
+let isSendingBatch = false
+let remoteServerUrl: string | null = null
 
 /**
  * HAP-839: Truncates a string to fit within the specified byte limit.
@@ -117,7 +152,11 @@ function truncateValue(value: unknown, maxStringBytes: number): unknown {
  * 2. If too large, truncates messageRawObject strings
  * 3. If still too large, truncates the main message
  * 4. Final fallback: aggressively truncate everything
+ *
+ * Note: Currently unused due to HAP-840 batching, but kept for potential future
+ * single-log fallback mode or direct API usage.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function truncatePayloadForRemote(payload: Record<string, unknown>): Record<string, unknown> {
   // Try the original payload first
   let serialized = JSON.stringify(payload)
@@ -349,22 +388,156 @@ function estimateEntrySize(entry: any): number {
   return safeStringify(entry).length
 }
 
-export function monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyInLocalBuilds() {
-  // NEVER ENABLE REMOTE LOGGING IN PRODUCTION
-  // This is for local debugging with AI only
-  // So AI will have all the logs easily accessible in one file for analysis
-  if (!process.env.EXPO_PUBLIC_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING) {
-    return
-  }
+// ============================================================================
+// HAP-840: Batch sending functions
+// ============================================================================
 
-  // HAP-836: Production guardrail - only allow remote logging in development builds
+/**
+ * HAP-840: Sends a batch of log entries to the remote server.
+ * Handles failures gracefully and doesn't block the app.
+ */
+async function sendBatch(entries: RemoteLogEntry[]): Promise<void> {
+    if (entries.length === 0 || !remoteServerUrl) {
+        return
+    }
+
+    // HAP-853: Skip sending if we're in backoff period due to previous failures
+    if (!canSendNow()) {
+        // Re-add entries to buffer if we can't send yet
+        remoteBatchBuffer.unshift(...entries)
+        return
+    }
+
+    try {
+        // Create batch payload
+        const batchPayload = {
+            batch: entries,
+            batchSize: entries.length,
+            timestamp: new Date().toISOString(),
+        }
+
+        // HAP-839: Check payload size and truncate if needed
+        let payloadString = safeStringify(batchPayload)
+        if (payloadString.length > MAX_REMOTE_PAYLOAD_BYTES) {
+            // Truncate individual messages in the batch
+            const truncatedEntries = entries.map(entry => ({
+                ...entry,
+                message: truncateString(entry.message, 1000),
+                messageRawObject: [] as unknown[], // Drop raw objects when truncating
+            }))
+            payloadString = safeStringify({
+                batch: truncatedEntries,
+                batchSize: truncatedEntries.length,
+                timestamp: new Date().toISOString(),
+                truncated: true,
+            })
+
+            // If still too large, drop some entries
+            if (payloadString.length > MAX_REMOTE_PAYLOAD_BYTES) {
+                const halfEntries = truncatedEntries.slice(-Math.floor(truncatedEntries.length / 2))
+                payloadString = safeStringify({
+                    batch: halfEntries,
+                    batchSize: halfEntries.length,
+                    timestamp: new Date().toISOString(),
+                    truncated: true,
+                    droppedCount: truncatedEntries.length - halfEntries.length,
+                })
+            }
+        }
+
+        // HAP-837: Build headers with optional auth token
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (config.devLoggingToken) {
+            headers['X-Dev-Logging-Token'] = config.devLoggingToken;
+        }
+
+        await fetchWithTimeout(remoteServerUrl + '/logs-combined-from-cli-and-mobile-for-simple-ai-debugging', {
+            method: 'POST',
+            headers,
+            body: payloadString,
+            timeoutMs: 5000, // 5s - logger should not block app
+        })
+
+        // HAP-853: Reset backoff on successful send
+        recordSendSuccess()
+    } catch {
+        // HAP-853: Record failure and apply exponential backoff
+        // Remote logging is optional - log suppression prevents network hammering when offline
+        recordSendFailure()
+    }
+}
+
+/**
+ * HAP-840: Flushes the remote batch buffer immediately.
+ * Called on interval, threshold, or app background.
+ */
+async function flushRemoteBatch(): Promise<void> {
+    if (remoteBatchBuffer.length === 0 || isSendingBatch) {
+        return
+    }
+
+    isSendingBatch = true
+    const entriesToSend = [...remoteBatchBuffer]
+    remoteBatchBuffer = []
+
+    try {
+        await sendBatch(entriesToSend)
+    } finally {
+        isSendingBatch = false
+    }
+}
+
+/**
+ * HAP-840: Adds a log entry to the remote batch buffer.
+ * Triggers immediate send if size threshold is reached.
+ */
+function addToRemoteBatch(entry: RemoteLogEntry): void {
+    remoteBatchBuffer.push(entry)
+
+    // Trigger immediate send if threshold reached
+    if (remoteBatchBuffer.length >= BATCH_SIZE_THRESHOLD) {
+        flushRemoteBatch()
+    }
+}
+
+/**
+ * HAP-840: Starts the batch interval timer.
+ */
+function startBatchTimer(): void {
+    if (batchTimerId !== null) {
+        return
+    }
+
+    batchTimerId = setInterval(() => {
+        flushRemoteBatch()
+    }, BATCH_INTERVAL_MS)
+}
+
+/**
+ * HAP-840: Stops the batch interval timer.
+ */
+function stopBatchTimer(): void {
+    if (batchTimerId !== null) {
+        clearInterval(batchTimerId)
+        batchTimerId = null
+    }
+}
+
+/**
+ * HAP-840: Handles app state changes to flush buffer on background.
+ */
+function handleAppStateChange(nextAppState: AppStateStatus): void {
+    if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // Flush immediately when app goes to background
+        flushRemoteBatch()
+    }
+}
+
+export function monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyInLocalBuilds() {
+  // HAP-842: Always initialize in dev mode to enable runtime toggle
+  // The env flag now just sets the default state
   if (!__DEV__) {
-    console.warn(
-      '[RemoteLogger] BLOCKED: Remote logging is only allowed in development builds (__DEV__ must be true). ' +
-      'This is a safety guardrail to prevent accidental production logging. ' +
-      'Remove EXPO_PUBLIC_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING from your production environment.'
-    );
-    return;
+    return
   }
 
   // Idempotency: skip if already patched (prevents duplicate logs during HMR/re-mounts)
@@ -381,40 +554,77 @@ export function monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyIn
     debug: console.debug,
   }
 
+  // HAP-842: Store original console for internal logging
+  originalConsoleLog = originalConsole.log
+
   const url = config.serverUrl
 
-  if (!url) {
-    console.log('[RemoteLogger] No server URL provided, remote logging disabled')
-    return
-  }
-
-  // HAP-836: Production guardrail - only allow local/dev server URLs
-  if (!isAllowedDevUrl(url)) {
-    console.warn(
-      `[RemoteLogger] BLOCKED: Server URL "${url}" is not a local/dev URL. ` +
-      'Remote logging is only allowed to localhost, 127.0.0.1, or private network addresses (10.x.x.x, 192.168.x.x, 172.16-31.x.x). ' +
-      'This is a safety guardrail to prevent accidental logging to production servers.'
-    );
-    return;
-  }
-
-  const sendLog = async (level: string, args: any[]) => {
-    // HAP-853: Skip sending if we're in backoff period due to previous failures
-    if (!canSendNow()) {
-      return
+  // HAP-842: Check if env flag enables remote logging by default
+  if (process.env.EXPO_PUBLIC_DANGEROUSLY_LOG_TO_SERVER_FOR_AI_AUTO_DEBUGGING) {
+    if (url && isAllowedDevUrl(url)) {
+      runtimeRemoteLoggingEnabled = true
+    } else if (url && !isAllowedDevUrl(url)) {
+      originalConsole.warn(
+        `[RemoteLogger] BLOCKED: Server URL "${url}" is not a local/dev URL. ` +
+        'Remote logging is only allowed to localhost, 127.0.0.1, or private network addresses (10.x.x.x, 192.168.x.x, 172.16-31.x.x). ' +
+        'This is a safety guardrail to prevent accidental logging to production servers.'
+      );
     }
+  }
 
-    try {
+  // HAP-840: Store URL for batch sending and set up batching infrastructure
+  if (url && isAllowedDevUrl(url)) {
+    remoteServerUrl = url
+    startBatchTimer()
+    appStateSubscription = AppState.addEventListener('change', handleAppStateChange)
+  }
+
+  // Patch console methods
+  ;(['log', 'info', 'warn', 'error', 'debug'] as const).forEach(level => {
+    console[level] = (...args: any[]) => {
+      // Always call original immediately (local console output remains immediate)
+      originalConsole[level](...args)
+
+      // Buffer for developer settings UI
+      const uiEntry = {
+        timestamp: new Date().toISOString(),
+        level,
+        message: args
+      }
+      const entrySize = estimateEntrySize(uiEntry)
+
+      // Evict oldest entries until we're under the byte limit
+      while (currentBufferBytes + entrySize > MAX_BUFFER_BYTES && logBuffer.length > 0) {
+        const removed = logBuffer.shift()
+        if (removed) {
+          currentBufferBytes -= estimateEntrySize(removed)
+        }
+      }
+
+      logBuffer.push(uiEntry)
+      currentBufferBytes += entrySize
+
+      // Secondary count-based safety limit
+      if (logBuffer.length > MAX_BUFFER_SIZE) {
+        const removed = logBuffer.shift()
+        if (removed) {
+          currentBufferBytes -= estimateEntrySize(removed)
+        }
+      }
+
+      // HAP-842: Check runtime toggle before adding to batch
+      if (!runtimeRemoteLoggingEnabled) {
+        return
+      }
+
       // HAP-838: Redact sensitive data before sending to remote server
-      // This prevents tokens, keys, and credentials from being logged remotely
       const redactedArgs = redactArgs(args);
 
       // HAP-848: Use safe serialization to handle circular references
-      // This prevents JSON.stringify from throwing on circular objects
       const safeRedactedArgs = safeSerializeArgs(redactedArgs);
 
-      // Build the payload
-      const payload: Record<string, unknown> = {
+      // HAP-840: Add to batch buffer instead of sending immediately
+      const remoteEntry: RemoteLogEntry = {
         timestamp: new Date().toISOString(),
         level,
         message: safeRedactedArgs.map(a =>
@@ -427,71 +637,15 @@ export function monkeyPatchConsoleForRemoteLoggingForFasterAiAutoDebuggingOnlyIn
         buildNumber: Application.nativeBuildVersion ?? null,
       }
 
-      // HAP-839: Truncate payload to prevent oversized requests
-      const truncatedPayload = truncatePayloadForRemote(payload)
-
-      // HAP-837: Build headers with optional auth token
-      // When configured, include X-Dev-Logging-Token for server authentication
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (config.devLoggingToken) {
-        headers['X-Dev-Logging-Token'] = config.devLoggingToken;
-      }
-
-      await fetchWithTimeout(url + '/logs-combined-from-cli-and-mobile-for-simple-ai-debugging', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(truncatedPayload),
-        timeoutMs: 5000, // 5s - logger should not block app
-      })
-
-      // HAP-853: Reset backoff on successful send
-      recordSendSuccess()
-    } catch {
-      // HAP-853: Record failure and apply exponential backoff
-      // Remote logging is optional - log suppression prevents network hammering when offline
-      recordSendFailure()
-    }
-  }
-
-  // Patch console methods
-  ;(['log', 'info', 'warn', 'error', 'debug'] as const).forEach(level => {
-    console[level] = (...args: any[]) => {
-      // Always call original
-      originalConsole[level](...args)
-      
-      // Buffer for developer settings
-      const entry = {
-        timestamp: new Date().toISOString(),
-        level,
-        message: args
-      }
-      const entrySize = estimateEntrySize(entry)
-
-      // Evict oldest entries until we're under the byte limit
-      while (currentBufferBytes + entrySize > MAX_BUFFER_BYTES && logBuffer.length > 0) {
-        const removed = logBuffer.shift()
-        if (removed) {
-          currentBufferBytes -= estimateEntrySize(removed)
-        }
-      }
-
-      logBuffer.push(entry)
-      currentBufferBytes += entrySize
-
-      // Secondary count-based safety limit
-      if (logBuffer.length > MAX_BUFFER_SIZE) {
-        const removed = logBuffer.shift()
-        if (removed) {
-          currentBufferBytes -= estimateEntrySize(removed)
-        }
-      }
-
-      // Send to remote
-      sendLog(level, args)
+      addToRemoteBatch(remoteEntry)
     }
   })
 
-  console.log('[RemoteLogger] Initialized with server:', url)
+  if (runtimeRemoteLoggingEnabled) {
+    originalConsole.log('[RemoteLogger] Initialized with server:', url, '(batched mode, interval:', BATCH_INTERVAL_MS, 'ms)')
+  } else {
+    originalConsole.log('[RemoteLogger] Initialized (buffering only, remote sending disabled - enable via dev settings)')
+  }
 }
 
 // For developer settings UI
@@ -502,4 +656,20 @@ export function getLogBuffer() {
 export function clearLogBuffer() {
   logBuffer = []
   currentBufferBytes = 0
+}
+
+/**
+ * HAP-840: Cleanup function to stop batching and flush remaining logs.
+ * Should be called when the app is shutting down.
+ */
+export function cleanupRemoteLogger(): void {
+  stopBatchTimer()
+
+  if (appStateSubscription) {
+    appStateSubscription.remove()
+    appStateSubscription = null
+  }
+
+  // Final flush
+  flushRemoteBatch()
 }
